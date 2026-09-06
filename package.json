@@ -1,7 +1,13 @@
 {
-  "name": "study-calendar-app",
+  "name": "studysync",
   "private": true,
   "version": "1.0.0",
+  "description": "AI-Powered Student Schedule & Homework Planner with Canvas LMS and Apple Calendar synchronization",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aiden0rchad/StudySync.git"
+  },
+  "homepage": "https://aiden0rchad.github.io/StudySync/",
   "type": "module",
   "scripts": {
     "dev": "vite",
