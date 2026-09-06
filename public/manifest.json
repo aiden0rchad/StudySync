@@ -1,0 +1,57 @@
+{
+  "name": "StudySync - Academic Planner",
+  "short_name": "StudySync",
+  "description": "Student class schedule and homework planner with AI, Canvas LMS and Apple Calendar sync",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Today Agenda",
+      "short_name": "Today",
+      "description": "View today's classes and homework",
+      "url": "/?tab=today",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Homework & Tasks",
+      "short_name": "Tasks",
+      "description": "Track pending assignments",
+      "url": "/?tab=homework",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Class Timetable",
+      "short_name": "Timetable",
+      "description": "View weekly schedule",
+      "url": "/?tab=week",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

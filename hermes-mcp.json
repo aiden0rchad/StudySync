@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "study-calendar": {
+      "command": "node",
+      "args": [
+        "/Users/rolandleyco/.gemini/antigravity/scratch/study-calendar-app/mcp/server.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

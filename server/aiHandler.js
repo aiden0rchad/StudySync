@@ -1,0 +1,982 @@
+import { 
+  getAllCourses, 
+  addCourse, 
+  deleteCourse, 
+  getAllHomework, 
+  addHomework, 
+  updateHomework, 
+  deleteHomework,
+  getSetting,
+  wipeAllData,
+  wipeHomeworkOnly,
+  wipeCanvasData
+} from './db.js';
+import { format, parseISO } from 'date-fns';
+import { syncCanvasICal, syncCanvasAPI } from './canvasHandler.js';
+
+// System prompt instructing the AI how to act as StudySync Calendar Assistant
+const SYSTEM_PROMPT = `You are StudySync AI, an intelligent, helpful academic calendar assistant.
+The current date is ${format(new Date(), 'EEEE, MMMM d, yyyy')}.
+
+You help students manage their recurring weekly classes, study schedule, homework deadlines, assignments, and exams.
+You have access to tools that can directly create, delete, and manage classes and homework in the user's database.
+
+Capabilities:
+1. Process text requests ("I have CS 101 on Mon/Wed 10am to 11:30am in Room 304", "Add Math homework due tomorrow 5pm").
+2. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
+3. Automatically execute functions to add or update items.
+4. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
+5. Provide concise, friendly confirmations highlighting what was added or updated.`;
+
+// Top 8 LLM API Providers + Custom
+export const PROVIDERS = [
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    description: 'Fast, multimodal vision, generous free tier',
+    defaultModel: 'gemini-1.5-flash',
+    defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    placeholderKey: 'AIzaSy...',
+    keyUrl: 'https://aistudio.google.com/app/apikey',
+    curatedModels: [
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash-exp',
+      'gemini-1.0-pro'
+    ]
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    description: 'GPT-4o, GPT-4o-mini, o1-mini with vision & tools',
+    defaultModel: 'gpt-4o-mini',
+    defaultBaseUrl: 'https://api.openai.com/v1',
+    placeholderKey: 'sk-proj-...',
+    keyUrl: 'https://platform.openai.com/api-keys',
+    curatedModels: [
+      'gpt-4o-mini',
+      'gpt-4o',
+      'o1-mini',
+      'gpt-4-turbo',
+      'gpt-3.5-turbo'
+    ]
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    description: 'Claude 3.5 Sonnet, Haiku with superior reasoning',
+    defaultModel: 'claude-3-5-sonnet-20241022',
+    defaultBaseUrl: 'https://api.anthropic.com/v1',
+    placeholderKey: 'sk-ant-...',
+    keyUrl: 'https://console.anthropic.com/settings/keys',
+    curatedModels: [
+      'claude-3-5-sonnet-20241022',
+      'claude-3-5-haiku-20241022',
+      'claude-3-opus-20240229',
+      'claude-3-sonnet-20240229'
+    ]
+  },
+  {
+    id: 'groq',
+    name: 'Groq',
+    description: 'Ultra high-speed inference for Llama 3.3, 3.1 & Mixtral',
+    defaultModel: 'llama-3.3-70b-versatile',
+    defaultBaseUrl: 'https://api.groq.com/openai/v1',
+    placeholderKey: 'gsk_...',
+    keyUrl: 'https://console.groq.com/keys',
+    curatedModels: [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+      'llama-3.2-11b-vision-preview',
+      'mixtral-8x7b-32768',
+      'gemma2-9b-it'
+    ]
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    description: 'High performance DeepSeek-V3 & DeepSeek-R1',
+    defaultModel: 'deepseek-chat',
+    defaultBaseUrl: 'https://api.deepseek.com',
+    placeholderKey: 'sk-...',
+    keyUrl: 'https://platform.deepseek.com/api_keys',
+    curatedModels: [
+      'deepseek-chat',
+      'deepseek-reasoner'
+    ]
+  },
+  {
+    id: 'mistral',
+    name: 'Mistral AI',
+    description: 'Mistral Large, Pixtral vision & Codestral',
+    defaultModel: 'mistral-large-latest',
+    defaultBaseUrl: 'https://api.mistral.ai/v1',
+    placeholderKey: '...',
+    keyUrl: 'https://console.mistral.ai/api-keys/',
+    curatedModels: [
+      'mistral-large-latest',
+      'mistral-small-latest',
+      'pixtral-12b-2409',
+      'codestral-latest',
+      'open-mistral-nemo'
+    ]
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    description: 'Unified gateway to 100+ models (Hermes, Claude, Llama)',
+    defaultModel: 'nousresearch/hermes-3-llama-3.1-405b:extended',
+    defaultBaseUrl: 'https://openrouter.ai/api/v1',
+    placeholderKey: 'sk-or-v1-...',
+    keyUrl: 'https://openrouter.ai/keys',
+    curatedModels: [
+      'nousresearch/hermes-3-llama-3.1-405b:extended',
+      'meta-llama/llama-3.3-70b-instruct',
+      'anthropic/claude-3.5-sonnet',
+      'google/gemini-flash-1.5',
+      'qwen/qwen-2.5-72b-instruct'
+    ]
+  },
+  {
+    id: 'hermes',
+    name: 'Ollama / Local Hermes',
+    description: 'Private local LLMs via Ollama, LM Studio, or vLLM',
+    defaultModel: 'hermes-3-llama-3.1-8b',
+    defaultBaseUrl: 'http://localhost:11434/v1',
+    placeholderKey: 'Optional for local (e.g. ollama)',
+    curatedModels: [
+      'hermes-3-llama-3.1-8b',
+      'llama3.2-vision',
+      'llama3.3',
+      'llama3.1',
+      'mistral',
+      'qwen2.5'
+    ]
+  },
+  {
+    id: 'custom',
+    name: 'Custom / Other Endpoint',
+    description: 'Any OpenAI-compatible API endpoint or proxy',
+    defaultModel: 'custom-model',
+    defaultBaseUrl: 'http://localhost:8000/v1',
+    placeholderKey: 'Bearer token or API key',
+    curatedModels: ['default']
+  }
+];
+
+export async function fetchProviderModels({ provider, apiKey, baseUrl }) {
+  const provConfig = PROVIDERS.find(p => p.id === provider) || PROVIDERS[0];
+  const effectiveBaseUrl = baseUrl || provConfig.defaultBaseUrl || '';
+  const effectiveKey = apiKey || getSetting('ai_api_key', '');
+
+  // 1. Google Gemini
+  if (provider === 'gemini') {
+    if (!effectiveKey) {
+      return {
+        models: provConfig.curatedModels,
+        isFallback: true,
+        message: 'Enter API key to fetch live models.'
+      };
+    }
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${effectiveKey}`);
+      if (!res.ok) throw new Error(`Gemini status ${res.status}`);
+      const data = await res.json();
+      const models = (data.models || [])
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''))
+        .filter(name => !name.includes('embedding') && !name.includes('aqa'));
+      return { models: models.length > 0 ? models : provConfig.curatedModels, isFallback: false };
+    } catch (e) {
+      console.warn('Failed to fetch live Gemini models:', e.message);
+      return { models: provConfig.curatedModels, isFallback: true, error: e.message };
+    }
+  }
+
+  // 2. Anthropic
+  if (provider === 'anthropic') {
+    if (!effectiveKey) {
+      return {
+        models: provConfig.curatedModels,
+        isFallback: true,
+        message: 'Enter API key to fetch live models.'
+      };
+    }
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/models', {
+        headers: {
+          'x-api-key': effectiveKey,
+          'anthropic-version': '2023-06-01'
+        }
+      });
+      if (!res.ok) throw new Error(`Anthropic status ${res.status}`);
+      const data = await res.json();
+      const models = (data.data || []).map(m => m.id);
+      return { models: models.length > 0 ? models : provConfig.curatedModels, isFallback: false };
+    } catch (e) {
+      console.warn('Failed to fetch Anthropic models:', e.message);
+      return { models: provConfig.curatedModels, isFallback: true, error: e.message };
+    }
+  }
+
+  // 3. OpenRouter (public models endpoint works even without key!)
+  if (provider === 'openrouter') {
+    try {
+      const headers = {};
+      if (effectiveKey) headers['Authorization'] = `Bearer ${effectiveKey}`;
+      const res = await fetch('https://openrouter.ai/api/v1/models', { headers });
+      if (res.ok) {
+        const data = await res.json();
+        const models = (data.data || []).map(m => m.id);
+        return { models: models.slice(0, 100), isFallback: false };
+      }
+    } catch (e) {
+      console.warn('Failed to fetch OpenRouter models:', e.message);
+    }
+    return { models: provConfig.curatedModels, isFallback: true };
+  }
+
+  // 4. Ollama / Local Hermes
+  if (provider === 'hermes') {
+    try {
+      const base = (effectiveBaseUrl || 'http://localhost:11434').replace(/\/v1\/?$/, '');
+      const resTags = await fetch(`${base}/api/tags`).catch(() => null);
+      if (resTags && resTags.ok) {
+        const data = await resTags.json();
+        const models = (data.models || []).map(m => m.name);
+        if (models.length > 0) return { models, isFallback: false };
+      }
+      const resV1 = await fetch(`${effectiveBaseUrl || 'http://localhost:11434/v1'}/models`).catch(() => null);
+      if (resV1 && resV1.ok) {
+        const data = await resV1.json();
+        const models = (data.data || []).map(m => m.id);
+        if (models.length > 0) return { models, isFallback: false };
+      }
+    } catch (e) {
+      console.warn('Failed to fetch local Ollama models:', e.message);
+    }
+    return { models: provConfig.curatedModels, isFallback: true };
+  }
+
+  // 5. OpenAI, Groq, DeepSeek, Mistral, Custom
+  let modelsUrl = effectiveBaseUrl.replace(/\/+$/, '');
+  if (!modelsUrl.endsWith('/models')) {
+    modelsUrl = `${modelsUrl}/models`;
+  }
+
+  if (!effectiveKey && provider !== 'custom') {
+    return {
+      models: provConfig.curatedModels,
+      isFallback: true,
+      message: 'Enter API key to fetch live models.'
+    };
+  }
+
+  try {
+    const headers = {};
+    if (effectiveKey) headers['Authorization'] = `Bearer ${effectiveKey}`;
+    const res = await fetch(modelsUrl, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    let models = (data.data || data.models || []).map(m => typeof m === 'string' ? m : m.id);
+
+    if (provider === 'openai') {
+      models = models.filter(id => id.startsWith('gpt-') || id.startsWith('o1') || id.startsWith('chatgpt'));
+      models.sort((a, b) => b.localeCompare(a));
+    }
+
+    return { models: models.length > 0 ? models : provConfig.curatedModels, isFallback: false };
+  } catch (e) {
+    console.warn(`Failed to fetch models from ${provider}:`, e.message);
+    return { models: provConfig.curatedModels, isFallback: true, error: e.message };
+  }
+}
+
+export const AI_TOOLS = [
+  {
+    name: 'add_course',
+    description: 'Add a new recurring weekly class to the student schedule.',
+    parameters: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', description: 'Course code, e.g. "CS 101" or "MATH 201"' },
+        name: { type: 'string', description: 'Full course title, e.g. "Intro to Computer Science"' },
+        color: { type: 'string', enum: ['indigo', 'emerald', 'amber', 'rose', 'sky', 'purple', 'orange', 'teal'], description: 'Color theme' },
+        daysOfWeek: { 
+          type: 'array', 
+          items: { type: 'integer' }, 
+          description: 'Days of week as array of integers (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)' 
+        },
+        startTime: { type: 'string', description: 'Start time in 24h format HH:mm, e.g. "10:00"' },
+        endTime: { type: 'string', description: 'End time in 24h format HH:mm, e.g. "11:30"' },
+        instructor: { type: 'string', description: 'Instructor name, e.g. "Dr. Turing"' },
+        room: { type: 'string', description: 'Room, building, or link, e.g. "Hall 304"' }
+      },
+      required: ['code', 'name', 'daysOfWeek', 'startTime', 'endTime']
+    }
+  },
+  {
+    name: 'delete_course',
+    description: 'Delete an enrolled course by code or ID.',
+    parameters: {
+      type: 'object',
+      properties: {
+        codeOrId: { type: 'string', description: 'Course code (e.g. "CS 101") or course ID' }
+      },
+      required: ['codeOrId']
+    }
+  },
+  {
+    name: 'add_homework',
+    description: 'Add a new homework assignment or exam deadline.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Title of the assignment, e.g. "Problem Set 4"' },
+        courseCode: { type: 'string', description: 'Associated course code if any, e.g. "CS 101"' },
+        dueDate: { type: 'string', description: 'Due date in YYYY-MM-DD format' },
+        dueTime: { type: 'string', description: 'Due time in HH:mm 24-hour format, defaults to "23:59"' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Priority level' },
+        estimatedMinutes: { type: 'integer', description: 'Estimated study/work time in minutes' },
+        description: { type: 'string', description: 'Notes, questions to solve, or instructions' }
+      },
+      required: ['title', 'dueDate']
+    }
+  },
+  {
+    name: 'complete_homework',
+    description: 'Mark a homework assignment or task as completed.',
+    parameters: {
+      type: 'object',
+      properties: {
+        titleOrId: { type: 'string', description: 'Title or ID of the assignment to mark done' }
+      },
+      required: ['titleOrId']
+    }
+  },
+  {
+    name: 'delete_homework',
+    description: 'Delete a homework task by title or ID.',
+    parameters: {
+      type: 'object',
+      properties: {
+        titleOrId: { type: 'string', description: 'Title or ID of the assignment' }
+      },
+      required: ['titleOrId']
+    }
+  },
+  {
+    name: 'get_schedule',
+    description: 'Get current classes, timetable, and pending homework.',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
+    name: 'sync_canvas',
+    description: 'Trigger a synchronization with Canvas LMS to pull upcoming assignments, quizzes, and course updates.',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
+    name: 'get_apple_calendar_feed',
+    description: 'Get the Apple Calendar / iCloud subscription feed URL and instructions to sync classes and homework with Mac, iPhone, and iPad.',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
+    name: 'wipe_calendar',
+    description: 'Admin tool to wipe calendar data (all data, homework only, or Canvas sync data) to give the user a clean slate.',
+    parameters: {
+      type: 'object',
+      properties: {
+        target: { 
+          type: 'string', 
+          enum: ['all', 'homework', 'canvas'],
+          description: 'What data to wipe: "all" for courses & homework, "homework" for tasks only, "canvas" for imported Canvas data.' 
+        },
+        confirm: { 
+          type: 'boolean', 
+          description: 'Must be explicitly set to true to execute wipe.' 
+        }
+      },
+      required: ['target', 'confirm']
+    }
+  }
+];
+
+export async function executeTool(toolName, args) {
+  const courses = getAllCourses();
+  const homework = getAllHomework();
+
+  if (toolName === 'wipe_calendar') {
+    if (!args.confirm) {
+      return { error: 'Confirmation required. Pass confirm: true to wipe calendar data.' };
+    }
+    if (args.target === 'homework') {
+      const res = wipeHomeworkOnly();
+      return { success: true, action: 'wipe_homework', message: 'All homework tasks cleared.' };
+    } else if (args.target === 'canvas') {
+      const res = wipeCanvasData();
+      return { success: true, action: 'wipe_canvas', message: 'All Canvas synced data cleared.' };
+    } else {
+      const res = wipeAllData();
+      return { success: true, action: 'wipe_all', message: 'All calendar courses and homework cleared.' };
+    }
+  }
+
+  if (toolName === 'get_apple_calendar_feed') {
+    return {
+      success: true,
+      feedUrl: 'http://localhost:3001/api/calendar/feed.ics',
+      webcalUrl: 'webcal://localhost:3001/api/calendar/feed.ics',
+      instructions: 'Click Subscribe in Apple Calendar or open Calendar on Mac -> File -> New Calendar Subscription -> Paste webcal://localhost:3001/api/calendar/feed.ics and set Location to iCloud for automatic sync across iPhone, iPad, and Apple Watch.'
+    };
+  }
+
+  if (toolName === 'sync_canvas') {
+    const mode = getSetting('canvas_mode', 'none');
+    if (mode === 'ical') {
+      const icalUrl = getSetting('canvas_ical_url', '');
+      if (!icalUrl) return { error: 'Canvas iCal Feed URL has not been configured yet.' };
+      const res = await syncCanvasICal(icalUrl);
+      return { success: true, action: 'sync_canvas', mode: 'ical', details: res };
+    } else if (mode === 'api') {
+      const domain = getSetting('canvas_domain', '');
+      const token = getSetting('canvas_api_token', '');
+      if (!domain || !token) return { error: 'Canvas API credentials have not been configured yet.' };
+      const res = await syncCanvasAPI(domain, token);
+      return { success: true, action: 'sync_canvas', mode: 'api', details: res };
+    } else {
+      return { error: 'Canvas is not connected yet. Click "Canvas Sync" in the top navigation to paste your Canvas Calendar Feed URL.' };
+    }
+  }
+
+  if (toolName === 'add_course') {
+    const newCourse = addCourse({
+      code: args.code,
+      name: args.name,
+      color: args.color || 'indigo',
+      daysOfWeek: args.daysOfWeek || [1, 3, 5],
+      startTime: args.startTime || '10:00',
+      endTime: args.endTime || '11:30',
+      instructor: args.instructor || '',
+      room: args.room || ''
+    });
+    return { success: true, action: 'add_course', course: newCourse };
+  }
+
+  if (toolName === 'delete_course') {
+    const target = courses.find(c => c.id === args.codeOrId || c.code.toLowerCase() === args.codeOrId.toLowerCase());
+    if (!target) return { error: `Course not found: ${args.codeOrId}` };
+    deleteCourse(target.id);
+    return { success: true, action: 'delete_course', code: target.code, id: target.id };
+  }
+
+  if (toolName === 'add_homework') {
+    let courseId = null;
+    if (args.courseCode) {
+      const match = courses.find(c => c.code.toLowerCase() === args.courseCode.toLowerCase());
+      if (match) courseId = match.id;
+    }
+    const newHw = addHomework({
+      title: args.title,
+      courseId,
+      dueDate: args.dueDate,
+      dueTime: args.dueTime || '23:59',
+      priority: args.priority || 'medium',
+      status: 'pending',
+      estimatedMinutes: args.estimatedMinutes || 60,
+      description: args.description || ''
+    });
+    return { success: true, action: 'add_homework', homework: newHw };
+  }
+
+  if (toolName === 'complete_homework') {
+    const target = homework.find(h => h.id === args.titleOrId || h.title.toLowerCase().includes(args.titleOrId.toLowerCase()));
+    if (!target) return { error: `Homework not found: ${args.titleOrId}` };
+    const updated = updateHomework(target.id, { status: 'completed' });
+    return { success: true, action: 'complete_homework', homework: updated };
+  }
+
+  if (toolName === 'delete_homework') {
+    const target = homework.find(h => h.id === args.titleOrId || h.title.toLowerCase().includes(args.titleOrId.toLowerCase()));
+    if (!target) return { error: `Homework not found: ${args.titleOrId}` };
+    deleteHomework(target.id);
+    return { success: true, action: 'delete_homework', title: target.title, id: target.id };
+  }
+
+  if (toolName === 'get_schedule') {
+    return {
+      courses: courses.map(c => ({ code: c.code, name: c.name, days: c.daysOfWeek, time: `${c.startTime}-${c.endTime}` })),
+      pendingHomework: homework.filter(h => h.status !== 'completed').map(h => ({ title: h.title, due: `${h.dueDate} ${h.dueTime}`, priority: h.priority }))
+    };
+  }
+
+  return { error: `Unknown tool: ${toolName}` };
+}
+
+/**
+ * Handles multimodal chat interaction with LLMs (Google Gemini or OpenAI/Hermes)
+ */
+export async function processAIChat({ message, imageBase64, imageMimeType, history = [] }) {
+  const provider = getSetting('ai_provider', 'gemini');
+  const apiKey = getSetting('ai_api_key', '');
+  const provConfig = PROVIDERS.find(p => p.id === provider) || PROVIDERS[0];
+  const baseUrl = getSetting('ai_base_url', '') || provConfig.defaultBaseUrl || '';
+  const model = getSetting('ai_model', provConfig.defaultModel);
+
+  const actionsTaken = [];
+
+  // Default fallback answer if no API key is set yet
+  const requiresKey = provider !== 'hermes' && provider !== 'custom';
+  if (!apiKey && requiresKey) {
+    const textLower = (message || '').toLowerCase();
+
+    // Canvas sync check
+    if (textLower.includes('canvas')) {
+      const mode = getSetting('canvas_mode', 'none');
+      if (mode === 'ical') {
+        const icalUrl = getSetting('canvas_ical_url', '');
+        if (icalUrl) {
+          const res = await syncCanvasICal(icalUrl);
+          actionsTaken.push(`Canvas synced: ${res.newHomeworkCount} new tasks, ${res.newCoursesCount} new courses`);
+          return {
+            reply: `✅ Successfully synced with Canvas! Added **${res.newHomeworkCount}** new assignments and **${res.newCoursesCount}** courses.`,
+            actionsTaken,
+            toolsCalled: ['sync_canvas']
+          };
+        }
+      }
+      return {
+        reply: `To sync your Canvas classes and homework, click the **Canvas** button in the top navigation bar to paste your Canvas Calendar Feed URL!`,
+        actionsTaken: [],
+        needsConfig: false
+      };
+    }
+
+    // Apple / External Calendar sync check
+    if (textLower.includes('apple calendar') || textLower.includes('icloud') || textLower.includes('calendar sync') || textLower.includes('subscribe')) {
+      return {
+        reply: `📅 **Apple Calendar & iCloud Sync**:\n\n1. You can subscribe directly on your Mac using this link: [webcal://localhost:3001/api/calendar/feed.ics](webcal://localhost:3001/api/calendar/feed.ics)\n2. Or open Apple Calendar → **File** → **New Calendar Subscription...** and paste: \`http://localhost:3001/api/calendar/feed.ics\`\n3. Set **Location** to **iCloud** so it automatically syncs across your iPhone, iPad, and Apple Watch!\n\nYou can also click the **Apple Calendar** button in the top navigation bar for 1-click subscription and mobile QR/LAN guides.`,
+        actionsTaken: ['apple_calendar_feed_provided'],
+        toolsCalled: ['get_apple_calendar_feed']
+      };
+    }
+    
+    // Quick heuristic pattern match so user can test even before entering an API key!
+    if (textLower.includes('add homework') || textLower.includes('add task')) {
+      const matchTitle = message.match(/(?:add homework|add task)[:\s]+([^,.]+)/i);
+      const title = matchTitle ? matchTitle[1].trim() : 'New Assignment';
+      const today = new Date();
+      const newHw = addHomework({
+        title,
+        dueDate: format(new Date(today.getTime() + 86400000), 'yyyy-MM-dd'),
+        dueTime: '23:59',
+        priority: 'medium',
+        status: 'pending',
+        estimatedMinutes: 60,
+        description: 'Added via Smart Assistant'
+      });
+      actionsTaken.push(`Created task: ${title} (Due tomorrow)`);
+      return {
+        reply: `I scheduled **${title}** for tomorrow at 11:59 PM. To unlock full multimodal vision and reasoning, add your API key in AI Settings!`,
+        actionsTaken,
+        toolsCalled: ['add_homework']
+      };
+    }
+
+    return {
+      reply: `👋 Hello! I'm your StudySync AI Assistant.\n\nTo enable full AI capabilities with **${provConfig.name}** (including analyzing photos of your syllabus, scheduling classes automatically, and answering complex study questions), please click **⚙️ Settings** in the top-right of this panel to add your API key!`,
+      actionsTaken: [],
+      needsConfig: true
+    };
+  }
+
+  if (provider === 'gemini') {
+    return await handleGeminiCall({ message, imageBase64, imageMimeType, history, apiKey, model, actionsTaken });
+  } else if (provider === 'anthropic') {
+    return await handleAnthropicCall({ message, imageBase64, imageMimeType, history, apiKey, model, actionsTaken });
+  } else {
+    // OpenAI, Hermes, OpenRouter, Groq, DeepSeek, Mistral, Custom
+    return await handleOpenAICall({ message, imageBase64, imageMimeType, history, apiKey, baseUrl, model, actionsTaken, provider });
+  }
+}
+
+async function handleGeminiCall({ message, imageBase64, imageMimeType, history, apiKey, model, actionsTaken }) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  // Format Gemini Tools
+  const geminiTools = [{
+    function_declarations: AI_TOOLS.map(t => ({
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters
+    }))
+  }];
+
+  // Construct parts
+  const parts = [];
+  if (imageBase64) {
+    parts.push({
+      inline_data: {
+        mime_type: imageMimeType || 'image/jpeg',
+        data: imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
+      }
+    });
+  }
+  if (message) {
+    parts.push({ text: message });
+  }
+
+  const payload = {
+    system_instruction: {
+      parts: [{ text: SYSTEM_PROMPT }]
+    },
+    tools: geminiTools,
+    contents: [
+      ...history.map(h => ({
+        role: h.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: h.content }]
+      })),
+      {
+        role: 'user',
+        parts
+      }
+    ]
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API error (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+  const candidate = data.candidates?.[0]?.content;
+  const functionCalls = candidate?.parts?.filter(p => p.functionCall) || [];
+
+  const toolsCalled = [];
+
+  // Execute tool calls if any
+  if (functionCalls.length > 0) {
+    const toolResultsParts = [];
+
+    for (const fc of functionCalls) {
+      const call = fc.functionCall;
+      toolsCalled.push(call.name);
+      const result = await executeTool(call.name, call.args || {});
+      
+      if (call.name === 'add_course' && result.course) {
+        actionsTaken.push(`Added course: ${result.course.code} - ${result.course.name}`);
+      } else if (call.name === 'add_homework' && result.homework) {
+        actionsTaken.push(`Scheduled assignment: ${result.homework.title} (Due: ${result.homework.dueDate})`);
+      } else if (call.name === 'complete_homework' && result.homework) {
+        actionsTaken.push(`Marked completed: ${result.homework.title}`);
+      } else if (call.name === 'delete_course') {
+        actionsTaken.push(`Removed course: ${call.args.codeOrId}`);
+      } else if (call.name === 'delete_homework') {
+        actionsTaken.push(`Removed task: ${call.args.titleOrId}`);
+      }
+
+      toolResultsParts.push({
+        functionResponse: {
+          name: call.name,
+          response: { result }
+        }
+      });
+    }
+
+    // Follow-up request with tool results to generate user-facing summary
+    const followUpPayload = {
+      system_instruction: {
+        parts: [{ text: SYSTEM_PROMPT }]
+      },
+      tools: geminiTools,
+      contents: [
+        ...payload.contents,
+        candidate,
+        {
+          role: 'user',
+          parts: toolResultsParts
+        }
+      ]
+    };
+
+    const followUpRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(followUpPayload)
+    });
+
+    if (followUpRes.ok) {
+      const followUpData = await followUpRes.json();
+      const finalCandidate = followUpData.candidates?.[0]?.content;
+      const textPart = finalCandidate?.parts?.find(p => p.text);
+      return {
+        reply: textPart?.text || 'Done! I have updated your schedule.',
+        actionsTaken,
+        toolsCalled
+      };
+    }
+  }
+
+  const textPart = candidate?.parts?.find(p => p.text);
+  return {
+    reply: textPart?.text || 'I have reviewed your request.',
+    actionsTaken,
+    toolsCalled
+  };
+}
+
+async function handleAnthropicCall({ message, imageBase64, imageMimeType, history, apiKey, model, actionsTaken }) {
+  const url = 'https://api.anthropic.com/v1/messages';
+  const anthropicTools = AI_TOOLS.map(t => ({
+    name: t.name,
+    description: t.description,
+    input_schema: t.parameters
+  }));
+
+  const userContent = [];
+  if (imageBase64) {
+    const base64Clean = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+    userContent.push({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: imageMimeType || 'image/jpeg',
+        data: base64Clean
+      }
+    });
+  }
+  if (message) {
+    userContent.push({ type: 'text', text: message });
+  }
+
+  const messages = [
+    ...history.map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content })),
+    { role: 'user', content: userContent }
+  ];
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-api-key': apiKey,
+    'anthropic-version': '2023-06-01'
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: model || 'claude-3-5-sonnet-20241022',
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages,
+      tools: anthropicTools
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Anthropic API error (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+  const toolUseBlocks = data.content?.filter(b => b.type === 'tool_use') || [];
+  const toolsCalled = [];
+
+  if (toolUseBlocks.length > 0) {
+    const toolResults = [];
+
+    for (const tu of toolUseBlocks) {
+      toolsCalled.push(tu.name);
+      const result = await executeTool(tu.name, tu.input || {});
+
+      if (tu.name === 'add_course' && result.course) {
+        actionsTaken.push(`Added course: ${result.course.code} - ${result.course.name}`);
+      } else if (tu.name === 'add_homework' && result.homework) {
+        actionsTaken.push(`Scheduled assignment: ${result.homework.title} (Due: ${result.homework.dueDate})`);
+      } else if (tu.name === 'complete_homework' && result.homework) {
+        actionsTaken.push(`Marked completed: ${result.homework.title}`);
+      } else if (tu.name === 'delete_course') {
+        actionsTaken.push(`Removed course: ${tu.input.codeOrId}`);
+      } else if (tu.name === 'delete_homework') {
+        actionsTaken.push(`Removed task: ${tu.input.titleOrId}`);
+      }
+
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: tu.id,
+        content: JSON.stringify(result)
+      });
+    }
+
+    const followUpRes = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: model || 'claude-3-5-sonnet-20241022',
+        max_tokens: 2048,
+        system: SYSTEM_PROMPT,
+        messages: [
+          ...messages,
+          { role: 'assistant', content: data.content },
+          { role: 'user', content: toolResults }
+        ],
+        tools: anthropicTools
+      })
+    });
+
+    if (followUpRes.ok) {
+      const followUpData = await followUpRes.json();
+      const textParts = followUpData.content?.filter(b => b.type === 'text')?.map(b => b.text) || [];
+      return {
+        reply: textParts.join('\n') || 'Done! I have updated your schedule.',
+        actionsTaken,
+        toolsCalled
+      };
+    }
+  }
+
+  const textBlocks = data.content?.filter(b => b.type === 'text')?.map(b => b.text) || [];
+  return {
+    reply: textBlocks.join('\n') || 'I have reviewed your request.',
+    actionsTaken,
+    toolsCalled
+  };
+}
+
+async function handleOpenAICall({ message, imageBase64, imageMimeType, history, apiKey, baseUrl, model, actionsTaken, provider }) {
+  let endpoint = baseUrl;
+  if (!endpoint) {
+    const pConf = PROVIDERS.find(p => p.id === provider);
+    endpoint = pConf?.defaultBaseUrl || 'https://api.openai.com/v1';
+  }
+
+  let chatUrl = endpoint.replace(/\/+$/, '');
+  if (!chatUrl.endsWith('/chat/completions')) {
+    chatUrl = `${chatUrl}/chat/completions`;
+  }
+
+  const openAiTools = AI_TOOLS.map(t => ({
+    type: 'function',
+    function: {
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters
+    }
+  }));
+
+  // Build user content with optional image
+  const userContent = [];
+  if (message) {
+    userContent.push({ type: 'text', text: message });
+  }
+  if (imageBase64) {
+    userContent.push({
+      type: 'image_url',
+      image_url: {
+        url: imageBase64.startsWith('data:') ? imageBase64 : `data:${imageMimeType || 'image/jpeg'};base64,${imageBase64}`
+      }
+    });
+  }
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history.map(h => ({ role: h.role, content: h.content })),
+    { role: 'user', content: userContent.length === 1 && userContent[0].type === 'text' ? userContent[0].text : userContent }
+  ];
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  const response = await fetch(chatUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: model || 'gpt-4o-mini',
+      messages,
+      tools: openAiTools,
+      tool_choice: 'auto'
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`API error (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+  const choice = data.choices?.[0];
+  const responseMsg = choice?.message;
+  const toolCalls = responseMsg?.tool_calls || [];
+  const toolsCalled = [];
+
+  if (toolCalls.length > 0) {
+    const toolMessages = [];
+
+    for (const tc of toolCalls) {
+      const name = tc.function.name;
+      const args = JSON.parse(tc.function.arguments || '{}');
+      toolsCalled.push(name);
+
+      const result = await executeTool(name, args);
+
+      if (name === 'add_course' && result.course) {
+        actionsTaken.push(`Added course: ${result.course.code} - ${result.course.name}`);
+      } else if (name === 'add_homework' && result.homework) {
+        actionsTaken.push(`Scheduled assignment: ${result.homework.title} (Due: ${result.homework.dueDate})`);
+      } else if (name === 'complete_homework' && result.homework) {
+        actionsTaken.push(`Marked completed: ${result.homework.title}`);
+      } else if (name === 'delete_course') {
+        actionsTaken.push(`Removed course: ${args.codeOrId}`);
+      } else if (name === 'delete_homework') {
+        actionsTaken.push(`Removed task: ${args.titleOrId}`);
+      }
+
+      toolMessages.push({
+        role: 'tool',
+        tool_call_id: tc.id,
+        name,
+        content: JSON.stringify(result)
+      });
+    }
+
+    // Follow-up
+    const followUpRes = await fetch(chatUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: model || 'gpt-4o-mini',
+        messages: [...messages, responseMsg, ...toolMessages]
+      })
+    });
+
+    if (followUpRes.ok) {
+      const followUpData = await followUpRes.json();
+      return {
+        reply: followUpData.choices?.[0]?.message?.content || 'Done! I have updated your schedule.',
+        actionsTaken,
+        toolsCalled
+      };
+    }
+  }
+
+  return {
+    reply: responseMsg?.content || 'I have reviewed your schedule.',
+    actionsTaken,
+    toolsCalled
+  };
+}

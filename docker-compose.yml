@@ -1,0 +1,19 @@
+services:
+  studysync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: studysync
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DB_PATH=/app/data/study_sync.db
+    volumes:
+      - studysync_data:/app/data
+
+volumes:
+  studysync_data:
+    driver: local
