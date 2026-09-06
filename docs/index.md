@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "StudySync"
-  text: "AI-Powered Student Schedule & Homework Planner"
-  tagline: "Multimodal syllabus scanning, one-way Canvas LMS sync, live Apple Calendar integration, and self-hosted PWA."
+  text: "Academic Calendar & Homework Planner"
+  tagline: "Multimodal syllabus scanning, read-only Canvas LMS sync, live Apple Calendar integration, and self-hosted PWA."
   image:
     src: /favicon.svg
     alt: StudySync
@@ -20,16 +20,16 @@ hero:
       link: https://github.com/aiden0rchad/StudySync
 
 features:
-  - title: 🤖 Multimodal AI Assistant
-    details: "Attach photos of class syllabi, lecture slides, or homework sheets. Compatible with Gemini, OpenAI, Anthropic, Ollama, OpenRouter, Groq, DeepSeek, and Mistral."
-  - title: 🎓 100% Read-Only Canvas LMS Pull
-    details: "Safely imports courses, assignments, and exams via iCal feed or API. Uses HTTP GET only; never modifies or deletes anything on your university account."
-  - title: ⏰ Automated Daily 5:00 AM Sync
-    details: "Background engine wakes at 5:00 AM every morning to pull fresh Canvas changes, with automatic sleep/wake catch-up so your schedule is always fresh."
-  - title: 🍎 Apple Calendar & iCloud Sync
-    details: "Live subscription feed with 15-minute refresh directives (PT15M). Subscribing on Mac mirrors instantly to iPhone and Apple Watch."
-  - title: 📱 Native Mobile Ergonomics & PWA
-    details: "Full-screen standalone PWA with iOS safe area padding, thumb-friendly bottom navigation, app quick-jump shortcuts, and zero input zooming."
-  - title: 🔌 Hermes Agent & MCP Server
-    details: "Includes a 13-tool Model Context Protocol server for Claude Desktop and Hermes Agent to autonomously plan your study calendar."
+  - title: Multimodal Syllabus Scanner
+    details: "Extract schedules and deadlines directly from PDFs, images, or camera captures using local or cloud AI models."
+  - title: Read-Only Canvas LMS Pull
+    details: "Imports courses, assignments, and exams using HTTP GET only. Never writes, modifies, or deletes anything on your university account."
+  - title: Automated Daily 5:00 AM Sync
+    details: "Background daemon pulls Canvas changes every morning at 5:00 AM, with automatic catch-up when your machine wakes from sleep."
+  - title: Apple Calendar & iCloud Feed
+    details: "RFC 5545 subscription feed with 15-minute refresh directives (PT15M) and Tailscale MagicDNS host auto-detection."
+  - title: Mobile PWA & Touch Ergonomics
+    details: "Standalone mobile interface with safe area notch padding, thumb-friendly navigation bar, and zero iOS input zoom."
+  - title: Model Context Protocol (MCP) Server
+    details: "Includes an RFC-compliant 13-tool MCP server for Claude Desktop and Hermes Agent to inspect and manage schedules."
 ---

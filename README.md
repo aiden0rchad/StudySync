@@ -1,33 +1,47 @@
 # StudySync
 
-Self-hosted, AI-powered academic calendar & homework planner with Canvas LMS and Apple Calendar synchronization.
+Self-hosted academic calendar and homework planner with Canvas LMS and Apple Calendar synchronization.
 
-[![Release](https://img.shields.io/badge/version-v1.0.0-indigo)](https://github.com/aiden0rchad/StudySync/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-capabilities%20%26%20guides-4f46e5)](https://aiden0rchad.github.io/StudySync/)
-[![PWA Ready](https://img.shields.io/badge/PWA-installable-emerald)](https://aiden0rchad.github.io/StudySync/getting-started/pwa-setup)
-[![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://aiden0rchad.github.io/StudySync/operations/docker)
+[![Release](https://img.shields.io/github/v/release/aiden0rchad/StudySync)](https://github.com/aiden0rchad/StudySync/releases)
+[![License](https://img.shields.io/github/license/aiden0rchad/StudySync)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-capabilities%20%26%20guides-2a78d6)](https://aiden0rchad.github.io/StudySync/)
 
 **[Explore the complete documentation →](https://aiden0rchad.github.io/StudySync/)**
-Capabilities, guided setup, Canvas integration, Apple Calendar webcal feeds, Tailscale networking, Hermes Agent MCP tools, and troubleshooting—with full-text search and dark/light themes.
+Setup guides, Canvas integration details, Apple Calendar webcal configuration, Tailscale deployment, MCP tool definitions, and operations—with full-text search and light/dark themes.
 
----
+StudySync connects your university Canvas courses to Apple Calendar and native iOS widgets. It runs as a self-hosted web app and local Progressive Web App (PWA), parses course syllabi and assignments using local or hosted LLMs, and exposes an RFC-compliant Model Context Protocol (MCP) server for local agent workflows.
 
-## What StudySync Does
+Your university account remains untouched. StudySync operates on an explicit read-only guarantee: it fetches assignments and timetable data using HTTP GET requests and never writes back to Canvas.
 
-StudySync bridges the gap between university course portals (Canvas LMS), modern multimodal AI (syllabus scanning), and your native ecosystem (Apple Calendar, iPhone lock screen widgets, and Progressive Web Apps).
+## Current release: v0.1.0
 
-* **🤖 Multimodal AI Assistant**: Photograph or drag-and-drop course syllabi, lecture slides, or homework sheets. Compatible with **Gemini**, **OpenAI**, **Anthropic**, **Ollama**, **OpenRouter**, **Groq**, **DeepSeek**, and **Mistral**.
-* **🎓 100% Read-Only Canvas LMS Pull**: Safely pulls enrolled courses, assignment deadlines, and exam schedules using HTTP `GET` exclusively. Never modifies or deletes anything on your university account.
-* **⏰ Automated Daily 5:00 AM Sync**: Background engine automatically wakes at 5:00 AM every morning to pull fresh Canvas changes, with intelligent catch-up on machine wake.
-* **🍎 Live Apple Calendar & iCloud Webcal Feed**: Standards-compliant RFC 5545 feed with 15-minute refresh directives (`REFRESH-INTERVAL: PT15M`). Subscribing on Mac mirrors automatically to iPhone and Apple Watch via iCloud.
-* **📱 Native Mobile Ergonomics & PWA**: Full-screen standalone app with iOS notch/home-indicator padding (`pb-safe`), bottom navigation bar, quick-add button, app shortcuts, and zero input zoom on iOS.
-* **🔌 Hermes Agent & Model Context Protocol (MCP)**: Built-in 13-tool MCP server allowing Claude Desktop and autonomous Hermes agents to plan your semester directly.
-* **🐳 Tailscale & Docker Self-Hosting**: Built-in dynamic host detection adapts calendar feeds to your Tailscale MagicDNS address automatically.
+Released September 6, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.0).
 
----
+- Single-row navigation bar with desktop segmented view switching and mobile bottom tab navigation.
+- Persistent floating AI assistant with support for syllabus image uploads and camera capture.
+- Automated daily 5:00 AM Canvas sync daemon with startup catch-up logic when host wakes from sleep.
+- Standards-compliant RFC 5545 iCalendar feed with 15-minute refresh directives (`PT15M`) and Tailscale MagicDNS host auto-detection.
+- Admin management mode with selective calendar clearing and permanent sample-data re-seed prevention.
+- Multi-provider LLM support: Anthropic, OpenAI, DeepSeek, Google Gemini, Ollama, Groq, OpenRouter, and Mistral.
+- Model Context Protocol (MCP) server exposing 13 calendar and task management tools over stdio and HTTP.
 
-## The Complete Daily Automation Loop
+## What it provides
+
+- **Syllabus and schedule scanning**: Extract course codes, meeting times, locations, and assignment due dates from PDF files, syllabus images, or camera captures directly into your calendar.
+- **Read-only Canvas LMS integration**: Import enrolled courses, homework deadlines, and exam schedules via Canvas iCal URL or personal access token. All Canvas queries strictly use HTTP `GET`.
+- **Daily background synchronization**: A local scheduler queries Canvas daily at 5:00 AM to pull syllabus and assignment changes. If your server or laptop was asleep at 5:00 AM, it catches up automatically upon waking.
+- **Apple Calendar and iCloud subscription**: Exposes a `webcal://` feed formatted with RFC 5545 compliance. When added to Apple Calendar on macOS, iCloud propagates the feed across your iPhone, iPad, and Apple Watch.
+- **Progressive Web App (PWA)**: Standalone mobile UI with safe-area padding for the iPhone notch and home indicator (`pb-safe`), offline asset caching, and touch-optimized controls without iOS input zoom.
+- **Model Context Protocol (MCP) server**: Integrates directly with Claude Desktop, Hermes Agent, and MCP-compatible clients to let local models query upcoming deadlines, reschedule tasks, and manage courses.
+- **Self-hosting and Tailscale support**: Runs either via Docker Compose or standalone Node.js. Server-side host detection automatically rewrites webcal subscription URLs to match incoming Tailscale MagicDNS hostnames.
+
+## Project boundaries and data safety
+
+- **No write access to Canvas**: StudySync has no API endpoints, database mutations, or code paths that send `POST`, `PUT`, `PATCH`, or `DELETE` requests to Canvas LMS. Wiping or editing items in StudySync only alters your local SQLite database (`study_sync.db`).
+- **Local-first storage**: All user data, courses, tasks, and credentials reside in your local SQLite database or browser storage. No data is sent to external servers other than direct LLM inference requests to your configured AI provider.
+- **Admin reset safety**: Clearing the database requires explicit confirmation. Once cleared, the database sets a persistent `has_been_seeded: 1` flag so server or container restarts do not inject sample courses back into your calendar.
+
+## Daily sync architecture
 
 ```mermaid
 sequenceDiagram
@@ -39,83 +53,63 @@ sequenceDiagram
     participant Device as iPhone, Mac & Apple Watch
 
     StudySync->>Canvas: 5:00 AM Auto-Pull (Read-Only HTTP GET)
-    Canvas-->>StudySync: Fresh assignments & syllabus updates
+    Canvas-->>StudySync: Fresh assignments & schedule updates
     StudySync->>SQLite: Store courses & homework in study_sync.db
-    Apple->>StudySync: Fetch webcal:// feed (15-minute interval)
+    Apple->>StudySync: Poll webcal:// feed (15-minute interval)
     StudySync-->>Apple: RFC 5545 iCalendar stream
-    Apple->>Device: Push updates to Calendar & Lock Screen widget
+    Apple->>Device: Update Calendar & Lock Screen widgets
 ```
 
----
+## Running StudySync
 
-## Quick Start Options
+### Option 1: Docker Compose
 
-### Option 1: Docker Compose (Recommended)
+Docker Compose runs the compiled web application, API server, and SQLite database in a single container with a persistent volume:
 
-```bash
-# 1. Clone the repository
+```sh
 git clone https://github.com/aiden0rchad/StudySync.git
 cd StudySync
-
-# 2. Launch container in background
 docker compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000). All schedule data is stored in the persistent Docker volume `studysync_data`.
+Open [http://localhost:3000](http://localhost:3000). Data is stored in the persistent Docker volume `studysync_data`.
 
----
+### Option 2: Standalone Node.js
 
-### Option 2: Run with Node.js (Standalone)
+Requirements: Node.js 20 or newer.
 
-Requirements: **Node.js 20+**
-
-```bash
-# 1. Clone and install dependencies
+```sh
 git clone https://github.com/aiden0rchad/StudySync.git
 cd StudySync
 npm install
-
-# 2. Build production assets & launch
 npm run build
 node server/server.js
 ```
 
-The application will be available at [http://localhost:3001](http://localhost:3001) (or port configured in `PORT`).
+Open [http://localhost:3001](http://localhost:3001) (or the port defined in `PORT`).
 
----
+## Subscribing in Apple Calendar
 
-## Apple Calendar & iCloud Sync Setup
+1. In StudySync, open **Sync** in the top navigation and select **Apple Calendar & iCloud**.
+2. Copy the webcal subscription URL.
+3. In Apple Calendar on macOS, press <kbd>⌥⌘S</kbd> (or go to **File** → **New Calendar Subscription...**).
+4. Paste the webcal URL and click **Subscribe**.
+5. Set **Location** to **iCloud** to sync with your iPhone and iPad, and set **Auto-refresh** to **Every 15 minutes**.
 
-1. Open StudySync → Click **Sync** in the top bar → Select **Apple Calendar & iCloud**.
-2. On your Mac, open the **Calendar** app.
-3. Click **File** → **New Calendar Subscription...** (<kbd>⌥⌘S</kbd>).
-4. Paste your StudySync webcal URL and click **Subscribe**.
-5. Set **Location: iCloud** (so it syncs to your iPhone) and **Auto-refresh: Every 15 minutes**.
+If accessing StudySync over a Tailscale network, open StudySync via your Tailscale machine name (e.g. `http://my-server.tailnet-xyz.ts.net:3000`). StudySync will detect the host header and generate the webcal URL using your Tailscale address.
 
----
+## Model Context Protocol (MCP) integration
 
-## Canvas LMS Integration & Read-Only Guarantee
+StudySync provides an MCP server in `mcp/server.js` implementing 13 tools for inspecting calendars, retrieving homework, creating events, optimizing schedules, and wiping data.
 
-StudySync connects to your university Canvas account using either:
-1. **Calendar Feed URL** (*Canvas → Calendar → Calendar Feed*): Easiest setup, zero permissions needed.
-2. **REST API Access Token** (*Canvas → Account → Settings → New Access Token*): Full syllabus sync.
+Add the server to your Hermes Agent or Claude Desktop configuration:
 
-> [!NOTE]
-> **Zero Risk Guarantee:** StudySync contains no code or endpoints capable of creating, modifying, or deleting records on Canvas LMS. Wiping data in StudySync only purges local SQLite cache and sample courses.
-
----
-
-## Hermes Agent & MCP Setup
-
-StudySync includes an RFC-compliant Model Context Protocol server in `mcp/server.js`.
-
-To connect with Hermes Agent, add to `hermes-mcp.json`:
 ```json
 {
   "mcpServers": {
     "studysync": {
       "command": "node",
-      "args": ["/path/to/StudySync/mcp/server.js"],
+      "args": ["/absolute/path/to/StudySync/mcp/server.js"],
       "env": {
         "API_BASE": "http://localhost:3000/api"
       }
@@ -124,19 +118,16 @@ To connect with Hermes Agent, add to `hermes-mcp.json`:
 }
 ```
 
----
-
 ## Documentation
 
-The full documentation site is powered by VitePress:
-* **Online**: [https://aiden0rchad.github.io/StudySync/](https://aiden0rchad.github.io/StudySync/)
-* **Local development**:
-  ```bash
+The full documentation site is built with VitePress and deployed to GitHub Pages:
+
+- **Online**: [https://aiden0rchad.github.io/StudySync/](https://aiden0rchad.github.io/StudySync/)
+- **Local preview**:
+  ```sh
   npm --prefix docs run dev
   ```
 
----
-
 ## License
 
-Released under the [MIT License](LICENSE). Built for students, homelabbers, and self-hosters.
+Released under the [MIT License](LICENSE).
