@@ -1,7 +1,7 @@
 {
   "name": "studysync",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "AI-Powered Student Schedule & Homework Planner with Canvas LMS and Apple Calendar synchronization",
   "repository": {
     "type": "git",
