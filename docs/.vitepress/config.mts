@@ -35,6 +35,13 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: true,
+  vite: {
+    css: {
+      postcss: {
+        plugins: []
+      }
+    }
+  },
   sitemap: { hostname: 'https://aiden0rchad.github.io/StudySync/' },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/StudySync/favicon.svg' }],
