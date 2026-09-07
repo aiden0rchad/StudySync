@@ -103,6 +103,12 @@ export default function App() {
   // Zero-Touch Capture & Automation modal states
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
   const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
+  const [automationInitialTab, setAutomationInitialTab] = useState('briefing');
+
+  const handleOpenAutomation = (tab = 'briefing') => {
+    setAutomationInitialTab(tab);
+    setIsAutomationModalOpen(true);
+  };
 
   // Toast notifications
   const [toast, setToast] = useState(null);
@@ -339,7 +345,7 @@ export default function App() {
         onOpenCanvas={() => setIsCanvasModalOpen(true)}
         onOpenAppleCalendar={() => setIsAppleCalendarModalOpen(true)}
         onOpenCapture={() => setIsCaptureModalOpen(true)}
-        onOpenAutomation={() => setIsAutomationModalOpen(true)}
+        onOpenAutomation={handleOpenAutomation}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenInstall={() => setIsInstallModalOpen(true)}
         userProfile={userProfile}
@@ -377,6 +383,8 @@ export default function App() {
             onEditHomework={openEditHomeworkModal}
             onDeleteHomework={handleDeleteHomework}
             onToggleStatus={handleToggleHomeworkStatus}
+            onOpenAutomation={handleOpenAutomation}
+            showToast={showToast}
           />
         )}
 
@@ -482,6 +490,7 @@ export default function App() {
         isOpen={isAutomationModalOpen}
         onClose={() => setIsAutomationModalOpen(false)}
         onRefreshData={refreshDataFromBackend}
+        initialTab={automationInitialTab}
       />
 
       {/* Scholar's Hall, Streaks & Daily Quests Modal */}

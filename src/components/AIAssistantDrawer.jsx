@@ -149,6 +149,8 @@ export default function AIAssistantDrawer({
   };
 
   const quickPrompts = [
+    { label: '🎮 Discord ADHD Nudge', text: 'Send an anti-procrastination ADHD nudge to Discord for my most urgent assignment' },
+    { label: '🌶️ Spicy Discord Roast', text: 'Send a spicy Discord roast to motivate me to finish my homework' },
     { label: '📅 Today’s Schedule', text: 'What classes and assignments do I have today?' },
     { label: '➕ Add Homework', text: 'Add homework: Physics Lab Report due this Friday 5pm' },
     { label: '📝 Schedule Class', text: 'Add class: BIO 101 on Mon, Wed 11am to 12:30pm in Room 102 with Dr. Miller' },

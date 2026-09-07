@@ -18,8 +18,8 @@ import {
   Gamepad2
 } from 'lucide-react';
 
-export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
-  const [activeTab, setActiveTab] = useState('briefing');
+export default function AutomationModal({ isOpen, onClose, onRefreshData, initialTab = 'briefing' }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [settings, setSettings] = useState({
     briefing_enabled: 'true',
     briefing_time: '07:00',
@@ -50,6 +50,10 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
   useEffect(() => {
     if (!isOpen) return;
 
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+
     // Load settings
     fetch('/api/settings')
       .then(res => res.json())
@@ -66,7 +70,7 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
 
     // Load study blocks
     loadStudyBlocks();
-  }, [isOpen]);
+  }, [isOpen, initialTab]);
 
   const loadStudyBlocks = () => {
     fetch('/api/study-blocks')
@@ -213,12 +217,13 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
             onClick={() => setActiveTab('discord')}
             className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
               activeTab === 'discord'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                ? 'border-[#5865F2] text-[#5865F2] dark:text-[#7983f5] dark:border-[#5865F2]'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
             }`}
           >
-            <Gamepad2 className="w-4 h-4 text-indigo-500" />
-            Discord ADHD Coach
+            <Gamepad2 className="w-4 h-4 text-[#5865F2]" />
+            <span>Discord ADHD Coach</span>
+            <span className="px-1.5 py-0.2 text-[9px] font-bold bg-[#5865F2] text-white rounded-full">NEW</span>
           </button>
           <button
             onClick={() => setActiveTab('geo')}

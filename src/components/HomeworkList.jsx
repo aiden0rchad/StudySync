@@ -11,7 +11,8 @@ import {
   Edit3, 
   Trash2, 
   CheckCircle,
-  Filter
+  Filter,
+  Gamepad2
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getRelativeDueDate, formatTime } from '../utils/dateUtils';
@@ -24,7 +25,9 @@ export default function HomeworkList({
   onAddHomework,
   onEditHomework,
   onDeleteHomework,
-  onToggleStatus
+  onToggleStatus,
+  onOpenAutomation,
+  showToast
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'completed', 'high'
@@ -288,6 +291,39 @@ export default function HomeworkList({
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-end">
+                  {/* Send Discord Nudge button */}
+                  {!isCompleted && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/discord/nudge', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ taskId: item.id })
+                          });
+                          const data = await res.json();
+                          if (!res.ok || data.error) {
+                            if (data.error && data.error.includes('Webhook URL is not configured')) {
+                              if (onOpenAutomation) onOpenAutomation('discord');
+                              if (showToast) showToast('Please paste your Discord Webhook URL first!', 'info');
+                            } else {
+                              throw new Error(data.error || 'Failed to dispatch Discord nudge');
+                            }
+                          } else {
+                            if (showToast) showToast(`🎮 Discord ADHD Nudge dispatched for "${item.title}"!`, 'success');
+                          }
+                        } catch (err) {
+                          if (showToast) showToast(err.message, 'error');
+                        }
+                      }}
+                      className="p-1.5 text-[#5865F2] hover:text-[#4752C4] hover:bg-[#5865F2]/10 dark:hover:bg-[#5865F2]/20 rounded-lg transition-colors"
+                      title="Send ADHD Coach Nudge to Discord"
+                    >
+                      <Gamepad2 className="w-4 h-4" />
+                    </button>
+                  )}
+
                   <button
                     onClick={() => onEditHomework(item)}
                     className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"

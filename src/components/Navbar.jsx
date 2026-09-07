@@ -27,7 +27,8 @@ import {
   Zap,
   Headphones,
   Volume2,
-  VolumeX
+  VolumeX,
+  Gamepad2
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -214,11 +215,31 @@ export default function Navbar({
                         </div>
                       </button>
 
+                      {/* Discord ADHD Coach */}
+                      <button
+                        onClick={() => {
+                          setShowSyncMenu(false);
+                          if (onOpenAutomation) onOpenAutomation('discord');
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors group"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-[#5865F2]/15 dark:bg-[#5865F2]/25 text-[#5865F2] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                          <Gamepad2 className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <span>Discord ADHD Coach</span>
+                            <span className="px-1.5 py-0.2 text-[9px] font-bold bg-[#5865F2] text-white rounded-full">NEW</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate">Webhooks, micro-steps & auto-nags</div>
+                        </div>
+                      </button>
+
                       {/* Smart Automations & Morning Briefing */}
                       <button
                         onClick={() => {
                           setShowSyncMenu(false);
-                          if (onOpenAutomation) onOpenAutomation();
+                          if (onOpenAutomation) onOpenAutomation('briefing');
                         }}
                         className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
                       >
@@ -248,6 +269,18 @@ export default function Navbar({
                   </>
                 )}
               </div>
+
+              {/* Discord ADHD Coach Direct Header Button */}
+              <button
+                onClick={() => {
+                  if (onOpenAutomation) onOpenAutomation('discord');
+                }}
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-[#5865F2]/10 dark:bg-[#5865F2]/20 text-[#5865F2] dark:text-[#7983f5] hover:bg-[#5865F2]/20 dark:hover:bg-[#5865F2]/30 border border-[#5865F2]/30 transition-all active:scale-95 shadow-2xs"
+                title="Discord ADHD Anti-Procrastination Coach & Nudges"
+              >
+                <Gamepad2 className="w-3.5 h-3.5" />
+                <span>Discord Coach</span>
+              </button>
 
               {/* Desktop "+ Add" Action Menu */}
               <div className="relative hidden sm:block">
@@ -411,6 +444,17 @@ export default function Navbar({
                       >
                         <Headphones className="w-3.5 h-3.5 text-purple-500" />
                         <span>Focus Room & Soundscapes</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          if (onOpenAutomation) onOpenAutomation('discord');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-[#5865F2] dark:text-[#7983f5] hover:bg-slate-50 dark:hover:bg-slate-800 text-left"
+                      >
+                        <Gamepad2 className="w-3.5 h-3.5 text-[#5865F2]" />
+                        <span>Discord ADHD Coach</span>
                       </button>
 
                       <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
