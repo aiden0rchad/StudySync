@@ -21,6 +21,7 @@ import {
 } from '../server/db.js';
 import { syncCanvasICal, syncCanvasAPI } from '../server/canvasHandler.js';
 import { sendUrgentAlert } from '../server/briefing.js';
+import { sendDiscordNudge } from '../server/discordHandler.js';
 import { format, parseISO, startOfDay } from 'date-fns';
 
 const server = new McpServer({
@@ -298,6 +299,29 @@ server.tool(
           results: { courses, homework, studyBlocks: blocks }
         }, null, 2)
       }]
+    };
+  }
+);
+
+// 8e. send_discord_nudge
+server.tool(
+  'send_discord_nudge',
+  'Dispatch an ADHD / procrastination motivational nudge to Discord via webhook to break executive dysfunction, roast doomscrolling, or trigger boss fight mode.',
+  {
+    taskTitle: z.string().optional().describe('Title of the assignment, quiz, or exam to nag about'),
+    nudgeType: z.enum(['adhd_microstep', 'spicy_roast', 'boss_fight', 'gentle_support']).optional().describe('Nudge personality style'),
+    customMessage: z.string().optional().describe('Custom nag or motivational message'),
+    pingMode: z.enum(['none', 'here', 'everyone', 'role']).optional().describe('Discord ping mode')
+  },
+  async (args) => {
+    const res = await sendDiscordNudge({
+      taskId: args.taskTitle,
+      nudgeType: args.nudgeType || 'adhd_microstep',
+      customMessage: args.customMessage,
+      pingMode: args.pingMode || 'none'
+    });
+    return {
+      content: [{ type: 'text', text: `Dispatched Discord nudge (${res.personality}) for "${res.taskTitle}"` }]
     };
   }
 );

@@ -1,6 +1,7 @@
 import { getSetting, setSetting } from './db.js';
 import { syncCanvasICal, syncCanvasAPI } from './canvasHandler.js';
 import { sendBriefing } from './briefing.js';
+import { checkAndSendAutomatedDiscordNudges } from './discordHandler.js';
 
 let intervalId = null;
 let isSyncRunning = false;
@@ -122,6 +123,13 @@ function checkScheduledTime() {
     if (lastBriefingDate !== todayStr && !isBriefingRunning) {
       triggerMorningBriefing(todayStr);
     }
+  }
+
+  // 3. Target: Periodic Discord ADHD / Procrastination Nudge check (at :00 and :30)
+  if (currentMinute === 0 || currentMinute === 30) {
+    checkAndSendAutomatedDiscordNudges().catch(err => {
+      console.warn('[Scheduler] Discord auto-nudge check error:', err.message);
+    });
   }
 }
 

@@ -15,22 +15,25 @@ import {
 import { format, parseISO } from 'date-fns';
 import { syncCanvasICal, syncCanvasAPI } from './canvasHandler.js';
 import { sendUrgentAlert } from './briefing.js';
+import { sendDiscordNudge } from './discordHandler.js';
 
 // System prompt instructing the AI how to act as StudySync Calendar Assistant
-const SYSTEM_PROMPT = `You are StudySync AI, an intelligent, helpful academic and personal schedule assistant.
+const SYSTEM_PROMPT = `You are StudySync AI, an intelligent, helpful academic, personal schedule, and ADHD motivation assistant.
 The current date is ${format(new Date(), 'EEEE, MMMM d, yyyy')}.
 
 You help students manage their recurring weekly classes, study schedule, homework deadlines, assignments, exams, and personal events/appointments (e.g. doctor visits, dentist appointments, meetings, work shifts).
-You have access to tools that can directly create, delete, search, notify, and manage classes, homework, personal events, and urgent alerts in the user's database and connected devices.
+You also provide psychological anti-procrastination nudges, ADHD executive dysfunction scaffolding, and critical deadline alerts via Discord webhooks and push notifications.
+You have access to tools that can directly create, delete, search, notify, nag, and manage classes, homework, personal events, and urgent alerts in the user's database, Discord study servers, and connected devices.
 
 Capabilities:
 1. Process academic requests ("I have CS 101 on Mon/Wed 10am to 11:30am in Room 304", "I have a pop quiz coming up for CS 101 on Friday, add it", "Add Math homework due tomorrow 5pm"). Use add_course and add_homework tools.
 2. Process personal appointments & life events ("I have a doctor's appointment on Thursday at 2:30pm, add it please", "Add dentist checkup next Tuesday 10am"). Use the add_personal_event tool.
 3. Send critical push notifications and urgent deadline alarms ("Can you give me a critical notification for this task at this time? It's the last push otherwise I'm not gonna make the deadline"). Use the send_critical_alert tool to trigger a Priority 5 urgent alert that bypasses Do-Not-Disturb on mobile phones.
-4. Search, query, and inspect the entire schedule, past/current tasks, exams, syllabus notes, and study blocks using search_schedule or get_schedule.
-5. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
-6. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
-7. Provide concise, friendly confirmations highlighting what was added, updated, searched, or alerted.`;
+4. Discord ADHD & Procrastination Coach ("Nag me on Discord for my quiz", "Send an ADHD micro-step prompt to Discord for my essay", "Send a spicy roast to Discord"). Use the send_discord_nudge tool to deliver rich motivational embeds.
+5. Search, query, and inspect the entire schedule, past/current tasks, exams, syllabus notes, and study blocks using search_schedule or get_schedule.
+6. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
+7. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
+8. Provide concise, friendly confirmations highlighting what was added, updated, searched, or alerted.`;
 
 
 // Top 8 LLM API Providers + Custom
@@ -413,6 +416,23 @@ export const AI_TOOLS = [
     }
   },
   {
+    name: 'send_discord_nudge',
+    description: 'Dispatch an ADHD / procrastination motivational nudge to Discord via webhook to break executive dysfunction, roast doomscrolling, or launch a boss fight.',
+    parameters: {
+      type: 'object',
+      properties: {
+        taskTitle: { type: 'string', description: 'Title or topic of the assignment or quiz' },
+        nudgeType: {
+          type: 'string',
+          enum: ['adhd_microstep', 'spicy_roast', 'boss_fight', 'gentle_support'],
+          description: 'Motivation style: "adhd_microstep" (2-minute low-friction kickoff), "spicy_roast" (Duolingo-owl tough love), "boss_fight" (RPG boss battle with HP bar), or "gentle_support" (calming grounding companion).'
+        },
+        customMessage: { type: 'string', description: 'Optional custom nag message' },
+        pingMode: { type: 'string', enum: ['none', 'here', 'everyone', 'role'], description: 'Optional Discord ping mode' }
+      }
+    }
+  },
+  {
     name: 'get_schedule',
     description: 'Get current classes, timetable, and pending homework.',
     parameters: {
@@ -631,6 +651,16 @@ export async function executeTool(toolName, args) {
     };
   }
 
+  if (toolName === 'send_discord_nudge') {
+    const res = await sendDiscordNudge({
+      taskId: args.taskTitle,
+      nudgeType: args.nudgeType || 'adhd_microstep',
+      customMessage: args.customMessage,
+      pingMode: args.pingMode || 'none'
+    });
+    return { success: true, action: 'send_discord_nudge', result: res };
+  }
+
   return { error: `Unknown tool: ${toolName}` };
 }
 
@@ -752,6 +782,42 @@ export async function processAIChat({ message, imageBase64, imageMimeType, histo
         actionsTaken: ['retrieved_schedule'],
         toolsCalled: ['get_schedule']
       };
+    }
+
+    // 5. Discord ADHD / Procrastination Nudge
+    if (textLower.includes('discord') || textLower.includes('nag me') || textLower.includes('roast me') || textLower.includes('procrastinat')) {
+      const webhook = getSetting('discord_webhook_url', '') || getSetting('briefing_webhook_url', '');
+      let nudgeType = 'adhd_microstep';
+      if (textLower.includes('spicy') || textLower.includes('roast')) nudgeType = 'spicy_roast';
+      else if (textLower.includes('boss') || textLower.includes('fight')) nudgeType = 'boss_fight';
+      else if (textLower.includes('gentle')) nudgeType = 'gentle_support';
+
+      if (webhook) {
+        try {
+          const nudgeRes = await sendDiscordNudge({
+            nudgeType,
+            customMessage: message.replace(/(?:nag me on discord|send to discord|send discord nudge)[:\s]*/i, '').trim()
+          });
+          actionsTaken.push(`Dispatched Discord Nudge (${nudgeRes.personality})`);
+          return {
+            reply: `🎮 **Discord Nudge Dispatched!**\n\nI sent a **${nudgeRes.personality}** embed directly to your Discord study channel for **${nudgeRes.taskTitle}**!\n\nCheck your Discord server for the interactive micro-step prompt and countdown timer.`,
+            actionsTaken,
+            toolsCalled: ['send_discord_nudge']
+          };
+        } catch (err) {
+          return {
+            reply: `⚠️ Failed to deliver to Discord: ${err.message}. Make sure your Discord Webhook URL is saved in Automations!`,
+            actionsTaken: [],
+            toolsCalled: ['send_discord_nudge']
+          };
+        }
+      } else {
+        return {
+          reply: `🎮 **Discord ADHD Nudge Ready!**\n\nI can send smart ADHD micro-step nudges, Duolingo-style roasts, or RPG boss battles straight to your Discord server.\n\nTo activate this, open **Automations** (in the top navigation bar) and paste your **Discord Webhook URL**!`,
+          actionsTaken: [],
+          toolsCalled: ['send_discord_nudge']
+        };
+      }
     }
 
     // Quick heuristic pattern match so user can test even before entering an API key!

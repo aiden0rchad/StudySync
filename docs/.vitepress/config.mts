@@ -8,6 +8,7 @@ const start = [
 
 const guides = [
   { text: 'Gamification & Study Feed', link: '/guide/gamification-feed' },
+  { text: 'Discord ADHD & Procrastination Coach', link: '/guide/discord-adhd-coach' },
   { text: 'AI Multimodal Assistant', link: '/guide/ai-assistant' },
   { text: 'Canvas LMS Synchronization', link: '/guide/canvas-sync' },
   { text: 'Apple Calendar & iCloud Sync', link: '/guide/apple-calendar' },
@@ -63,14 +64,14 @@ export default defineConfig({
     siteTitle: 'StudySync Docs',
     nav: [
       { text: 'Start here', link: '/getting-started/' },
-      { text: 'Guides', link: '/guide/ai-assistant' },
+      { text: 'Guides', link: '/guide/discord-adhd-coach' },
       { text: 'Self-Hosting', link: '/operations/docker' },
       { text: 'Reference', link: '/reference/mcp-server' },
       {
-        text: 'v0.1.0',
+        text: 'v0.1.1',
         items: [
           { text: 'GitHub Repository', link: 'https://github.com/aiden0rchad/StudySync' },
-          { text: 'v0.1.0 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.0' },
+          { text: 'v0.1.1 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.1' },
           { text: 'Docker Compose Guide', link: '/operations/docker' }
         ]
       }

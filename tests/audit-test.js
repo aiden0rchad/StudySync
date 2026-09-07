@@ -381,6 +381,54 @@ async function runTests() {
     assert.ok(data.toolsCalled.includes('get_schedule') || data.toolsCalled.includes('search_schedule'));
   });
 
+  // 12. Discord Webhooks & ADHD Motivation Nudge Engine
+  await test('GET /api/discord/personalities returns 4 motivation styles', async () => {
+    const res = await fetch(`${BASE}/api/discord/personalities`);
+    assert.strictEqual(res.status, 200);
+    const personalities = await res.json();
+    assert.ok(personalities.adhd_microstep);
+    assert.ok(personalities.spicy_roast);
+    assert.ok(personalities.boss_fight);
+    assert.ok(personalities.gentle_support);
+    assert.ok(personalities.adhd_microstep.templates.length > 0);
+  });
+
+  await test('POST /api/discord/nudge validates missing webhook gracefully', async () => {
+    const res = await fetch(`${BASE}/api/discord/nudge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        webhookUrl: '',
+        nudgeType: 'adhd_microstep'
+      })
+    });
+    assert.strictEqual(res.status, 400);
+    const data = await res.json();
+    assert.ok(data.error.includes('Discord Webhook URL'));
+  });
+
+  await test('POST /api/discord/auto-check executes without error', async () => {
+    const res = await fetch(`${BASE}/api/discord/auto-check`, { method: 'POST' });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.hasOwnProperty('enabled') || data.hasOwnProperty('success'));
+  });
+
+  await test('POST /api/ai/chat invokes Discord ADHD nudge on user request', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'Can you nag me on Discord for my CS 101 quiz in spicy mode?'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('send_discord_nudge'));
+    assert.ok(data.reply.toLowerCase().includes('discord'));
+  });
+
   console.log(`\n========================================`);
   console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);

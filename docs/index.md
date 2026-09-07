@@ -30,6 +30,10 @@ features:
     details: "RFC 5545 subscription feed with 15-minute refresh directives (PT15M) and Tailscale MagicDNS host auto-detection."
   - title: Mobile PWA & Touch Ergonomics
     details: "Standalone mobile interface with safe area notch padding, thumb-friendly navigation bar, and zero iOS input zoom."
+  - title: Discord ADHD & Procrastination Coach
+    details: "Psychologically engineered webhooks with 4 motivation styles (ADHD Micro-Steps, Spicy Duolingo-style roasts, Boss Battles, and Gentle Support) to conquer task paralysis."
+  - title: Dopamine Feed & Focus Lounge
+    details: "Brain-scroll active recall micro-quiz cards, ambient study audio, and Scholar rank XP progression to replace doomscrolling with productive learning."
   - title: Model Context Protocol (MCP) Server
-    details: "Includes an RFC-compliant 13-tool MCP server for Claude Desktop and Hermes Agent to inspect and manage schedules."
+    details: "Includes an RFC-compliant 16-tool MCP server for Claude Desktop, Cursor, and Hermes Agent to inspect and manage schedules."
 ---

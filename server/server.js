@@ -33,6 +33,7 @@ import { generateCalendarFeed } from './calendarFeed.js';
 import { generateDailyBriefing, sendBriefing } from './briefing.js';
 import { generateAutopilotStudyBlocks } from './studyBlocks.js';
 import { handleQuickCapture } from './capture.js';
+import { sendDiscordNudge, checkAndSendAutomatedDiscordNudges, NUDGE_PERSONALITIES } from './discordHandler.js';
 import {
   getGamificationProfile,
   recordUserActivity,
@@ -456,6 +457,34 @@ app.post('/api/briefing/send', async (req, res) => {
       ...req.body,
       origin
     });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ======================== DISCORD ADHD NUDGE ENGINE ========================
+app.get('/api/discord/personalities', (req, res) => {
+  res.json(NUDGE_PERSONALITIES);
+});
+
+app.post('/api/discord/nudge', async (req, res) => {
+  try {
+    const origin = getDynamicOrigin(req);
+    const result = await sendDiscordNudge({
+      ...req.body,
+      origin
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/discord/auto-check', async (req, res) => {
+  try {
+    const origin = getDynamicOrigin(req);
+    const result = await checkAndSendAutomatedDiscordNudges({ origin });
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });

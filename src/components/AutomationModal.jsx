@@ -11,7 +11,11 @@ import {
   Trash2, 
   Calendar,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  MessageSquare,
+  Flame,
+  Zap,
+  Gamepad2
 } from 'lucide-react';
 
 export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
@@ -22,6 +26,11 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
     briefing_channel: 'ntfy',
     briefing_topic: 'studysync-briefing',
     briefing_webhook_url: '',
+    discord_webhook_url: '',
+    discord_nudge_personality: 'adhd_microstep',
+    discord_ping_mode: 'none',
+    discord_ping_role_id: '',
+    discord_auto_nag: 'true',
     campus_name: '',
     campus_address: '',
     campus_geo: ''
@@ -31,6 +40,8 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [sendResult, setSendResult] = useState(null);
   const [saveStatus, setSaveStatus] = useState('');
+  const [discordTestSending, setDiscordTestSending] = useState(false);
+  const [discordTestResult, setDiscordTestResult] = useState(null);
 
   // Study blocks state
   const [studyBlocks, setStudyBlocks] = useState([]);
@@ -105,6 +116,30 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
     }
   };
 
+  const handleSendDiscordTestNudge = async () => {
+    setDiscordTestSending(true);
+    setDiscordTestResult(null);
+    try {
+      const res = await fetch('/api/discord/nudge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          webhookUrl: settings.discord_webhook_url,
+          nudgeType: settings.discord_nudge_personality || 'adhd_microstep',
+          pingMode: settings.discord_ping_mode || 'none',
+          roleId: settings.discord_ping_role_id || ''
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to dispatch Discord nudge');
+      setDiscordTestResult({ success: true, message: `Delivered ${data.personality} to Discord channel!` });
+    } catch (err) {
+      setDiscordTestResult({ success: false, message: err.message });
+    } finally {
+      setDiscordTestSending(false);
+    }
+  };
+
   const handleGenerateStudyBlocks = async () => {
     setIsGeneratingBlocks(true);
     try {
@@ -149,7 +184,7 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
                 Automations & Smart Assistant
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Morning briefings, Apple Maps geotagging alerts, and Autopilot study blocking
+                Morning briefings, Discord ADHD coach, Apple Maps geotagging, and Autopilot study blocks
               </p>
             </div>
           </div>
@@ -162,10 +197,10 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
         </div>
 
         {/* Tab navigation */}
-        <div className="flex border-b border-slate-100 dark:border-slate-800 px-6 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="flex border-b border-slate-100 dark:border-slate-800 px-6 bg-slate-50/50 dark:bg-slate-800/30 overflow-x-auto">
           <button
             onClick={() => setActiveTab('briefing')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
               activeTab === 'briefing'
                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
@@ -175,26 +210,37 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
             Morning Briefing
           </button>
           <button
+            onClick={() => setActiveTab('discord')}
+            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
+              activeTab === 'discord'
+                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+            }`}
+          >
+            <Gamepad2 className="w-4 h-4 text-indigo-500" />
+            Discord ADHD Coach
+          </button>
+          <button
             onClick={() => setActiveTab('geo')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
               activeTab === 'geo'
                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
             }`}
           >
             <MapPin className="w-4 h-4" />
-            Campus Geotags (Time to Leave)
+            Campus Geotags
           </button>
           <button
             onClick={() => setActiveTab('autopilot')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
               activeTab === 'autopilot'
                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
             }`}
           >
             <Brain className="w-4 h-4" />
-            Autopilot Study Blocks
+            Autopilot Blocks
           </button>
         </div>
 
@@ -317,6 +363,184 @@ export default function AutomationModal({ isOpen, onClose, onRefreshData }) {
                   <pre className="text-xs font-mono text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                     {briefingPreview.body}
                   </pre>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: DISCORD ADHD MOTIVATION & PROCRASTINATION COACH */}
+          {activeTab === 'discord' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200 dark:border-indigo-800/60">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base">🎮</span>
+                  <h3 className="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
+                    Discord ADHD Nudge & Procrastination Buster
+                  </h3>
+                </div>
+                <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                  Psychologically engineered embeds delivered directly to your Discord study channel. Designed with executive dysfunction scaffolding, Duolingo-style roast interventions, and RPG boss battle timers.
+                </p>
+              </div>
+
+              {/* Webhook URL Input */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Discord Webhook URL
+                </label>
+                <input
+                  type="url"
+                  value={settings.discord_webhook_url || ''}
+                  onChange={(e) => setSettings({ ...settings, discord_webhook_url: e.target.value })}
+                  placeholder="https://discord.com/api/webhooks/..."
+                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-mono"
+                />
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  How to get: In Discord, click your channel's <strong>⚙️ Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL</strong>.
+                </p>
+              </div>
+
+              {/* Nudge Personality Selector */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Motivation Personality Mode
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    {
+                      id: 'adhd_microstep',
+                      emoji: '🧠',
+                      title: 'ADHD Micro-Step Coach',
+                      desc: 'Busts paralysis with 120s kickoff steps. Lowers activation energy to zero.',
+                      badge: 'Executive Scaffolding'
+                    },
+                    {
+                      id: 'spicy_roast',
+                      emoji: '🌶️',
+                      title: 'Spicy Tough Love',
+                      desc: 'Duolingo-owl style interventions calling out doomscrolling and memes.',
+                      badge: 'Procrastinator Alert'
+                    },
+                    {
+                      id: 'boss_fight',
+                      emoji: '⚔️',
+                      title: 'Gamified Boss Battle',
+                      desc: 'RPG boss fight styling with ASCII HP bars, countdowns, and XP bounties.',
+                      badge: 'High Stimulation'
+                    },
+                    {
+                      id: 'gentle_support',
+                      emoji: '🌱',
+                      title: 'Gentle Body-Doubling',
+                      desc: 'Calm, non-judgmental accountability for anxious or overwhelmed students.',
+                      badge: 'Nervous System Reset'
+                    }
+                  ].map((p) => {
+                    const isSelected = (settings.discord_nudge_personality || 'adhd_microstep') === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSettings({ ...settings, discord_nudge_personality: p.id })}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          isSelected
+                            ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 shadow-sm'
+                            : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                            <span>{p.emoji}</span> {p.title}
+                          </span>
+                          <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                            {p.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {p.desc}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Ping Mode & Auto Nag */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Discord Ping / Mention
+                  </label>
+                  <select
+                    value={settings.discord_ping_mode || 'none'}
+                    onChange={(e) => setSettings({ ...settings, discord_ping_mode: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100"
+                  >
+                    <option value="none">No ping (Silent Embed)</option>
+                    <option value="here">@here (Active channel members)</option>
+                    <option value="everyone">@everyone (High urgency)</option>
+                    <option value="role">Custom Role / User ID</option>
+                  </select>
+                </div>
+
+                {settings.discord_ping_mode === 'role' && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Role or User Snowflake ID
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.discord_ping_role_id || ''}
+                      onChange={(e) => setSettings({ ...settings, discord_ping_role_id: e.target.value })}
+                      placeholder="e.g. 1092837465..."
+                      className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-mono"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-6 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    id="discord_auto_nag"
+                    checked={settings.discord_auto_nag === 'true'}
+                    onChange={(e) => setSettings({ ...settings, discord_auto_nag: e.target.checked ? 'true' : 'false' })}
+                    className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                  />
+                  <label htmlFor="discord_auto_nag" className="text-xs text-slate-700 dark:text-slate-300">
+                    <strong>Auto-nag quizzes & exams</strong> (Automatically pings Discord 24h & 2h before upcoming deadlines)
+                  </label>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={handleSendDiscordTestNudge}
+                  disabled={discordTestSending || !settings.discord_webhook_url}
+                  className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {discordTestSending ? 'Dispatching...' : 'Send Test Nudge to Discord'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveSettings}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-sm"
+                >
+                  {saveStatus === 'Saved!' ? <Check className="w-3.5 h-3.5" /> : null}
+                  {saveStatus || 'Save Settings'}
+                </button>
+              </div>
+
+              {discordTestResult && (
+                <div className={`p-3 rounded-lg text-xs ${
+                  discordTestResult.success
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                }`}>
+                  {discordTestResult.success ? '✅ ' : '❌ '} {discordTestResult.message}
                 </div>
               )}
             </div>

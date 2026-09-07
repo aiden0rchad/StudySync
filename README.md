@@ -13,20 +13,21 @@ StudySync connects your university Canvas courses to Apple Calendar and native i
 
 Your university account remains untouched. StudySync operates on an explicit read-only guarantee: it fetches assignments and timetable data using HTTP GET requests and never writes back to Canvas.
 
-## Current release: v0.1.0
+## Current release: v0.1.1
 
-Released September 6, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.0).
+Released September 6, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.1).
 
-- Single-row navigation bar with desktop segmented view switching and mobile bottom tab navigation.
-- Persistent floating AI assistant with support for syllabus image uploads and camera capture.
-- Automated daily 5:00 AM Canvas sync daemon with startup catch-up logic when host wakes from sleep.
-- Standards-compliant RFC 5545 iCalendar feed with 15-minute refresh directives (`PT15M`) and Tailscale MagicDNS host auto-detection.
-- Admin management mode with selective calendar clearing and permanent sample-data re-seed prevention.
-- Multi-provider LLM support: Anthropic, OpenAI, DeepSeek, Google Gemini, Ollama, Groq, OpenRouter, and Mistral.
-- Model Context Protocol (MCP) server exposing 13 calendar and task management tools over stdio and HTTP.
+- **Discord ADHD & Procrastination Coach**: Dedicated Discord webhook integration engineered specifically for neurodivergent students and chronic procrastinators. Features 4 distinct psychological motivation modes (ADHD Micro-Step, Spicy Duolingo-style roast, Gamified Boss Battle with ASCII HP bars, and Gentle Body-Doubling).
+- **Automated Quiz & Exam Discord Alerts**: Background daemon scans the schedule and automatically dispatches pre-quiz warnings 24 hours and 2 hours prior with live Discord relative countdown timestamps (`<t:UNIX:R>`).
+- **Unified Calendar Hub**: Consolidated Month, Week (Timetable), Day, and 14-Day Agenda into a single clutter-free view.
+- **Dopamine Study Feed & Focus Room**: Brain-Scroll active recall feed that replaces doomscrolling with micro-learning, paired with an ambient Pomodoro Focus Lounge and Scholar Rank XP gamification.
+- **Critical DND-Bypass Mobile Alerts**: Priority 5 emergency alerts via `ntfy.sh` that bypass Do Not Disturb / Silent mode on iOS and Android phones for imminent deadline pushes.
+- **Enhanced AI & 16-Tool MCP Server**: Dedicated tools for personal events/appointments (doctors, dentist, meetings), schedule-wide search, and on-demand Discord nudges.
 
 ## What it provides
 
+- **Discord ADHD & Procrastination Coach**: Psychologically engineered webhooks delivering micro-step prompts to overcome executive dysfunction, roast doomscrolling habits, or frame impending exams as high-stakes RPG boss battles.
+- **Dopamine Study Feed & Ambient Focus Lounge**: Bite-sized active recall quizzes, procedural ambient focus audio (Rain, White Noise, Campfire, Cyber Drone, Lo-Fi Cafe), and streak/level progression.
 - **Syllabus and schedule scanning**: Extract course codes, meeting times, locations, and assignment due dates from PDF files, syllabus images, or camera captures directly into your calendar.
 - **Zero-touch capture and iOS Shortcuts**: Dedicated webhook (`POST /api/capture`) with pre-configured Apple Shortcuts for the iOS Share Sheet and Siri, plus Scriptable widgets for the iPhone Home and Lock Screen.
 - **Smart alarms and Apple Maps geotags**: Generates tailored `VALARM` triggers (15m before class, 24h and 2h before exams) and embeds `GEO` / `X-APPLE-STRUCTURED-LOCATION` tags for native iOS "Time to Leave" walking alerts.
@@ -35,7 +36,7 @@ Released September 6, 2026. [Read the release notes](https://github.com/aiden0rc
 - **Daily background synchronization**: A local scheduler queries Canvas daily at 5:00 AM to pull syllabus and assignment changes. If your server or laptop was asleep at 5:00 AM, it catches up automatically upon waking.
 - **Apple Calendar and iCloud subscription**: Exposes a `webcal://` feed formatted with RFC 5545 compliance. When added to Apple Calendar on macOS, iCloud propagates the feed across your iPhone, iPad, and Apple Watch.
 - **Progressive Web App (PWA)**: Standalone mobile UI with safe-area padding for the iPhone notch and home indicator (`pb-safe`), offline asset caching, and touch-optimized controls without iOS input zoom.
-- **Model Context Protocol (MCP) server**: Integrates directly with Claude Desktop, Hermes Agent, and MCP-compatible clients to let local models query upcoming deadlines, reschedule tasks, and manage courses.
+- **Model Context Protocol (MCP) server**: 16 RFC-compliant MCP tools integrating directly with Claude Desktop, Cursor, and Hermes Agent to inspect deadlines, dispatch Discord nudges, and manage courses.
 - **Self-hosting and Tailscale support**: Runs either via Docker Compose or standalone Node.js. Server-side host detection automatically rewrites webcal subscription URLs to match incoming Tailscale MagicDNS hostnames.
 
 ## Project boundaries and data safety
