@@ -18,7 +18,8 @@ const guides = [
 
 const operations = [
   { text: 'Docker Self-Hosting', link: '/operations/docker' },
-  { text: 'Tailscale Remote Access', link: '/operations/tailscale' },
+  { text: 'Remote Access (Tailscale, WireGuard, etc.)', link: '/operations/remote-access' },
+  { text: 'Tailscale Quickstart', link: '/operations/tailscale' },
   { text: 'Database & Backups', link: '/operations/backups' },
 ];
 

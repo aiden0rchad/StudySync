@@ -2,6 +2,8 @@
 
 StudySync includes built-in **dynamic host detection**, making it a first-class citizen on your private **Tailscale** network.
 
+> Looking for WireGuard, NetBird, or ZeroTier setups? See the comprehensive [Remote Access Guide](/operations/remote-access).
+
 ---
 
 ## How Dynamic Host Detection Works
