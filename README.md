@@ -39,11 +39,17 @@ Released September 6, 2026. [Read the release notes](https://github.com/aiden0rc
 - **Model Context Protocol (MCP) server**: 16 RFC-compliant MCP tools integrating directly with Claude Desktop, Cursor, and Hermes Agent to inspect deadlines, dispatch Discord nudges, and manage courses.
 - **Self-hosting and Tailscale support**: Runs either via Docker Compose or standalone Node.js. Server-side host detection automatically rewrites webcal subscription URLs to match incoming Tailscale MagicDNS hostnames.
 
-## Project boundaries and data safety
+## Security, Safety & Project Boundaries
 
-- **No write access to Canvas**: StudySync has no API endpoints, database mutations, or code paths that send `POST`, `PUT`, `PATCH`, or `DELETE` requests to Canvas LMS. Wiping or editing items in StudySync only alters your local SQLite database (`study_sync.db`).
-- **Local-first storage**: All user data, courses, tasks, and credentials reside in your local SQLite database or browser storage. No data is sent to external servers other than direct LLM inference requests to your configured AI provider.
+> **Disclaimer**: Tested on my end by the author, but has not been independently audited by a third-party cybersecurity firm. I tried my best to inspect, look, update, and patch vulnerabilities.
+
+For full technical details, threat models, and safe deployment guides, see [SECURITY.md](SECURITY.md) and [SAFETY.md](SAFETY.md).
+
+- **Read-only Canvas guarantee**: StudySync strictly communicates with Canvas LMS via HTTP `GET` requests. It contains no API endpoints, database mutations, or code paths that send `POST`, `PUT`, `PATCH`, or `DELETE` requests to Canvas. Wiping or editing items in StudySync only alters your local SQLite database (`study_sync.db`).
+- **Local-first storage & zero telemetry**: All user data, courses, tasks, and credentials reside in your local SQLite database or browser storage. No data is sent to external servers other than direct LLM inference requests to your configured AI provider (or 100% offline via local Ollama).
+- **SSRF and injection defenses**: Outbound requests block cloud metadata endpoints (`169.254.169.254`) and loopbacks by default. Database queries strictly use parameterized prepared statements, and calendar feeds escape RFC 5545 delimiters to prevent CRLF injection.
 - **Admin reset safety**: Clearing the database requires explicit confirmation. Once cleared, the database sets a persistent `has_been_seeded: 1` flag so server or container restarts do not inject sample courses back into your calendar.
+- **Automated security verification suite**: Run `npm run test:security` to execute 19 automated tests verifying SSRF rejection, SQL injection protection, Discord webhook validation, CRLF sanitization, and `npm audit` dependency checks.
 
 ## Daily sync architecture
 

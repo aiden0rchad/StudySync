@@ -2,7 +2,7 @@
   "name": "studysync",
   "private": true,
   "version": "0.1.1",
-  "description": "AI-Powered Student Schedule & Homework Planner with Canvas LMS and Apple Calendar synchronization",
+  "description": "Student schedule and homework planner with Canvas LMS integration, Apple Calendar synchronization, and local SQLite storage",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aiden0rchad/StudySync.git"
@@ -14,7 +14,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "server": "node server/server.js",
-    "mcp": "node mcp/server.js"
+    "mcp": "node mcp/server.js",
+    "test": "node tests/audit-test.js && node tests/security-check.js",
+    "test:security": "node tests/security-check.js",
+    "test:audit": "node tests/audit-test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -36,6 +39,10 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
-    "vite": "^5.2.11"
+    "vite": "^6.4.3"
+  },
+  "overrides": {
+    "qs": "^6.16.0",
+    "esbuild": "^0.25.0"
   }
 }

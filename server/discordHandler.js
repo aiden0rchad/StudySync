@@ -1,10 +1,9 @@
 import { getAllHomework, getAllCourses, getSetting, setSetting } from './db.js';
 import { format, parseISO, differenceInMinutes, differenceInHours } from 'date-fns';
+import { validateDiscordWebhook } from './utils/security.js';
 
 /**
- * ADHD & Procrastination Psychology Engine
- * 4 Distinct Personalities designed to bust executive dysfunction, overcome task paralysis,
- * and provide gamified dopamine triggers for students with ADHD.
+ * Motivational reminder templates and personality profiles.
  */
 export const NUDGE_PERSONALITIES = {
   adhd_microstep: {
@@ -124,6 +123,10 @@ export async function sendDiscordNudge({
 
   if (!targetWebhook) {
     throw new Error('Discord Webhook URL is not configured. Please paste your Discord Webhook URL in Automations settings.');
+  }
+
+  if (!validateDiscordWebhook(targetWebhook)) {
+    throw new Error('Invalid Discord Webhook URL. URL must start with https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/');
   }
 
   // Find target task or pick the most urgent pending task / quiz

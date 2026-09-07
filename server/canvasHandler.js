@@ -3,11 +3,12 @@ import {
   addCourse, 
   getAllHomework, 
   addHomework, 
-  updateHomework,
-  getSetting,
-  setSetting
+  updateHomework, 
+  getSetting, 
+  setSetting 
 } from './db.js';
 import { format, parseISO } from 'date-fns';
+import { validateExternalUrl } from './utils/security.js';
 
 const COLOR_PALETTE = ['indigo', 'emerald', 'amber', 'rose', 'sky', 'purple', 'orange', 'teal'];
 
@@ -161,6 +162,9 @@ export async function syncCanvasICal(icalUrl) {
     cleanUrl = cleanUrl.replace('webcal://', 'https://');
   }
 
+  // Enforce protocol and block SSRF vectors
+  validateExternalUrl(cleanUrl);
+
   const res = await fetch(cleanUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (StudySync Student Calendar; Canvas Feed Parser 1.0)'
@@ -288,6 +292,9 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
     domain = `https://${domain}`;
   }
   domain = domain.replace(/\/+$/, '');
+
+  // Enforce protocol and block SSRF vectors
+  validateExternalUrl(domain);
 
   const headers = {
     'Authorization': `Bearer ${apiToken.trim()}`,

@@ -1,5 +1,6 @@
 import { getAllCourses, getAllHomework, getSetting, setSetting } from './db.js';
 import { format, addDays } from 'date-fns';
+import { validateExternalUrl, sanitizeHeaderValue } from './utils/security.js';
 
 /**
  * Generate a structured daily morning briefing
@@ -111,7 +112,7 @@ export async function sendBriefing(options = {}) {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Title': briefing.title,
+        'Title': sanitizeHeaderValue(briefing.title),
         'Priority': priority,
         'Tags': 'mortarboard,calendar,book',
         'Actions': `view, Open StudySync, ${origin}`
@@ -133,6 +134,9 @@ export async function sendBriefing(options = {}) {
     if (!webhookUrl) {
       throw new Error('Webhook URL is not configured');
     }
+
+    // SSRF prevention on webhook delivery
+    validateExternalUrl(webhookUrl);
 
     const payload = {
       content: `**${briefing.title}**\n\n${briefing.body}\n\n[Open StudySync](${origin})`,
@@ -215,6 +219,7 @@ export async function sendUrgentAlert(options = {}) {
   }
 
   if (channel === 'webhook' && webhookUrl) {
+    validateExternalUrl(webhookUrl);
     const payload = {
       content: `🚨 **${title}**\n\n${message}\n\n[Open StudySync](${origin})`,
       embeds: [

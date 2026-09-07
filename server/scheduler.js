@@ -39,7 +39,7 @@ export async function runScheduledCanvasSync(triggerReason = 'scheduled_5am') {
 
   isSyncRunning = true;
   const startTime = new Date();
-  console.log(`⏰ [Canvas Auto-Sync | 5:00 AM Engine] Starting daily sync (${triggerReason}) at ${startTime.toLocaleTimeString()}...`);
+  console.log(`[scheduler] Starting daily Canvas sync (${triggerReason}) at ${startTime.toLocaleTimeString()}...`);
 
   try {
     let result = null;
@@ -64,10 +64,10 @@ export async function runScheduledCanvasSync(triggerReason = 'scheduled_5am') {
     setSetting('canvas_last_auto_sync_date', todayStr);
     setSetting('canvas_last_auto_sync_status', 'success');
 
-    console.log(`✅ [Canvas Auto-Sync] Daily 5:00 AM sync completed in ${durationSec}s! Fresh courses & assignments loaded.`);
+    console.log(`[scheduler] Daily Canvas sync completed in ${durationSec}s.`);
     return { success: true, result, finishTime: finishTime.toISOString() };
   } catch (err) {
-    console.error('❌ [Canvas Auto-Sync] Daily sync encountered an error:', err.message);
+    console.error('[scheduler] Daily Canvas sync failed:', err.message);
     setSetting('canvas_last_auto_sync_status', `error: ${err.message}`);
     return { success: false, error: err.message };
   } finally {
@@ -81,8 +81,7 @@ export async function runScheduledCanvasSync(triggerReason = 'scheduled_5am') {
 export function startDailyScheduler() {
   if (intervalId) clearInterval(intervalId);
 
-  console.log('⏰ [Scheduler] StudySync daily 5:00 AM sync scheduler active.');
-  console.log(`   Next scheduled Canvas sync: ${getNext5AM()}`);
+  console.log(`[scheduler] Daily scheduler active. Next Canvas sync: ${getNext5AM()}`);
 
   // Catch-up check on server start / reboot / wake
   setTimeout(() => {
@@ -136,12 +135,12 @@ function checkScheduledTime() {
 async function triggerMorningBriefing(todayStr) {
   isBriefingRunning = true;
   try {
-    console.log(`[Scheduler] Triggering scheduled morning briefing...`);
+    console.log('[scheduler] Triggering scheduled morning briefing...');
     await sendBriefing();
     setSetting('briefing_last_sent_date', todayStr);
-    console.log(`✅ [Scheduler] Morning briefing sent successfully.`);
+    console.log('[scheduler] Morning briefing sent successfully.');
   } catch (err) {
-    console.error(`❌ [Scheduler] Failed to send morning briefing:`, err.message);
+    console.error('[scheduler] Failed to send morning briefing:', err.message);
   } finally {
     isBriefingRunning = false;
   }

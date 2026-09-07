@@ -1,9 +1,7 @@
 import { db, getAllCourses, getAllHomework } from './db.js';
 import { format, subDays, differenceInCalendarDays } from 'date-fns';
 
-// ==========================================
 // Level Hierarchy & Titles
-// ==========================================
 export const RANKS = [
   { level: 1, title: 'Novice Scholar', minXP: 0, maxXP: 150 },
   { level: 2, title: 'Cram Champion', minXP: 150, maxXP: 350 },
@@ -49,9 +47,7 @@ export function getRankForXP(xp) {
   };
 }
 
-// ==========================================
 // Database Schema Initialization
-// ==========================================
 let isInitialized = false;
 
 export function initGamificationSchema() {
@@ -135,9 +131,7 @@ export function initGamificationSchema() {
   }
 }
 
-// ==========================================
-// Profile & Streak Engine
-// ==========================================
+// Profile & Streak Calculation
 export function getGamificationProfile() {
   initGamificationSchema();
   const raw = db.prepare("SELECT * FROM gamification_profile WHERE id = 'user'").get();
@@ -240,9 +234,7 @@ export function addFocusMinutes(minutes = 25) {
   return { ...result, minutesAdded: minutes };
 }
 
-// ==========================================
-// Daily Quests Engine
-// ==========================================
+// Daily Quests
 export function getDailyQuests() {
   initGamificationSchema();
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -327,9 +319,7 @@ export function claimDailyQuest(questId) {
   };
 }
 
-// ==========================================
 // Achievements & Badges
-// ==========================================
 export function getAchievements() {
   initGamificationSchema();
   const all = db.prepare("SELECT * FROM achievements ORDER BY unlocked DESC, xp_reward ASC").all();
@@ -389,9 +379,7 @@ function seedDefaultAchievements() {
   }
 }
 
-// ==========================================
-// Study Cards & "Brain-Scroll" Feed Engine
-// ==========================================
+// Study Cards & Review Feed
 export function getStudyCards(courseId = null, limit = 50) {
   initGamificationSchema();
   let query = "SELECT * FROM study_cards";

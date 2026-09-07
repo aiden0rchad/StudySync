@@ -68,7 +68,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'study-calendar-backend', time: new Date().toISOString() });
 });
 
-// ======================== COURSES ========================
+// Courses
 app.get('/api/courses', (req, res) => {
   try {
     const courses = getAllCourses();
@@ -106,7 +106,7 @@ app.delete('/api/courses/:id', (req, res) => {
   }
 });
 
-// ======================== HOMEWORK ========================
+// Homework
 app.get('/api/homework', (req, res) => {
   try {
     const homework = getAllHomework();
@@ -151,7 +151,7 @@ app.delete('/api/homework/:id', (req, res) => {
   }
 });
 
-// ======================== AI CHAT & MODELS ========================
+// AI Chat & Models
 app.post('/api/ai/chat', async (req, res) => {
   try {
     const { message, imageBase64, imageMimeType, history } = req.body;
@@ -178,7 +178,7 @@ app.post('/api/ai/models', async (req, res) => {
   }
 });
 
-// ======================== CANVAS LMS SYNC ========================
+// Canvas LMS Sync
 app.get('/api/canvas/status', (req, res) => {
   try {
     const status = getCanvasStatus();
@@ -237,7 +237,7 @@ app.post('/api/canvas/disconnect', (req, res) => {
   }
 });
 
-// ======================== CALENDAR FEED (APPLE CALENDAR / iCLOUD / EXPORT) ========================
+// Calendar Feed (Apple Calendar / Webcal / Export)
 function getLocalIpAddress() {
   try {
     const nets = os.networkInterfaces();
@@ -320,7 +320,7 @@ app.get('/api/calendar/info', (req, res) => {
   }
 });
 
-// ======================== SETTINGS ========================
+// Settings
 app.get('/api/settings', (req, res) => {
   try {
     res.json(getAllSettings());
@@ -341,7 +341,7 @@ app.post('/api/settings', (req, res) => {
   }
 });
 
-// ======================== RESET DATA ========================
+// Reset data
 app.post('/api/reset', (req, res) => {
   try {
     const result = resetAllData();
@@ -351,7 +351,7 @@ app.post('/api/reset', (req, res) => {
   }
 });
 
-// ======================== ADMIN MODE & DATA WIPE ========================
+// Admin data controls
 app.get('/api/admin/stats', (req, res) => {
   try {
     const stats = getDatabaseStats();
@@ -426,7 +426,7 @@ function getDynamicOrigin(req) {
   return `${reqProto}://${reqHost}`;
 }
 
-// ======================== ZERO-TOUCH QUICK CAPTURE ========================
+// Quick Capture
 app.post('/api/capture', async (req, res) => {
   try {
     const origin = getDynamicOrigin(req);
@@ -440,7 +440,7 @@ app.post('/api/capture', async (req, res) => {
   }
 });
 
-// ======================== DAILY MORNING BRIEFING ========================
+// Daily Morning Briefing
 app.get('/api/briefing/preview', (req, res) => {
   try {
     const briefing = generateDailyBriefing();
@@ -463,7 +463,7 @@ app.post('/api/briefing/send', async (req, res) => {
   }
 });
 
-// ======================== DISCORD ADHD NUDGE ENGINE ========================
+// Discord Motivation & Nudges
 app.get('/api/discord/personalities', (req, res) => {
   res.json(NUDGE_PERSONALITIES);
 });
@@ -491,7 +491,7 @@ app.post('/api/discord/auto-check', async (req, res) => {
   }
 });
 
-// ======================== AUTOPILOT STUDY BLOCKS ========================
+// Study Blocks
 app.get('/api/study-blocks', (req, res) => {
   try {
     const blocks = getAllStudyBlocks();
@@ -528,7 +528,7 @@ app.delete('/api/study-blocks', (req, res) => {
   }
 });
 
-// ======================== SCRIPTABLE IOS WIDGETS ========================
+// Scriptable iOS Widget
 app.get('/api/widgets/summary', (req, res) => {
   try {
     const now = new Date();
@@ -671,7 +671,7 @@ Script.complete();
   res.send(scriptContent);
 });
 
-// ======================== GAMIFICATION & BRAIN-SCROLL FEED ========================
+// Gamification & Study Cards
 app.get('/api/gamification/profile', (req, res) => {
   try {
     const profile = getGamificationProfile();
@@ -766,7 +766,7 @@ app.post('/api/gamification/cards/generate', (req, res) => {
   }
 });
 
-// ======================== STATIC FRONTEND SERVING (PWA & DOCKER) ========================
+// Static Frontend Serving (PWA & Docker)
 const distPath = path.join(__dirname, '../dist');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));

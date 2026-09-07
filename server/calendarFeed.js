@@ -1,19 +1,8 @@
 import { getAllCourses, getAllHomework, getAllStudyBlocks, getSetting } from './db.js';
 import { format, parseISO, startOfWeek, addDays, isBefore } from 'date-fns';
+import { escapeICalText } from './utils/security.js';
 
 const DAY_CODES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-
-/**
- * Escape text for RFC 5545 compliance
- */
-function escapeICalText(str) {
-  if (!str) return '';
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
-}
 
 /**
  * Generate RFC 5545 compliant iCalendar feed string with smart VALARM reminders,

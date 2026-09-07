@@ -7,6 +7,7 @@ const start = [
 ];
 
 const guides = [
+  { text: 'Security & Safety Policy', link: '/guide/security-safety' },
   { text: 'Gamification & Study Feed', link: '/guide/gamification-feed' },
   { text: 'Discord ADHD & Procrastination Coach', link: '/guide/discord-adhd-coach' },
   { text: 'AI Multimodal Assistant', link: '/guide/ai-assistant' },
@@ -35,7 +36,7 @@ export default defineConfig({
   lang: 'en-US',
   title: 'StudySync',
   titleTemplate: ':title | StudySync Docs',
-  description: 'AI-Powered Student Schedule & Homework Planner with Canvas LMS and Apple Calendar Synchronization',
+  description: 'Student Academic Schedule & Homework Planner with Canvas LMS and Apple Calendar Synchronization',
   base: '/StudySync/',
   cleanUrls: true,
   lastUpdated: true,
@@ -97,7 +98,7 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/aiden0rchad/StudySync' },
     ],
     footer: {
-      message: 'AI-Powered Academic Schedule Planner · 100% Read-Only Canvas Integration',
+      message: 'Student Academic Schedule Planner · 100% Read-Only Canvas Integration',
       copyright: 'MIT License · Built for Students & Homelabbers',
     },
     darkModeSwitchLabel: 'Theme',
