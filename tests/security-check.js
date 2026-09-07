@@ -262,11 +262,18 @@ await runAsyncTest('sendDiscordNudge rejects untrusted webhook hosts', async () 
 // ==========================================
 console.log('\n[6/6] Testing Production Dependencies for Known Vulnerabilities...');
 
-runTest('npm audit --omit=dev reports 0 known vulnerabilities', () => {
-  const output = execSync('npm audit --omit=dev --json', { encoding: 'utf-8' });
+runTest('Root dependencies (npm audit) report 0 known vulnerabilities', () => {
+  const output = execSync('npm audit --json', { encoding: 'utf-8' });
   const auditData = JSON.parse(output);
   const vulnTotal = auditData.metadata?.vulnerabilities?.total || 0;
-  assert.equal(vulnTotal, 0, `Expected 0 production vulnerabilities, but found ${vulnTotal}`);
+  assert.equal(vulnTotal, 0, `Expected 0 root vulnerabilities, but found ${vulnTotal}`);
+});
+
+runTest('Documentation dependencies (docs audit) report 0 known vulnerabilities', () => {
+  const output = execSync('npm --prefix docs audit --json', { encoding: 'utf-8' });
+  const auditData = JSON.parse(output);
+  const vulnTotal = auditData.metadata?.vulnerabilities?.total || 0;
+  assert.equal(vulnTotal, 0, `Expected 0 docs vulnerabilities, but found ${vulnTotal}`);
 });
 
 console.log('\n========================================');
