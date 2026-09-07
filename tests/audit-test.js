@@ -230,6 +230,97 @@ async function runTests() {
     assert.ok(stats.dbSizeFormatted);
   });
 
+  // 10. Gamification, Brain-Scroll & Focus Lounge
+  await test('GET /api/gamification/profile returns scholar rank, XP, and streak', async () => {
+    const res = await fetch(`${BASE}/api/gamification/profile`);
+    assert.strictEqual(res.status, 200);
+    const profile = await res.json();
+    assert.strictEqual(typeof profile.xp, 'number');
+    assert.strictEqual(typeof profile.level, 'number');
+    assert.strictEqual(typeof profile.streak, 'number');
+    assert.ok(profile.title);
+    assert.strictEqual(typeof profile.progressPercent, 'number');
+  });
+
+  await test('POST /api/gamification/action awards XP and updates progress', async () => {
+    const res = await fetch(`${BASE}/api/gamification/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ xp: 25, type: 'action' })
+    });
+    assert.strictEqual(res.status, 200);
+    const result = await res.json();
+    assert.strictEqual(result.xpAdded, 25);
+    assert.ok(result.totalXP > 0);
+    assert.ok(result.rank);
+  });
+
+  await test('POST /api/gamification/focus records focus session minutes and awards XP', async () => {
+    const res = await fetch(`${BASE}/api/gamification/focus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ minutes: 25 })
+    });
+    assert.strictEqual(res.status, 200);
+    const result = await res.json();
+    assert.strictEqual(result.minutesAdded, 25);
+    assert.ok(result.xpAdded > 0);
+  });
+
+  await test('GET /api/gamification/quests returns dynamic daily quests', async () => {
+    const res = await fetch(`${BASE}/api/gamification/quests`);
+    assert.strictEqual(res.status, 200);
+    const quests = await res.json();
+    assert.ok(Array.isArray(quests));
+    assert.strictEqual(quests.length, 3);
+    assert.ok(quests[0].title);
+    assert.strictEqual(typeof quests[0].xp_reward, 'number');
+  });
+
+  await test('GET /api/gamification/achievements returns badge catalog', async () => {
+    const res = await fetch(`${BASE}/api/gamification/achievements`);
+    assert.strictEqual(res.status, 200);
+    const achs = await res.json();
+    assert.ok(Array.isArray(achs));
+    assert.ok(achs.length >= 5);
+    assert.ok(achs.some(a => a.id === 'first_step'));
+  });
+
+  let sampleCardId = null;
+  await test('GET /api/gamification/cards returns study cards with options & tags', async () => {
+    const res = await fetch(`${BASE}/api/gamification/cards?limit=5`);
+    assert.strictEqual(res.status, 200);
+    const cards = await res.json();
+    assert.ok(Array.isArray(cards));
+    assert.ok(cards.length > 0);
+    sampleCardId = cards[0].id;
+    assert.ok(cards[0].title);
+    assert.ok(Array.isArray(cards[0].tags));
+  });
+
+  await test('POST /api/gamification/cards/:id/review records review and awards XP', async () => {
+    assert.ok(sampleCardId);
+    const res = await fetch(`${BASE}/api/gamification/cards/${sampleCardId}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isCorrect: true })
+    });
+    assert.strictEqual(res.status, 200);
+    const review = await res.json();
+    assert.strictEqual(review.success, true);
+    assert.ok(review.xpAwarded > 0);
+  });
+
+  await test('POST /api/gamification/cards/generate extracts micro-tasks from schedule', async () => {
+    const res = await fetch(`${BASE}/api/gamification/cards/generate`, {
+      method: 'POST'
+    });
+    assert.strictEqual(res.status, 200);
+    const gen = await res.json();
+    assert.strictEqual(typeof gen.count, 'number');
+    assert.ok(Array.isArray(gen.cards));
+  });
+
   console.log(`\n========================================`);
   console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);

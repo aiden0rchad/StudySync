@@ -327,6 +327,119 @@ export async function sendQuickCaptureAPI(payload) {
   return await res.json();
 }
 
+// ======================== GAMIFICATION & STUDY FEED ========================
+export async function fetchGamificationProfile() {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/profile`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch gamification profile:', e);
+  }
+  return {
+    xp: 180,
+    level: 2,
+    streak: 3,
+    title: 'Cram Champion',
+    progressXP: 30,
+    neededXP: 200,
+    progressPercent: 15,
+    streak_freezes: 2
+  };
+}
 
+export async function recordGamificationAction(xp = 15, type = 'action') {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ xp, type })
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to record gamification action:', e);
+  }
+  return null;
+}
 
+export async function recordFocusSessionAPI(minutes = 25) {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/focus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ minutes })
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to record focus session:', e);
+  }
+  return null;
+}
 
+export async function fetchDailyQuestsAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/quests`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch quests:', e);
+  }
+  return [];
+}
+
+export async function claimDailyQuestAPI(questId) {
+  const res = await fetch(`${API_BASE}/gamification/quests/${questId}/claim`, {
+    method: 'POST'
+  });
+  if (!res.ok) throw new Error('Failed to claim quest');
+  return await res.json();
+}
+
+export async function fetchAchievementsAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/achievements`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch achievements:', e);
+  }
+  return [];
+}
+
+export async function fetchStudyCardsAPI(courseId = null, limit = 50) {
+  try {
+    const params = new URLSearchParams();
+    if (courseId && courseId !== 'all') params.append('courseId', courseId);
+    if (limit) params.append('limit', limit);
+    const res = await fetch(`${API_BASE}/gamification/cards?${params.toString()}`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch study cards:', e);
+  }
+  return [];
+}
+
+export async function reviewStudyCardAPI(cardId, isCorrect = true) {
+  const res = await fetch(`${API_BASE}/gamification/cards/${cardId}/review`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isCorrect })
+  });
+  if (!res.ok) throw new Error('Failed to submit card review');
+  return await res.json();
+}
+
+export async function generateStudyCardsAPI() {
+  const res = await fetch(`${API_BASE}/gamification/cards/generate`, {
+    method: 'POST'
+  });
+  if (!res.ok) throw new Error('Failed to generate cards');
+  return await res.json();
+}
+
+export async function createStudyCardAPI(cardData) {
+  const res = await fetch(`${API_BASE}/gamification/cards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cardData)
+  });
+  if (!res.ok) throw new Error('Failed to create card');
+  return await res.json();
+}

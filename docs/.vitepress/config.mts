@@ -7,6 +7,7 @@ const start = [
 ];
 
 const guides = [
+  { text: 'Gamification & Study Feed', link: '/guide/gamification-feed' },
   { text: 'AI Multimodal Assistant', link: '/guide/ai-assistant' },
   { text: 'Canvas LMS Synchronization', link: '/guide/canvas-sync' },
   { text: 'Apple Calendar & iCloud Sync', link: '/guide/apple-calendar' },

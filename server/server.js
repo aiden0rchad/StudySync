@@ -33,6 +33,18 @@ import { generateCalendarFeed } from './calendarFeed.js';
 import { generateDailyBriefing, sendBriefing } from './briefing.js';
 import { generateAutopilotStudyBlocks } from './studyBlocks.js';
 import { handleQuickCapture } from './capture.js';
+import {
+  getGamificationProfile,
+  recordUserActivity,
+  addFocusMinutes,
+  getDailyQuests,
+  claimDailyQuest,
+  getAchievements,
+  getStudyCards,
+  reviewStudyCard,
+  createStudyCard,
+  generateStudyCardsFromSchedule
+} from './gamification.js';
 import { format } from 'date-fns';
 import os from 'node:os';
 import path from 'node:path';
@@ -114,8 +126,15 @@ app.post('/api/homework', (req, res) => {
 
 app.put('/api/homework/:id', (req, res) => {
   try {
+    const existingHw = getHomeworkById(req.params.id);
     const hw = updateHomework(req.params.id, req.body);
     if (!hw) return res.status(404).json({ error: 'Homework not found' });
+
+    // If status changed to completed, award XP
+    if (req.body.status === 'completed' && (!existingHw || existingHw.status !== 'completed')) {
+      recordUserActivity(50, 'complete_homework');
+    }
+
     res.json(hw);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -621,6 +640,101 @@ Script.complete();
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="StudySyncWidget.js"');
   res.send(scriptContent);
+});
+
+// ======================== GAMIFICATION & BRAIN-SCROLL FEED ========================
+app.get('/api/gamification/profile', (req, res) => {
+  try {
+    const profile = getGamificationProfile();
+    res.json(profile);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/action', (req, res) => {
+  try {
+    const { xp = 10, type = 'action' } = req.body;
+    const result = recordUserActivity(Number(xp), type);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/focus', (req, res) => {
+  try {
+    const { minutes = 25 } = req.body;
+    const result = addFocusMinutes(Number(minutes));
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/gamification/quests', (req, res) => {
+  try {
+    const quests = getDailyQuests();
+    res.json(quests);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/quests/:id/claim', (req, res) => {
+  try {
+    const result = claimDailyQuest(req.params.id);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/gamification/achievements', (req, res) => {
+  try {
+    const achs = getAchievements();
+    res.json(achs);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/gamification/cards', (req, res) => {
+  try {
+    const { courseId, limit } = req.query;
+    const cards = getStudyCards(courseId, limit ? Number(limit) : 50);
+    res.json(cards);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/cards', (req, res) => {
+  try {
+    const card = createStudyCard(req.body);
+    res.json(card);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/cards/:id/review', (req, res) => {
+  try {
+    const { isCorrect = true } = req.body;
+    const result = reviewStudyCard(req.params.id, Boolean(isCorrect));
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/cards/generate', (req, res) => {
+  try {
+    const result = generateStudyCardsFromSchedule();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ======================== STATIC FRONTEND SERVING (PWA & DOCKER) ========================

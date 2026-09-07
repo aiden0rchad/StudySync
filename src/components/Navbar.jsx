@@ -21,7 +21,13 @@ import {
   Share2,
   ShieldAlert,
   Smartphone,
-  Bell
+  Bell,
+  Flame,
+  Trophy,
+  Zap,
+  Headphones,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -46,7 +52,11 @@ export default function Navbar({
   onOpenCapture,
   onOpenAutomation,
   onOpenAdmin,
-  onOpenInstall
+  onOpenInstall,
+  userProfile,
+  onOpenTrophies,
+  soundEnabled = true,
+  onToggleSound
 }) {
   const [showSyncMenu, setShowSyncMenu] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -57,6 +67,8 @@ export default function Navbar({
     { id: 'week', label: 'Timetable', fullLabel: 'Weekly Timetable', icon: Clock },
     { id: 'homework', label: 'Tasks', fullLabel: 'Homework & Tasks', icon: CheckSquare, badge: pendingHomeworkCount },
     { id: 'today', label: 'Today', fullLabel: 'Today Focus', icon: Sun },
+    { id: 'feed', label: 'Feed ⚡', fullLabel: 'Brain Scroll Feed', icon: Zap },
+    { id: 'focus', label: 'Focus', fullLabel: 'Focus Room', icon: Headphones },
   ];
 
   return (
@@ -291,6 +303,43 @@ export default function Navbar({
                 )}
               </div>
 
+              {/* Scholar Streak & Level Widget */}
+              <button
+                onClick={onOpenTrophies}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-violet-500/10 hover:from-amber-500/20 hover:to-violet-500/20 border border-amber-300/40 dark:border-amber-500/30 text-slate-800 dark:text-slate-100 transition-all active:scale-95 shadow-2xs group"
+                title="Scholar Profile: Streaks, Daily Quests & Trophies"
+              >
+                <div className="flex items-center gap-1">
+                  <Flame className="w-4 h-4 text-amber-500 fill-amber-500 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+                    {userProfile?.streak || 1}
+                  </span>
+                </div>
+                <div className="hidden sm:flex items-center gap-1.5 pl-1.5 border-l border-slate-300 dark:border-slate-700">
+                  <span className="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400">
+                    Lv.{userProfile?.level || 1}
+                  </span>
+                  <div className="w-8 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-indigo-600 rounded-full transition-all"
+                      style={{ width: `${userProfile?.progressPercent || 20}%` }}
+                    />
+                  </div>
+                </div>
+              </button>
+
+              {/* Audio Effects Toggle */}
+              <button
+                onClick={onToggleSound}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:border-slate-700 ${
+                  !soundEnabled ? 'opacity-50' : ''
+                }`}
+                title={soundEnabled ? 'Sound FX Enabled (Chimes & Fanfare)' : 'Sound FX Muted'}
+                aria-label="Toggle sound effects"
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-500" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+              </button>
+
               {/* Dark Mode Icon Button */}
               <button
                 onClick={onToggleDarkMode}
@@ -342,6 +391,31 @@ export default function Navbar({
                           ))}
                         </select>
                       </div>
+
+                      {/* Quick View Switches */}
+                      <button
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          setActiveTab('week');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Weekly Timetable</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          setActiveTab('focus');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left"
+                      >
+                        <Headphones className="w-3.5 h-3.5 text-purple-500" />
+                        <span>Focus Room & Soundscapes</span>
+                      </button>
+
+                      <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
 
                       <button
                         onClick={() => {
@@ -423,30 +497,33 @@ export default function Navbar({
       {/* ===================== MOBILE BOTTOM NAVIGATION BAR ===================== */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 shadow-lg pb-safe">
         <div className="grid grid-cols-5 items-center h-16 px-1">
-          {/* Month */}
+          {/* Today Focus */}
           <button
-            onClick={() => setActiveTab('month')}
+            onClick={() => setActiveTab('today')}
             className={`flex flex-col items-center justify-center h-full transition-colors ${
-              activeTab === 'month'
+              activeTab === 'today'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 font-medium'
             }`}
           >
-            <CalendarIcon className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px]">Month</span>
+            <Sun className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Today</span>
           </button>
 
-          {/* Week Timetable */}
+          {/* Feed ⚡ (Brain Scroll) */}
           <button
-            onClick={() => setActiveTab('week')}
-            className={`flex flex-col items-center justify-center h-full transition-colors ${
-              activeTab === 'week'
+            onClick={() => setActiveTab('feed')}
+            className={`flex flex-col items-center justify-center h-full transition-colors relative ${
+              activeTab === 'feed'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 font-medium'
             }`}
           >
-            <Clock className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px]">Week</span>
+            <div className="relative">
+              <Zap className="w-5 h-5 mb-0.5 text-amber-500 fill-amber-500" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
+            </div>
+            <span className="text-[10px]">Feed ⚡</span>
           </button>
 
           {/* Elevated Center Quick (+) Button */}
@@ -481,17 +558,17 @@ export default function Navbar({
             <span className="text-[10px]">Tasks</span>
           </button>
 
-          {/* Today Agenda */}
+          {/* Month Calendar */}
           <button
-            onClick={() => setActiveTab('today')}
+            onClick={() => setActiveTab('month')}
             className={`flex flex-col items-center justify-center h-full transition-colors ${
-              activeTab === 'today'
+              activeTab === 'month'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 font-medium'
             }`}
           >
-            <Sun className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px]">Today</span>
+            <CalendarIcon className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Month</span>
           </button>
         </div>
       </div>

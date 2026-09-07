@@ -15,6 +15,12 @@ import AdminModal from './components/AdminModal';
 import PWAInstallModal from './components/PWAInstallModal';
 import CaptureModal from './components/CaptureModal';
 import AutomationModal from './components/AutomationModal';
+import StudyFeed from './components/StudyFeed';
+import FocusRoom from './components/FocusRoom';
+import TrophyModal from './components/TrophyModal';
+import XPToast from './components/XPToast';
+import { audioFX } from './utils/audioFX';
+import { triggerTaskConfetti, triggerLevelUpConfetti } from './utils/confetti';
 import { 
   loadCourses, 
   saveCourses, 
@@ -33,7 +39,9 @@ import {
   updateHomeworkAPI, 
   deleteHomeworkAPI, 
   resetServerData,
-  fetchStudyBlocksAPI 
+  fetchStudyBlocksAPI,
+  fetchGamificationProfile,
+  recordGamificationAction
 } from './utils/api';
 import { exportToICS } from './utils/icsExport';
 import { CheckCircle2, Info, Sparkles } from 'lucide-react';
@@ -42,11 +50,16 @@ export default function App() {
   const [courses, setCourses] = useState(() => loadCourses());
   const [homework, setHomework] = useState(() => loadHomework());
   const [studyBlocks, setStudyBlocks] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
+  const [isTrophyModalOpen, setIsTrophyModalOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => audioFX.isSoundEnabled());
+  const [xpEvents, setXpEvents] = useState([]);
+
   const [activeTab, setActiveTab] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (['month', 'week', 'homework', 'today'].includes(tab)) return tab;
+      if (['month', 'week', 'homework', 'today', 'feed', 'focus'].includes(tab)) return tab;
       if (window.innerWidth < 768) return 'today';
     } catch (e) {}
     return 'month';
@@ -140,21 +153,55 @@ export default function App() {
     fetchStudyBlocksAPI().then(sb => {
       if (sb) setStudyBlocks(sb);
     });
+    fetchGamificationProfile().then(p => {
+      if (p) setUserProfile(p);
+    });
   }, []);
 
   const refreshDataFromBackend = async () => {
     try {
-      const [c, h, sb] = await Promise.all([
+      const [c, h, sb, p] = await Promise.all([
         fetchCourses(), 
         fetchHomework(),
-        fetchStudyBlocksAPI()
+        fetchStudyBlocksAPI(),
+        fetchGamificationProfile()
       ]);
       if (c) setCourses(c);
       if (h) setHomework(h);
       if (sb) setStudyBlocks(sb);
+      if (p) setUserProfile(p);
     } catch (e) {
       console.error('Failed to sync with backend:', e);
     }
+  };
+
+  // Gamification & Dopamine Triggers
+  const triggerXPReward = async (amount = 50, label = '+50 XP', type = 'xp') => {
+    const evtId = `xp-${Date.now()}-${Math.random()}`;
+    setXpEvents(prev => [...prev, { id: evtId, amount, text: label, type }]);
+    setTimeout(() => {
+      setXpEvents(prev => prev.filter(e => e.id !== evtId));
+    }, 2400);
+
+    const res = await recordGamificationAction(amount, 'action');
+    if (res) {
+      setUserProfile(prev => ({
+        ...(prev || {}),
+        ...res,
+        ...res.rank
+      }));
+      if (res.didLevelUp) {
+        audioFX.playLevelUp();
+        triggerLevelUpConfetti();
+        showToast(`🏆 Level Up! You are now Level ${res.newLevel}: ${res.rank.title}!`, 'success');
+      }
+    }
+  };
+
+  const handleToggleSound = () => {
+    const next = audioFX.toggleSound();
+    setSoundEnabled(next);
+    showToast(next ? 'Sound FX Enabled 🔔' : 'Sound FX Muted 🔇');
   };
 
   // Sync to localStorage
@@ -213,8 +260,12 @@ export default function App() {
     const updated = { ...target, status: nextStatus };
     setHomework(homework.map(h => h.id === hwId ? updated : h));
     await updateHomeworkAPI(hwId, updated);
+    
     if (nextStatus === 'completed') {
-      showToast('Task marked as completed! 🎉');
+      audioFX.playTaskComplete();
+      triggerTaskConfetti();
+      triggerXPReward(50, '🎯 Task Conquered! +50 XP');
+      showToast('Task marked as completed! +50 XP 🎉');
     }
   };
 
@@ -291,6 +342,10 @@ export default function App() {
         onOpenAutomation={() => setIsAutomationModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenInstall={() => setIsInstallModalOpen(true)}
+        userProfile={userProfile}
+        onOpenTrophies={() => setIsTrophyModalOpen(true)}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
       />
 
       {/* Main Content Area */}
@@ -334,6 +389,22 @@ export default function App() {
             onEditHomework={openEditHomeworkModal}
             onDeleteHomework={handleDeleteHomework}
             onToggleStatus={handleToggleHomeworkStatus}
+          />
+        )}
+
+        {activeTab === 'feed' && (
+          <StudyFeed
+            courses={courses}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={setSelectedCourseId}
+            onActionReward={triggerXPReward}
+          />
+        )}
+
+        {activeTab === 'focus' && (
+          <FocusRoom
+            onActionReward={triggerXPReward}
+            onSessionComplete={refreshDataFromBackend}
           />
         )}
 
@@ -437,6 +508,16 @@ export default function App() {
         onClose={() => setIsAutomationModalOpen(false)}
         onRefreshData={refreshDataFromBackend}
       />
+
+      {/* Scholar's Hall, Streaks & Daily Quests Modal */}
+      <TrophyModal
+        isOpen={isTrophyModalOpen}
+        onClose={() => setIsTrophyModalOpen(false)}
+        onActionReward={triggerXPReward}
+      />
+
+      {/* Floating XP Gain Animations */}
+      <XPToast xpEvents={xpEvents} />
 
       {/* Persistent Floating Ask AI Button (Bottom Right) */}
       <button
