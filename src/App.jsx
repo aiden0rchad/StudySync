@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import MonthView from './components/MonthView';
-import WeekTimetable from './components/WeekTimetable';
+import CalendarView from './components/CalendarView';
 import HomeworkList from './components/HomeworkList';
-import TodayAgenda from './components/TodayAgenda';
 import ClassModal from './components/ClassModal';
 import HomeworkModal from './components/HomeworkModal';
 import CourseManagerModal from './components/CourseManagerModal';
@@ -59,10 +57,12 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (['month', 'week', 'homework', 'today', 'feed', 'focus'].includes(tab)) return tab;
-      if (window.innerWidth < 768) return 'today';
+      if (['calendar', 'month', 'week', 'today', 'homework', 'feed', 'focus'].includes(tab)) {
+        if (['month', 'week', 'today'].includes(tab)) return 'calendar';
+        return tab;
+      }
     } catch (e) {}
-    return 'month';
+    return 'calendar';
   });
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCourseId, setSelectedCourseId] = useState('all');
@@ -350,8 +350,8 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full pb-24 md:pb-8">
-        {activeTab === 'month' && (
-          <MonthView
+        {(activeTab === 'calendar' || activeTab === 'month' || activeTab === 'week' || activeTab === 'today') && (
+          <CalendarView
             currentDate={currentDate}
             setCurrentDate={setCurrentDate}
             courses={courses}
@@ -360,23 +360,11 @@ export default function App() {
             selectedCourseId={selectedCourseId}
             onSelectClass={openEditClassModal}
             onSelectHomework={openEditHomeworkModal}
-            onAddHomeworkForDate={(dateStr) => openNewHomeworkModal(dateStr)}
-            onToggleHomeworkStatus={handleToggleHomeworkStatus}
-          />
-        )}
-
-        {activeTab === 'week' && (
-          <WeekTimetable
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-            courses={courses}
-            homework={homework}
-            selectedCourseId={selectedCourseId}
-            onSelectClass={openEditClassModal}
-            onSelectHomework={openEditHomeworkModal}
             onAddClass={openNewClassModal}
+            onAddHomework={() => openNewHomeworkModal()}
             onAddHomeworkForDate={(dateStr) => openNewHomeworkModal(dateStr)}
             onToggleHomeworkStatus={handleToggleHomeworkStatus}
+            initialSubView={['month', 'week', 'today'].includes(activeTab) ? (activeTab === 'today' ? 'day' : activeTab) : null}
           />
         )}
 
@@ -405,19 +393,6 @@ export default function App() {
           <FocusRoom
             onActionReward={triggerXPReward}
             onSessionComplete={refreshDataFromBackend}
-          />
-        )}
-
-        {activeTab === 'today' && (
-          <TodayAgenda
-            courses={courses}
-            homework={homework}
-            onSelectClass={openEditClassModal}
-            onSelectHomework={openEditHomeworkModal}
-            onAddClass={openNewClassModal}
-            onAddHomework={() => openNewHomeworkModal()}
-            onToggleHomeworkStatus={handleToggleHomeworkStatus}
-            onSwitchTab={setActiveTab}
           />
         )}
       </main>

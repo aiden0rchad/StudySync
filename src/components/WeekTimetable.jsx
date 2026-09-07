@@ -38,7 +38,8 @@ export default function WeekTimetable({
   onSelectHomework,
   onAddClass,
   onAddHomeworkForDate,
-  onToggleHomeworkStatus
+  onToggleHomeworkStatus,
+  hideHeader = false
 }) {
   // Start week on Monday (1)
   const weekDays = getWeekDays(currentDate, 1);
@@ -60,36 +61,38 @@ export default function WeekTimetable({
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-colors">
       {/* Week Toolbar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            {format(startDay, 'MMM d')} – {format(endDay, 'MMM d, yyyy')}
-          </h2>
-          <button
-            onClick={handleToday}
-            className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs transition-colors"
-          >
-            This Week
-          </button>
-        </div>
+      {!hideHeader && (
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              {format(startDay, 'MMM d')} – {format(endDay, 'MMM d, yyyy')}
+            </h2>
+            <button
+              onClick={handleToday}
+              className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs transition-colors"
+            >
+              This Week
+            </button>
+          </div>
 
-        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 shadow-2xs">
-          <button
-            onClick={handlePrevWeek}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300 transition-colors"
-            title="Previous week"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleNextWeek}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300 transition-colors"
-            title="Next week"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 shadow-2xs">
+            <button
+              onClick={handlePrevWeek}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300 transition-colors"
+              title="Previous week"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleNextWeek}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300 transition-colors"
+              title="Next week"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Horizontally scrollable wrapper on mobile */}
       <div className="overflow-x-auto">

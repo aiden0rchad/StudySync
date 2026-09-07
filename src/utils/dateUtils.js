@@ -12,6 +12,8 @@ import {
   subMonths,
   addWeeks,
   subWeeks,
+  addDays,
+  subDays,
   parseISO,
   isBefore,
   startOfDay,
@@ -27,6 +29,8 @@ export {
   subMonths,
   addWeeks,
   subWeeks,
+  addDays,
+  subDays,
   parseISO,
   startOfDay,
   differenceInCalendarDays

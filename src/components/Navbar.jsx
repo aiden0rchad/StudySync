@@ -63,10 +63,8 @@ export default function Navbar({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const tabs = [
-    { id: 'month', label: 'Month', fullLabel: 'Month Calendar', icon: CalendarIcon },
-    { id: 'week', label: 'Timetable', fullLabel: 'Weekly Timetable', icon: Clock },
+    { id: 'calendar', label: 'Calendar', fullLabel: 'Academic Calendar', icon: CalendarIcon },
     { id: 'homework', label: 'Tasks', fullLabel: 'Homework & Tasks', icon: CheckSquare, badge: pendingHomeworkCount },
-    { id: 'today', label: 'Today', fullLabel: 'Today Focus', icon: Sun },
     { id: 'feed', label: 'Feed ⚡', fullLabel: 'Brain Scroll Feed', icon: Zap },
     { id: 'focus', label: 'Focus', fullLabel: 'Focus Room', icon: Headphones },
   ];
@@ -97,7 +95,7 @@ export default function Navbar({
             <nav className="hidden md:flex items-center p-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+                const isActive = activeTab === tab.id || (tab.id === 'calendar' && ['month', 'week', 'today', 'calendar'].includes(activeTab));
                 return (
                   <button
                     key={tab.id}
@@ -497,46 +495,18 @@ export default function Navbar({
       {/* ===================== MOBILE BOTTOM NAVIGATION BAR ===================== */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 shadow-lg pb-safe">
         <div className="grid grid-cols-5 items-center h-16 px-1">
-          {/* Today Focus */}
+          {/* Unified Calendar Hub */}
           <button
-            onClick={() => setActiveTab('today')}
+            onClick={() => setActiveTab('calendar')}
             className={`flex flex-col items-center justify-center h-full transition-colors ${
-              activeTab === 'today'
+              activeTab === 'calendar' || activeTab === 'month' || activeTab === 'week' || activeTab === 'today'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 font-medium'
             }`}
           >
-            <Sun className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px]">Today</span>
+            <CalendarIcon className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Calendar</span>
           </button>
-
-          {/* Feed ⚡ (Brain Scroll) */}
-          <button
-            onClick={() => setActiveTab('feed')}
-            className={`flex flex-col items-center justify-center h-full transition-colors relative ${
-              activeTab === 'feed'
-                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
-                : 'text-slate-500 dark:text-slate-400 font-medium'
-            }`}
-          >
-            <div className="relative">
-              <Zap className="w-5 h-5 mb-0.5 text-amber-500 fill-amber-500" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
-            </div>
-            <span className="text-[10px]">Feed ⚡</span>
-          </button>
-
-          {/* Elevated Center Quick (+) Button */}
-          <div className="flex items-center justify-center">
-            <button
-              onClick={onAddHomework}
-              className="w-12 h-12 -mt-4 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-lg shadow-indigo-300 dark:shadow-none flex items-center justify-center active:scale-95 transition-transform"
-              title="Add Task"
-              aria-label="Add task"
-            >
-              <Plus className="w-6 h-6 stroke-[2.5]" />
-            </button>
-          </div>
 
           {/* Tasks & Homework */}
           <button
@@ -558,17 +528,45 @@ export default function Navbar({
             <span className="text-[10px]">Tasks</span>
           </button>
 
-          {/* Month Calendar */}
+          {/* Elevated Center Quick (+) Button */}
+          <div className="flex items-center justify-center">
+            <button
+              onClick={onAddHomework}
+              className="w-12 h-12 -mt-4 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-lg shadow-indigo-300 dark:shadow-none flex items-center justify-center active:scale-95 transition-transform"
+              title="Add Task"
+              aria-label="Add task"
+            >
+              <Plus className="w-6 h-6 stroke-[2.5]" />
+            </button>
+          </div>
+
+          {/* Feed ⚡ (Brain Scroll) */}
           <button
-            onClick={() => setActiveTab('month')}
-            className={`flex flex-col items-center justify-center h-full transition-colors ${
-              activeTab === 'month'
+            onClick={() => setActiveTab('feed')}
+            className={`flex flex-col items-center justify-center h-full transition-colors relative ${
+              activeTab === 'feed'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 font-medium'
             }`}
           >
-            <CalendarIcon className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px]">Month</span>
+            <div className="relative">
+              <Zap className="w-5 h-5 mb-0.5 text-amber-500 fill-amber-500" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
+            </div>
+            <span className="text-[10px]">Feed ⚡</span>
+          </button>
+
+          {/* Focus Room */}
+          <button
+            onClick={() => setActiveTab('focus')}
+            className={`flex flex-col items-center justify-center h-full transition-colors ${
+              activeTab === 'focus'
+                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'text-slate-500 dark:text-slate-400 font-medium'
+            }`}
+          >
+            <Headphones className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Focus</span>
           </button>
         </div>
       </div>
