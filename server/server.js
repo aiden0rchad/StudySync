@@ -20,12 +20,20 @@ import {
   wipeCoursesOnly,
   wipeCanvasData,
   seedSampleData,
-  getDatabaseStats
+  getDatabaseStats,
+  getAllStudyBlocks,
+  addStudyBlock,
+  deleteStudyBlock,
+  clearStudyBlocks
 } from './db.js';
 import { processAIChat, fetchProviderModels, PROVIDERS } from './aiHandler.js';
 import { syncCanvasICal, syncCanvasAPI, getCanvasStatus, disconnectCanvas } from './canvasHandler.js';
 import { startDailyScheduler, getSchedulerStatus, runScheduledCanvasSync } from './scheduler.js';
 import { generateCalendarFeed } from './calendarFeed.js';
+import { generateDailyBriefing, sendBriefing } from './briefing.js';
+import { generateAutopilotStudyBlocks } from './studyBlocks.js';
+import { handleQuickCapture } from './capture.js';
+import { format } from 'date-fns';
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -389,6 +397,230 @@ app.post('/api/admin/wipe-and-sync-canvas', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Helper for dynamic origin (Tailscale MagicDNS / local network detection)
+function getDynamicOrigin(req) {
+  const reqHost = req.headers['x-forwarded-host'] || req.get('host') || `localhost:${PORT}`;
+  const reqProto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  return `${reqProto}://${reqHost}`;
+}
+
+// ======================== ZERO-TOUCH QUICK CAPTURE ========================
+app.post('/api/capture', async (req, res) => {
+  try {
+    const origin = getDynamicOrigin(req);
+    const result = await handleQuickCapture({
+      ...req.body,
+      origin
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ======================== DAILY MORNING BRIEFING ========================
+app.get('/api/briefing/preview', (req, res) => {
+  try {
+    const briefing = generateDailyBriefing();
+    res.json(briefing);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/briefing/send', async (req, res) => {
+  try {
+    const origin = getDynamicOrigin(req);
+    const result = await sendBriefing({
+      ...req.body,
+      origin
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ======================== AUTOPILOT STUDY BLOCKS ========================
+app.get('/api/study-blocks', (req, res) => {
+  try {
+    const blocks = getAllStudyBlocks();
+    res.json(blocks);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/study-blocks/generate', (req, res) => {
+  try {
+    const result = generateAutopilotStudyBlocks(req.body);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/study-blocks/:id', (req, res) => {
+  try {
+    const result = deleteStudyBlock(req.params.id);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/study-blocks', (req, res) => {
+  try {
+    const result = clearStudyBlocks();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ======================== SCRIPTABLE IOS WIDGETS ========================
+app.get('/api/widgets/summary', (req, res) => {
+  try {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const todayStr = format(now, 'yyyy-MM-dd');
+    const courses = getAllCourses();
+    const homework = getAllHomework();
+
+    const todayClasses = courses
+      .filter(c => Array.isArray(c.daysOfWeek) && c.daysOfWeek.includes(dayOfWeek))
+      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    let nextClass = null;
+    let minutesUntil = null;
+
+    for (const c of todayClasses) {
+      const [h, m] = (c.startTime || '00:00').split(':').map(Number);
+      const classStartMin = h * 60 + m;
+      if (classStartMin > currentMinutes) {
+        nextClass = c;
+        minutesUntil = classStartMin - currentMinutes;
+        break;
+      }
+    }
+
+    const dueToday = homework.filter(h => h.dueDate === todayStr && h.status !== 'completed');
+
+    res.json({
+      timestamp: now.toISOString(),
+      todayClassesCount: todayClasses.length,
+      nextClass: nextClass ? {
+        code: nextClass.code,
+        name: nextClass.name,
+        room: nextClass.room,
+        startTime: nextClass.startTime,
+        endTime: nextClass.endTime,
+        color: nextClass.color,
+        minutesUntil
+      } : null,
+      dueTodayCount: dueToday.length,
+      dueTodayItems: dueToday.slice(0, 3).map(h => ({
+        title: h.title,
+        dueTime: h.dueTime,
+        priority: h.priority
+      }))
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/widgets/scriptable.js', (req, res) => {
+  const origin = getDynamicOrigin(req);
+  const scriptContent = `// StudySync iOS Scriptable Widget
+// Displays next upcoming lecture with room number, countdown, and tasks due today.
+const API_URL = "${origin}/api/widgets/summary";
+
+async function createWidget() {
+  const widget = new ListWidget();
+  widget.backgroundColor = new Color("#0f172a");
+
+  let data = null;
+  try {
+    const req = new Request(API_URL);
+    req.timeoutInterval = 8;
+    data = await req.loadJSON();
+  } catch (e) {
+    data = null;
+  }
+
+  // Header
+  const headerStack = widget.addStack();
+  headerStack.centerAlignContent();
+  const title = headerStack.addText("StudySync");
+  title.font = Font.boldSystemFont(12);
+  title.textColor = new Color("#818cf8");
+  headerStack.addSpacer();
+
+  if (!data) {
+    widget.addSpacer(8);
+    const errText = widget.addText("Offline / Connecting...");
+    errText.font = Font.systemFont(11);
+    errText.textColor = new Color("#94a3b8");
+    return widget;
+  }
+
+  widget.addSpacer(6);
+
+  if (data.nextClass) {
+    const classBadge = widget.addStack();
+    classBadge.backgroundColor = new Color("#1e293b");
+    classBadge.cornerRadius = 6;
+    classBadge.setPadding(4, 6, 4, 6);
+
+    const code = classBadge.addText(data.nextClass.code);
+    code.font = Font.boldSystemFont(14);
+    code.textColor = new Color("#ffffff");
+
+    widget.addSpacer(4);
+    const room = widget.addText("📍 " + (data.nextClass.room || "Room TBA") + " · " + data.nextClass.startTime);
+    room.font = Font.systemFont(11);
+    room.textColor = new Color("#cbd5e1");
+
+    widget.addSpacer(4);
+    const countdown = widget.addText("Starts in " + data.nextClass.minutesUntil + " mins");
+    countdown.font = Font.semiboldSystemFont(11);
+    countdown.textColor = new Color("#38bdf8");
+  } else {
+    const doneText = widget.addText("No more classes today 🎉");
+    doneText.font = Font.systemFont(12);
+    doneText.textColor = new Color("#cbd5e1");
+  }
+
+  widget.addSpacer(6);
+  const dueStack = widget.addStack();
+  dueStack.centerAlignContent();
+  const dueIcon = dueStack.addText("Tasks due today: ");
+  dueIcon.font = Font.systemFont(11);
+  dueIcon.textColor = new Color("#94a3b8");
+
+  const dueCount = dueStack.addText(data.dueTodayCount + " pending");
+  dueCount.font = Font.boldSystemFont(11);
+  dueCount.textColor = data.dueTodayCount > 0 ? new Color("#f43f5e") : new Color("#10b981");
+
+  widget.url = "${origin}";
+  return widget;
+}
+
+const widget = await createWidget();
+if (config.runsInWidget) {
+  Script.setWidget(widget);
+} else {
+  widget.presentMedium();
+}
+Script.complete();
+`;
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="StudySyncWidget.js"');
+  res.send(scriptContent);
 });
 
 // ======================== STATIC FRONTEND SERVING (PWA & DOCKER) ========================

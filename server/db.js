@@ -45,6 +45,18 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS study_blocks (
+    id TEXT PRIMARY KEY,
+    courseId TEXT,
+    homeworkId TEXT,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    startTime TEXT NOT NULL,
+    endTime TEXT NOT NULL,
+    status TEXT DEFAULT 'scheduled',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 export function getInitialCourses() {
@@ -337,26 +349,26 @@ export function getAllSettings() {
 }
 
 export function resetAllData() {
-  db.exec('DELETE FROM homework; DELETE FROM courses;');
+  db.exec('DELETE FROM homework; DELETE FROM courses; DELETE FROM study_blocks;');
   seedDatabase();
   setSetting('has_been_seeded', '1');
-  return { courses: getAllCourses(), homework: getAllHomework() };
+  return { courses: getAllCourses(), homework: getAllHomework(), studyBlocks: getAllStudyBlocks() };
 }
 
 export function wipeAllData() {
-  db.exec('DELETE FROM homework; DELETE FROM courses;');
+  db.exec('DELETE FROM homework; DELETE FROM courses; DELETE FROM study_blocks;');
   setSetting('has_been_seeded', '1');
-  return { success: true, target: 'all', courses: [], homework: [] };
+  return { success: true, target: 'all', courses: [], homework: [], studyBlocks: [] };
 }
 
 export function wipeHomeworkOnly() {
-  db.exec('DELETE FROM homework;');
-  return { success: true, target: 'homework', courses: getAllCourses(), homework: [] };
+  db.exec('DELETE FROM homework; DELETE FROM study_blocks;');
+  return { success: true, target: 'homework', courses: getAllCourses(), homework: [], studyBlocks: [] };
 }
 
 export function wipeCoursesOnly() {
-  db.exec('DELETE FROM courses; DELETE FROM homework;');
-  return { success: true, target: 'courses', courses: [], homework: [] };
+  db.exec('DELETE FROM courses; DELETE FROM homework; DELETE FROM study_blocks;');
+  return { success: true, target: 'courses', courses: [], homework: [], studyBlocks: [] };
 }
 
 export function wipeCanvasData() {
@@ -371,20 +383,87 @@ export function wipeCanvasData() {
     success: true, 
     target: 'canvas', 
     courses: getAllCourses(), 
-    homework: getAllHomework() 
+    homework: getAllHomework(),
+    studyBlocks: getAllStudyBlocks()
   };
 }
 
 export function seedSampleData() {
-  db.exec('DELETE FROM homework; DELETE FROM courses;');
+  db.exec('DELETE FROM homework; DELETE FROM courses; DELETE FROM study_blocks;');
   seedDatabase();
   setSetting('has_been_seeded', '1');
-  return { courses: getAllCourses(), homework: getAllHomework() };
+  return { courses: getAllCourses(), homework: getAllHomework(), studyBlocks: getAllStudyBlocks() };
+}
+
+// ==========================================
+// STUDY BLOCKS CRUD
+// ==========================================
+export function getAllStudyBlocks() {
+  const stmt = db.prepare('SELECT * FROM study_blocks ORDER BY date ASC, startTime ASC');
+  return stmt.all();
+}
+
+export function getStudyBlockById(id) {
+  const stmt = db.prepare('SELECT * FROM study_blocks WHERE id = ?');
+  return stmt.get(id);
+}
+
+export function addStudyBlock(block) {
+  const id = block.id || `sb-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const stmt = db.prepare(`
+    INSERT INTO study_blocks (id, courseId, homeworkId, title, date, startTime, endTime, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    id,
+    block.courseId || null,
+    block.homeworkId || null,
+    block.title,
+    block.date,
+    block.startTime || '14:00',
+    block.endTime || '15:30',
+    block.status || 'scheduled'
+  );
+  return getStudyBlockById(id);
+}
+
+export function updateStudyBlock(id, updates) {
+  const existing = getStudyBlockById(id);
+  if (!existing) return null;
+  const merged = { ...existing, ...updates };
+  const stmt = db.prepare(`
+    UPDATE study_blocks
+    SET courseId = ?, homeworkId = ?, title = ?, date = ?, startTime = ?, endTime = ?, status = ?
+    WHERE id = ?
+  `);
+  stmt.run(
+    merged.courseId,
+    merged.homeworkId,
+    merged.title,
+    merged.date,
+    merged.startTime,
+    merged.endTime,
+    merged.status,
+    id
+  );
+  return getStudyBlockById(id);
+}
+
+export function deleteStudyBlock(id) {
+  const stmt = db.prepare('DELETE FROM study_blocks WHERE id = ?');
+  stmt.run(id);
+  return { success: true, id };
+}
+
+export function clearStudyBlocks() {
+  db.exec('DELETE FROM study_blocks;');
+  return { success: true };
 }
 
 export function getDatabaseStats() {
   const coursesCount = db.prepare('SELECT COUNT(*) as c FROM courses').get().c;
   const homeworkCount = db.prepare('SELECT COUNT(*) as c FROM homework').get().c;
+  const studyBlocksCount = db.prepare('SELECT COUNT(*) as c FROM study_blocks').get().c;
   const pendingCount = db.prepare("SELECT COUNT(*) as c FROM homework WHERE status != 'completed'").get().c;
   const completedCount = db.prepare("SELECT COUNT(*) as c FROM homework WHERE status = 'completed'").get().c;
   const canvasMode = getSetting('canvas_mode', 'none');
@@ -401,6 +480,7 @@ export function getDatabaseStats() {
     dbSizeFormatted: (dbSizeBytes / 1024).toFixed(1) + ' KB',
     coursesCount,
     homeworkCount,
+    studyBlocksCount,
     pendingCount,
     completedCount,
     canvasMode

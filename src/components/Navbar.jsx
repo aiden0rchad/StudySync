@@ -20,7 +20,8 @@ import {
   Server,
   Share2,
   ShieldAlert,
-  Smartphone
+  Smartphone,
+  Bell
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -42,6 +43,8 @@ export default function Navbar({
   onOpenAISettings,
   onOpenCanvas,
   onOpenAppleCalendar,
+  onOpenCapture,
+  onOpenAutomation,
   onOpenAdmin,
   onOpenInstall
 }) {
@@ -181,6 +184,40 @@ export default function Navbar({
                         <div>
                           <div className="font-semibold text-slate-900 dark:text-white">Canvas LMS Sync</div>
                           <div className="text-[11px] text-slate-400">Import classes & homework</div>
+                        </div>
+                      </button>
+
+                      {/* iOS Shortcuts & Zero-Touch Capture */}
+                      <button
+                        onClick={() => {
+                          setShowSyncMenu(false);
+                          if (onOpenCapture) onOpenCapture();
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                          <Share2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-900 dark:text-white">iOS Shortcuts & Share Sheet</div>
+                          <div className="text-[11px] text-slate-400">Quick capture & Siri setup</div>
+                        </div>
+                      </button>
+
+                      {/* Smart Automations & Morning Briefing */}
+                      <button
+                        onClick={() => {
+                          setShowSyncMenu(false);
+                          if (onOpenAutomation) onOpenAutomation();
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-900 dark:text-white">Smart Automations</div>
+                          <div className="text-[11px] text-slate-400">Morning briefings & study blocks</div>
                         </div>
                       </button>
 

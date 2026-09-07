@@ -11,6 +11,8 @@ const guides = [
   { text: 'Canvas LMS Synchronization', link: '/guide/canvas-sync' },
   { text: 'Apple Calendar & iCloud Sync', link: '/guide/apple-calendar' },
   { text: 'Daily 5:00 AM Automation', link: '/guide/daily-sync' },
+  { text: 'iOS Shortcuts & Quick Capture', link: '/guide/ios-shortcuts' },
+  { text: 'Morning Briefing & Automations', link: '/guide/morning-briefing' },
   { text: 'Admin Mode & Clean Slate', link: '/guide/admin-mode' },
 ];
 

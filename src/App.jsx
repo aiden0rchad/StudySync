@@ -13,6 +13,8 @@ import CanvasSyncModal from './components/CanvasSyncModal';
 import AppleCalendarModal from './components/AppleCalendarModal';
 import AdminModal from './components/AdminModal';
 import PWAInstallModal from './components/PWAInstallModal';
+import CaptureModal from './components/CaptureModal';
+import AutomationModal from './components/AutomationModal';
 import { 
   loadCourses, 
   saveCourses, 
@@ -82,6 +84,10 @@ export default function App() {
 
   // PWA Installation Guide modal state
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+
+  // Zero-Touch Capture & Automation modal states
+  const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
+  const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
 
   // Toast notifications
   const [toast, setToast] = useState(null);
@@ -271,6 +277,8 @@ export default function App() {
         onOpenAISettings={() => setIsAISettingsOpen(true)}
         onOpenCanvas={() => setIsCanvasModalOpen(true)}
         onOpenAppleCalendar={() => setIsAppleCalendarModalOpen(true)}
+        onOpenCapture={() => setIsCaptureModalOpen(true)}
+        onOpenAutomation={() => setIsAutomationModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenInstall={() => setIsInstallModalOpen(true)}
       />
@@ -403,6 +411,20 @@ export default function App() {
       <PWAInstallModal
         isOpen={isInstallModalOpen}
         onClose={() => setIsInstallModalOpen(false)}
+      />
+
+      {/* Zero-Touch Capture & Shortcuts Modal */}
+      <CaptureModal
+        isOpen={isCaptureModalOpen}
+        onClose={() => setIsCaptureModalOpen(false)}
+        onRefreshData={refreshDataFromBackend}
+      />
+
+      {/* Smart Automations & Morning Briefing Modal */}
+      <AutomationModal
+        isOpen={isAutomationModalOpen}
+        onClose={() => setIsAutomationModalOpen(false)}
+        onRefreshData={refreshDataFromBackend}
       />
 
       {/* Persistent Floating Ask AI Button (Bottom Right) */}

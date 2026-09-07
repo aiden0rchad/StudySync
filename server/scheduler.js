@@ -1,8 +1,10 @@
 import { getSetting, setSetting } from './db.js';
 import { syncCanvasICal, syncCanvasAPI } from './canvasHandler.js';
+import { sendBriefing } from './briefing.js';
 
 let intervalId = null;
 let isSyncRunning = false;
+let isBriefingRunning = false;
 
 /**
  * Calculates the next occurrence of 5:00 AM local time
@@ -93,41 +95,77 @@ export function startDailyScheduler() {
 }
 
 /**
- * Checks if current local time is 5:00 AM and hasn't run today
+ * Checks if current local time is 5:00 AM for Canvas sync or briefing time
  */
 function checkScheduledTime() {
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
+  const todayStr = now.toISOString().slice(0, 10);
 
-  // Target: 5:00 AM (between 5:00 and 5:02)
+  // 1. Target: 5:00 AM (between 5:00 and 5:02) for Canvas Sync
   if (currentHour === 5 && currentMinute <= 2) {
-    const todayStr = now.toISOString().slice(0, 10);
     const lastRunDate = getSetting('canvas_last_auto_sync_date', '');
-
     if (lastRunDate !== todayStr) {
       console.log(`[Scheduler] 5:00 AM reached (${now.toLocaleTimeString()}). Triggering daily Canvas synchronization...`);
       runScheduledCanvasSync('scheduled_5am');
     }
   }
+
+  // 2. Target: Morning Briefing Time (default 07:00)
+  const briefingEnabled = getSetting('briefing_enabled', 'true') === 'true';
+  const briefingTime = getSetting('briefing_time', '07:00');
+  const [bHour, bMin] = briefingTime.split(':').map(Number);
+
+  if (briefingEnabled && currentHour === bHour && Math.abs(currentMinute - bMin) <= 2) {
+    const lastBriefingDate = getSetting('briefing_last_sent_date', '');
+    if (lastBriefingDate !== todayStr && !isBriefingRunning) {
+      triggerMorningBriefing(todayStr);
+    }
+  }
+}
+
+async function triggerMorningBriefing(todayStr) {
+  isBriefingRunning = true;
+  try {
+    console.log(`[Scheduler] Triggering scheduled morning briefing...`);
+    await sendBriefing();
+    setSetting('briefing_last_sent_date', todayStr);
+    console.log(`✅ [Scheduler] Morning briefing sent successfully.`);
+  } catch (err) {
+    console.error(`❌ [Scheduler] Failed to send morning briefing:`, err.message);
+  } finally {
+    isBriefingRunning = false;
+  }
 }
 
 /**
- * Catch-up check: If server was offline at 5:00 AM and current time is past 5:00 AM,
- * auto-sync to ensure calendar freshness.
+ * Catch-up check: If server was offline at 5:00 AM or briefing time,
+ * catch up to ensure calendar freshness and morning dispatch.
  */
 function checkAndCatchUpSync() {
   const now = new Date();
-  const mode = getSetting('canvas_mode', 'none');
-  if (mode === 'none') return;
-
   const todayStr = now.toISOString().slice(0, 10);
-  const lastRunDate = getSetting('canvas_last_auto_sync_date', '');
+  const mode = getSetting('canvas_mode', 'none');
 
-  // If it's after 5:00 AM today and we haven't synced today
-  if (now.getHours() >= 5 && lastRunDate !== todayStr) {
-    console.log(`[Scheduler] Catch-up sync: Current time (${now.toLocaleTimeString()}) is past 5:00 AM and today's sync hasn't run yet.`);
-    runScheduledCanvasSync('startup_catchup');
+  // 1. Canvas catch-up
+  if (mode !== 'none') {
+    const lastRunDate = getSetting('canvas_last_auto_sync_date', '');
+    if (now.getHours() >= 5 && lastRunDate !== todayStr) {
+      console.log(`[Scheduler] Catch-up sync: Current time (${now.toLocaleTimeString()}) is past 5:00 AM and today's sync hasn't run yet.`);
+      runScheduledCanvasSync('startup_catchup');
+    }
+  }
+
+  // 2. Briefing catch-up
+  const briefingEnabled = getSetting('briefing_enabled', 'true') === 'true';
+  const briefingTime = getSetting('briefing_time', '07:00');
+  const [bHour] = briefingTime.split(':').map(Number);
+  const lastBriefingDate = getSetting('briefing_last_sent_date', '');
+
+  if (briefingEnabled && now.getHours() >= bHour && lastBriefingDate !== todayStr && !isBriefingRunning) {
+    console.log(`[Scheduler] Catch-up briefing: Current time is past ${briefingTime} and today's briefing hasn't sent yet.`);
+    triggerMorningBriefing(todayStr);
   }
 }
 
@@ -147,6 +185,15 @@ export function getSchedulerStatus() {
     lastAutoSync: getSetting('canvas_last_auto_sync', null),
     lastAutoSyncStatus: getSetting('canvas_last_auto_sync_status', 'idle'),
     syncedToday,
-    isSyncRunning
+    isSyncRunning,
+    briefing: {
+      enabled: getSetting('briefing_enabled', 'true') === 'true',
+      time: getSetting('briefing_time', '07:00'),
+      channel: getSetting('briefing_channel', 'ntfy'),
+      topic: getSetting('briefing_topic', 'studysync-briefing'),
+      lastSent: getSetting('briefing_last_sent', null),
+      lastStatus: getSetting('briefing_last_status', 'idle'),
+      sentToday: getSetting('briefing_last_sent_date', '') === todayStr
+    }
   };
 }
