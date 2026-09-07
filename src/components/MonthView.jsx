@@ -28,6 +28,7 @@ export default function MonthView({
   setCurrentDate, 
   courses, 
   homework, 
+  studyBlocks = [],
   selectedCourseId, 
   onSelectClass, 
   onSelectHomework,
@@ -50,6 +51,10 @@ export default function MonthView({
   const filteredHomework = selectedCourseId === 'all' 
     ? homework 
     : homework.filter(h => h.courseId === selectedCourseId);
+
+  const filteredStudyBlocks = selectedCourseId === 'all'
+    ? studyBlocks
+    : studyBlocks.filter(b => b.courseId === selectedCourseId);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-colors">
@@ -112,6 +117,9 @@ export default function MonthView({
 
           // Get homework due on this exact date
           const dayHomework = filteredHomework.filter(hw => hw.dueDate === dateKey);
+
+          // Get study blocks on this exact date
+          const dayStudyBlocks = filteredStudyBlocks.filter(sb => sb.date === dateKey);
 
           return (
             <div
@@ -208,6 +216,18 @@ export default function MonthView({
                     </div>
                   );
                 })}
+
+                {/* Study Focus Blocks */}
+                {dayStudyBlocks.map((sb) => (
+                  <div
+                    key={`sb-${sb.id}`}
+                    className="text-[10px] leading-tight px-1.5 py-0.5 rounded-md border border-purple-200 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex items-center gap-1 font-medium truncate"
+                    title={`Focus Block: ${sb.title} (${sb.startTime} - ${sb.endTime})`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
+                    <span className="truncate">{sb.title}</span>
+                  </div>
+                ))}
               </div>
             </div>
           );

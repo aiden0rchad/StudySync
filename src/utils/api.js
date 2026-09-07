@@ -287,5 +287,46 @@ export async function adminWipeAndSyncCanvasAPI() {
   return await res.json();
 }
 
+// ======================== STUDY BLOCKS & AUTOMATION ========================
+export async function fetchStudyBlocksAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/study-blocks`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch study blocks:', e);
+  }
+  return [];
+}
+
+export async function generateStudyBlocksAPI(options = {}) {
+  const res = await fetch(`${API_BASE}/study-blocks/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(options)
+  });
+  if (!res.ok) throw new Error('Failed to generate study blocks');
+  return await res.json();
+}
+
+export async function deleteStudyBlockAPI(id) {
+  const res = await fetch(`${API_BASE}/study-blocks/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete study block');
+  return await res.json();
+}
+
+export async function sendQuickCaptureAPI(payload) {
+  const res = await fetch(`${API_BASE}/capture`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Capture failed' }));
+    throw new Error(err.error || 'Failed to capture schedule item');
+  }
+  return await res.json();
+}
+
+
 
 

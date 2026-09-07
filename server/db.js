@@ -199,13 +199,24 @@ export function seedDatabase() {
   });
 }
 
+function safeParseDaysOfWeek(val) {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+  }
+  return [];
+}
+
 // ======================== COURSES CRUD ========================
 
 export function getAllCourses() {
   const rows = db.prepare('SELECT * FROM courses ORDER BY code ASC').all();
   return rows.map(r => ({
     ...r,
-    daysOfWeek: typeof r.daysOfWeek === 'string' ? JSON.parse(r.daysOfWeek) : r.daysOfWeek
+    daysOfWeek: safeParseDaysOfWeek(r.daysOfWeek)
   }));
 }
 
@@ -214,21 +225,25 @@ export function getCourseById(id) {
   if (!row) return null;
   return {
     ...row,
-    daysOfWeek: typeof row.daysOfWeek === 'string' ? JSON.parse(row.daysOfWeek) : row.daysOfWeek
+    daysOfWeek: safeParseDaysOfWeek(row.daysOfWeek)
   };
 }
 
-export function addCourse(course) {
+export function addCourse(course = {}) {
   const id = course.id || `course-${Date.now()}`;
-  const daysOfWeek = Array.isArray(course.daysOfWeek) ? JSON.stringify(course.daysOfWeek) : (course.daysOfWeek || '[]');
+  const code = (course.code || 'COURSE').toString().trim().toUpperCase();
+  const name = (course.name || course.code || 'Untitled Course').toString().trim();
+  const daysOfWeek = Array.isArray(course.daysOfWeek) 
+    ? JSON.stringify(course.daysOfWeek) 
+    : (typeof course.daysOfWeek === 'string' ? course.daysOfWeek : '[]');
   
   db.prepare(`
     INSERT INTO courses (id, code, name, color, instructor, room, daysOfWeek, startTime, endTime)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
-    course.code.trim().toUpperCase(),
-    course.name.trim(),
+    code,
+    name,
     course.color || 'indigo',
     course.instructor || '',
     course.room || '',
@@ -240,7 +255,7 @@ export function addCourse(course) {
   return getCourseById(id);
 }
 
-export function updateCourse(id, course) {
+export function updateCourse(id, course = {}) {
   const existing = getCourseById(id);
   if (!existing) return null;
 
@@ -253,8 +268,8 @@ export function updateCourse(id, course) {
     SET code = ?, name = ?, color = ?, instructor = ?, room = ?, daysOfWeek = ?, startTime = ?, endTime = ?
     WHERE id = ?
   `).run(
-    course.code ? course.code.trim().toUpperCase() : existing.code,
-    course.name ? course.name.trim() : existing.name,
+    course.code ? course.code.toString().trim().toUpperCase() : existing.code,
+    course.name ? course.name.toString().trim() : existing.name,
     course.color || existing.color,
     course.instructor !== undefined ? course.instructor : existing.instructor,
     course.room !== undefined ? course.room : existing.room,
@@ -282,17 +297,20 @@ export function getHomeworkById(id) {
   return db.prepare('SELECT * FROM homework WHERE id = ?').get(id);
 }
 
-export function addHomework(hw) {
+export function addHomework(hw = {}) {
   const id = hw.id || `hw-${Date.now()}`;
+  const title = (hw.title || 'Untitled Task').toString().trim();
+  const dueDate = hw.dueDate || format(new Date(), 'yyyy-MM-dd');
+
   db.prepare(`
     INSERT INTO homework (id, courseId, title, description, dueDate, dueTime, priority, status, estimatedMinutes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     hw.courseId || null,
-    hw.title.trim(),
+    title,
     hw.description || '',
-    hw.dueDate,
+    dueDate,
     hw.dueTime || '23:59',
     hw.priority || 'medium',
     hw.status || 'pending',

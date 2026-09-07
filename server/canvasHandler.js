@@ -228,8 +228,9 @@ export async function syncCanvasICal(icalUrl) {
     const { dateStr, timeStr } = parseICalDate(evt.dtend || evt.dtstart);
 
     // De-duplication check
+    const eventUid = evt.uid ? evt.uid.replace(/[^a-zA-Z0-9_-]/g, '_') : null;
     const existing = existingHomework.find(h => {
-      if (evt.uid && h.id === `canvas-${evt.uid}`) return true;
+      if (eventUid && (h.id === `canvas-${eventUid}` || h.id === `canvas-${evt.uid}`)) return true;
       if (h.title.toLowerCase() === title.toLowerCase() && h.dueDate === dateStr) return true;
       return false;
     });

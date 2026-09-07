@@ -32,7 +32,8 @@ import {
   createHomework, 
   updateHomeworkAPI, 
   deleteHomeworkAPI, 
-  resetServerData 
+  resetServerData,
+  fetchStudyBlocksAPI 
 } from './utils/api';
 import { exportToICS } from './utils/icsExport';
 import { CheckCircle2, Info, Sparkles } from 'lucide-react';
@@ -40,6 +41,7 @@ import { CheckCircle2, Info, Sparkles } from 'lucide-react';
 export default function App() {
   const [courses, setCourses] = useState(() => loadCourses());
   const [homework, setHomework] = useState(() => loadHomework());
+  const [studyBlocks, setStudyBlocks] = useState([]);
   const [activeTab, setActiveTab] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -135,13 +137,21 @@ export default function App() {
     fetchHomework().then(h => {
       if (h && h.length > 0) setHomework(h);
     });
+    fetchStudyBlocksAPI().then(sb => {
+      if (sb) setStudyBlocks(sb);
+    });
   }, []);
 
   const refreshDataFromBackend = async () => {
     try {
-      const [c, h] = await Promise.all([fetchCourses(), fetchHomework()]);
+      const [c, h, sb] = await Promise.all([
+        fetchCourses(), 
+        fetchHomework(),
+        fetchStudyBlocksAPI()
+      ]);
       if (c) setCourses(c);
       if (h) setHomework(h);
+      if (sb) setStudyBlocks(sb);
     } catch (e) {
       console.error('Failed to sync with backend:', e);
     }
@@ -291,6 +301,7 @@ export default function App() {
             setCurrentDate={setCurrentDate}
             courses={courses}
             homework={homework}
+            studyBlocks={studyBlocks}
             selectedCourseId={selectedCourseId}
             onSelectClass={openEditClassModal}
             onSelectHomework={openEditHomeworkModal}
