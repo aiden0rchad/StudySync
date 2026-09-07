@@ -45,3 +45,13 @@ node server/server.js
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to view the development app.
+
+---
+
+## Next Steps
+
+Now that your server is running, import your courses and assignments:
+* [Connect Canvas LMS (Zero-Friction Guide)](/guide/canvas-sync)
+* [Install as a Mobile PWA on iOS/Android](/getting-started/pwa-setup)
+* [Set Up Discord ADHD & Procrastination Alerts](/guide/discord-adhd-coach)
+
