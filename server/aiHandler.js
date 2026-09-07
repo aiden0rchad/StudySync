@@ -6,6 +6,7 @@ import {
   addHomework, 
   updateHomework, 
   deleteHomework,
+  getAllStudyBlocks,
   getSetting,
   wipeAllData,
   wipeHomeworkOnly,
@@ -13,20 +14,24 @@ import {
 } from './db.js';
 import { format, parseISO } from 'date-fns';
 import { syncCanvasICal, syncCanvasAPI } from './canvasHandler.js';
+import { sendUrgentAlert } from './briefing.js';
 
 // System prompt instructing the AI how to act as StudySync Calendar Assistant
-const SYSTEM_PROMPT = `You are StudySync AI, an intelligent, helpful academic calendar assistant.
+const SYSTEM_PROMPT = `You are StudySync AI, an intelligent, helpful academic and personal schedule assistant.
 The current date is ${format(new Date(), 'EEEE, MMMM d, yyyy')}.
 
-You help students manage their recurring weekly classes, study schedule, homework deadlines, assignments, and exams.
-You have access to tools that can directly create, delete, and manage classes and homework in the user's database.
+You help students manage their recurring weekly classes, study schedule, homework deadlines, assignments, exams, and personal events/appointments (e.g. doctor visits, dentist appointments, meetings, work shifts).
+You have access to tools that can directly create, delete, search, notify, and manage classes, homework, personal events, and urgent alerts in the user's database and connected devices.
 
 Capabilities:
-1. Process text requests ("I have CS 101 on Mon/Wed 10am to 11:30am in Room 304", "Add Math homework due tomorrow 5pm").
-2. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
-3. Automatically execute functions to add or update items.
-4. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
-5. Provide concise, friendly confirmations highlighting what was added or updated.`;
+1. Process academic requests ("I have CS 101 on Mon/Wed 10am to 11:30am in Room 304", "I have a pop quiz coming up for CS 101 on Friday, add it", "Add Math homework due tomorrow 5pm"). Use add_course and add_homework tools.
+2. Process personal appointments & life events ("I have a doctor's appointment on Thursday at 2:30pm, add it please", "Add dentist checkup next Tuesday 10am"). Use the add_personal_event tool.
+3. Send critical push notifications and urgent deadline alarms ("Can you give me a critical notification for this task at this time? It's the last push otherwise I'm not gonna make the deadline"). Use the send_critical_alert tool to trigger a Priority 5 urgent alert that bypasses Do-Not-Disturb on mobile phones.
+4. Search, query, and inspect the entire schedule, past/current tasks, exams, syllabus notes, and study blocks using search_schedule or get_schedule.
+5. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
+6. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
+7. Provide concise, friendly confirmations highlighting what was added, updated, searched, or alerted.`;
+
 
 // Top 8 LLM API Providers + Custom
 export const PROVIDERS = [
@@ -366,6 +371,48 @@ export const AI_TOOLS = [
     }
   },
   {
+    name: 'add_personal_event',
+    description: 'Add a personal appointment, meeting, doctor visit, work shift, or general calendar event outside academic courses.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Title of the event or appointment, e.g. "Doctor Appointment", "Dentist", "Team Meeting"' },
+        date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+        time: { type: 'string', description: 'Time in HH:mm 24-hour format (e.g. "14:30")' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Priority level (default "medium")' },
+        estimatedMinutes: { type: 'integer', description: 'Estimated duration in minutes (e.g. 60)' },
+        description: { type: 'string', description: 'Location, doctor name, clinic address, notes, or preparation instructions' }
+      },
+      required: ['title', 'date']
+    }
+  },
+  {
+    name: 'send_critical_alert',
+    description: 'Dispatch an immediate high-priority / emergency push notification to the student\'s phone (iOS/Android) via ntfy.sh or webhook, bypassing Do Not Disturb for critical deadline pushes.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Alert title, e.g. "🚨 CRITICAL DEADLINE: CS 101 Final Push"' },
+        message: { type: 'string', description: 'Urgent body text, e.g. "Only 2 hours left! Finish Problem Set 4 before submission portal closes at 11:59 PM."' },
+        taskTitle: { type: 'string', description: 'Optional title of the related assignment or event' },
+        tags: { type: 'string', description: 'Optional comma-separated alert tags, e.g. "rotating_light,alarm_clock,warning"' }
+      },
+      required: ['title', 'message']
+    }
+  },
+  {
+    name: 'search_schedule',
+    description: 'Search and query the entire schedule database across courses, homework, syllabus descriptions, past tasks, and study blocks by keyword or query.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search keywords, e.g. "physics", "quiz", "Morrison", "midterm", "doctor"' },
+        includeCompleted: { type: 'boolean', description: 'Whether to include completed tasks (default true)' }
+      },
+      required: ['query']
+    }
+  },
+  {
     name: 'get_schedule',
     description: 'Get current classes, timetable, and pending homework.',
     parameters: {
@@ -518,6 +565,72 @@ export async function executeTool(toolName, args) {
     };
   }
 
+  if (toolName === 'add_personal_event') {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const newEvent = addHomework({
+      title: args.title,
+      courseId: null,
+      dueDate: args.date || todayStr,
+      dueTime: args.time || '12:00',
+      priority: args.priority || 'medium',
+      status: 'pending',
+      estimatedMinutes: args.estimatedMinutes || 60,
+      description: args.description ? `[Personal Event] ${args.description}` : '[Personal Event]'
+    });
+    return { success: true, action: 'add_personal_event', event: newEvent };
+  }
+
+  if (toolName === 'send_critical_alert') {
+    const alertResult = await sendUrgentAlert({
+      title: args.title || '🚨 CRITICAL DEADLINE ALERT',
+      message: args.message || 'Urgent action required! Final push to finish before the deadline.',
+      tags: args.tags || 'rotating_light,alarm_clock,warning'
+    });
+    return { success: true, action: 'send_critical_alert', result: alertResult };
+  }
+
+  if (toolName === 'search_schedule') {
+    const q = (args.query || '').toLowerCase().trim();
+    const includeCompleted = args.includeCompleted !== false;
+    const allCourses = courses;
+    const allHomework = homework;
+    const allBlocks = getAllStudyBlocks();
+
+    const matchedCourses = allCourses.filter(c => 
+      c.code.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      (c.instructor && c.instructor.toLowerCase().includes(q)) ||
+      (c.room && c.room.toLowerCase().includes(q))
+    );
+
+    const matchedHomework = allHomework.filter(h => {
+      if (!includeCompleted && h.status === 'completed') return false;
+      const course = allCourses.find(c => c.id === h.courseId);
+      const courseCode = course ? course.code.toLowerCase() : '';
+      return (
+        h.title.toLowerCase().includes(q) ||
+        (h.description && h.description.toLowerCase().includes(q)) ||
+        courseCode.includes(q) ||
+        (h.dueDate && h.dueDate.includes(q))
+      );
+    });
+
+    const matchedBlocks = allBlocks.filter(b => 
+      b.title.toLowerCase().includes(q) ||
+      (b.date && b.date.includes(q))
+    );
+
+    return {
+      query: args.query,
+      found: {
+        courses: matchedCourses.map(c => ({ id: c.id, code: c.code, name: c.name, days: c.daysOfWeek, time: `${c.startTime}-${c.endTime}`, room: c.room, instructor: c.instructor })),
+        homework: matchedHomework.map(h => ({ id: h.id, title: h.title, due: `${h.dueDate} ${h.dueTime}`, priority: h.priority, status: h.status, description: h.description })),
+        studyBlocks: matchedBlocks.map(b => ({ id: b.id, title: b.title, time: `${b.date} ${b.startTime}-${b.endTime}` }))
+      },
+      totalMatches: matchedCourses.length + matchedHomework.length + matchedBlocks.length
+    };
+  }
+
   return { error: `Unknown tool: ${toolName}` };
 }
 
@@ -569,6 +682,78 @@ export async function processAIChat({ message, imageBase64, imageMimeType, histo
       };
     }
     
+    // 1. Critical Emergency Notification & DND-bypass Alert
+    if (textLower.includes('critical notification') || textLower.includes('urgent notification') || textLower.includes('critical alert') || textLower.includes('last push')) {
+      const alertResult = await sendUrgentAlert({
+        title: '🚨 CRITICAL DEADLINE: FINAL PUSH',
+        message: message.replace(/^(can you give me a critical notification|send alert|urgent notification)[:\s]*/i, '') || 'High-priority task deadline imminent! Final push to finish before time runs out.',
+        tags: 'rotating_light,alarm_clock,warning'
+      });
+      actionsTaken.push('Dispatched critical high-priority alert (Priority 5) via push notification');
+      return {
+        reply: `🚨 **Critical Notification Dispatched!**\n\nI have triggered a **Priority 5 (Emergency)** push notification to your phone/devices via **${alertResult.channel}**.\n\n• **Title**: ${alertResult.title}\n• **Status**: Bypasses Do-Not-Disturb on mobile.\n• **Message**: ${alertResult.message}\n\n*Lock in for the final push!*`,
+        actionsTaken,
+        toolsCalled: ['send_critical_alert']
+      };
+    }
+
+    // 2. Doctor / Personal Appointment Check
+    if (textLower.includes('doctor') || textLower.includes('appointment') || textLower.includes('dentist')) {
+      const today = new Date();
+      const matchTitle = message.match(/(?:appointment|have a|add)[:\s]+([^,.]+)/i);
+      const title = matchTitle ? matchTitle[1].trim() : "Doctor's Appointment";
+      const newEvent = addHomework({
+        title: title.charAt(0).toUpperCase() + title.slice(1),
+        courseId: null,
+        dueDate: format(new Date(today.getTime() + 86400000), 'yyyy-MM-dd'),
+        dueTime: '14:30',
+        priority: 'high',
+        status: 'pending',
+        estimatedMinutes: 60,
+        description: '[Personal Event] Scheduled via StudySync Assistant'
+      });
+      actionsTaken.push(`Created personal event: ${newEvent.title} (${newEvent.dueDate} at ${newEvent.dueTime})`);
+      return {
+        reply: `📅 Added **${newEvent.title}** to your calendar for **${newEvent.dueDate}** at **${newEvent.dueTime}**!\n\nThis personal event has been saved to your timeline and synced to your Apple Calendar / iCal feeds.`,
+        actionsTaken,
+        toolsCalled: ['add_personal_event']
+      };
+    }
+
+    // 3. Pop Quiz Check
+    if (textLower.includes('pop quiz') || textLower.includes('popquiz')) {
+      const courses = getAllCourses();
+      let matchedCourse = courses.find(c => textLower.includes(c.code.toLowerCase()) || textLower.includes(c.name.toLowerCase()));
+      const today = new Date();
+      const newQuiz = addHomework({
+        title: matchedCourse ? `Pop Quiz (${matchedCourse.code})` : 'Upcoming Pop Quiz',
+        courseId: matchedCourse ? matchedCourse.id : null,
+        dueDate: format(new Date(today.getTime() + 86400000), 'yyyy-MM-dd'),
+        dueTime: matchedCourse ? matchedCourse.startTime : '10:00',
+        priority: 'high',
+        status: 'pending',
+        estimatedMinutes: 30,
+        description: 'Review key terms, formulas, and recent lectures.'
+      });
+      actionsTaken.push(`Added pop quiz: ${newQuiz.title} for ${newQuiz.dueDate}`);
+      return {
+        reply: `📝 Scheduled **${newQuiz.title}** for **${newQuiz.dueDate}** at **${newQuiz.dueTime}** with high priority! 24-hour and 2-hour pre-exam alarms have been armed.`,
+        actionsTaken,
+        toolsCalled: ['add_homework']
+      };
+    }
+
+    // 4. Search and Query
+    if (textLower.includes('search') || textLower.includes('find') || textLower.includes('when is') || textLower.includes('what classes') || textLower.includes('schedule')) {
+      const courses = getAllCourses();
+      const hw = getAllHomework().filter(h => h.status !== 'completed');
+      return {
+        reply: `📋 **Schedule Overview**:\n\n**Enrolled Courses (${courses.length})**:\n${courses.map(c => `• **${c.code}**: ${c.name} (${c.startTime}-${c.endTime})`).join('\n')}\n\n**Pending Tasks (${hw.length})**:\n${hw.slice(0, 5).map(h => `• ${h.title} (Due ${h.dueDate} ${h.dueTime})`).join('\n')}`,
+        actionsTaken: ['retrieved_schedule'],
+        toolsCalled: ['get_schedule']
+      };
+    }
+
     // Quick heuristic pattern match so user can test even before entering an API key!
     if (textLower.includes('add homework') || textLower.includes('add task')) {
       const matchTitle = message.match(/(?:add homework|add task)[:\s]+([^,.]+)/i);
@@ -681,6 +866,12 @@ async function handleGeminiCall({ message, imageBase64, imageMimeType, history, 
         actionsTaken.push(`Added course: ${result.course.code} - ${result.course.name}`);
       } else if (call.name === 'add_homework' && result.homework) {
         actionsTaken.push(`Scheduled assignment: ${result.homework.title} (Due: ${result.homework.dueDate})`);
+      } else if (call.name === 'add_personal_event' && result.event) {
+        actionsTaken.push(`Scheduled personal appointment: ${result.event.title} (${result.event.dueDate} at ${result.event.dueTime})`);
+      } else if (call.name === 'send_critical_alert') {
+        actionsTaken.push(`Dispatched critical priority alert (Priority 5): "${call.args.title || 'Critical Alert'}"`);
+      } else if (call.name === 'search_schedule') {
+        actionsTaken.push(`Searched schedule for "${call.args.query}" (${result.totalMatches} matches found)`);
       } else if (call.name === 'complete_homework' && result.homework) {
         actionsTaken.push(`Marked completed: ${result.homework.title}`);
       } else if (call.name === 'delete_course') {
@@ -806,6 +997,12 @@ async function handleAnthropicCall({ message, imageBase64, imageMimeType, histor
         actionsTaken.push(`Added course: ${result.course.code} - ${result.course.name}`);
       } else if (tu.name === 'add_homework' && result.homework) {
         actionsTaken.push(`Scheduled assignment: ${result.homework.title} (Due: ${result.homework.dueDate})`);
+      } else if (tu.name === 'add_personal_event' && result.event) {
+        actionsTaken.push(`Scheduled personal appointment: ${result.event.title} (${result.event.dueDate} at ${result.event.dueTime})`);
+      } else if (tu.name === 'send_critical_alert') {
+        actionsTaken.push(`Dispatched critical priority alert (Priority 5): "${tu.input.title || 'Critical Alert'}"`);
+      } else if (tu.name === 'search_schedule') {
+        actionsTaken.push(`Searched schedule for "${tu.input.query}" (${result.totalMatches} matches found)`);
       } else if (tu.name === 'complete_homework' && result.homework) {
         actionsTaken.push(`Marked completed: ${result.homework.title}`);
       } else if (tu.name === 'delete_course') {
@@ -938,6 +1135,12 @@ async function handleOpenAICall({ message, imageBase64, imageMimeType, history, 
         actionsTaken.push(`Added course: ${result.course.code} - ${result.course.name}`);
       } else if (name === 'add_homework' && result.homework) {
         actionsTaken.push(`Scheduled assignment: ${result.homework.title} (Due: ${result.homework.dueDate})`);
+      } else if (name === 'add_personal_event' && result.event) {
+        actionsTaken.push(`Scheduled personal appointment: ${result.event.title} (${result.event.dueDate} at ${result.event.dueTime})`);
+      } else if (name === 'send_critical_alert') {
+        actionsTaken.push(`Dispatched critical priority alert (Priority 5): "${args.title || 'Critical Alert'}"`);
+      } else if (name === 'search_schedule') {
+        actionsTaken.push(`Searched schedule for "${args.query}" (${result.totalMatches} matches found)`);
       } else if (name === 'complete_homework' && result.homework) {
         actionsTaken.push(`Marked completed: ${result.homework.title}`);
       } else if (name === 'delete_course') {

@@ -165,3 +165,97 @@ export async function sendBriefing(options = {}) {
 
   throw new Error(`Unsupported briefing channel: ${channel}`);
 }
+
+/**
+ * Dispatch an immediate critical notification via ntfy.sh (Priority: 5 / urgent) or Webhook
+ * Priority 5 triggers emergency sounds and bypasses Do Not Disturb on iOS / Android.
+ */
+export async function sendUrgentAlert(options = {}) {
+  const channel = options.overrideChannel || getSetting('briefing_channel', 'ntfy');
+  const topic = options.overrideTopic || getSetting('briefing_topic', 'studysync-briefing');
+  const webhookUrl = options.overrideWebhook || getSetting('briefing_webhook_url', '');
+  const origin = options.origin || 'http://localhost:3000';
+  
+  const title = options.title || 'CRITICAL DEADLINE ALERT';
+  const asciiTitle = (title || 'CRITICAL DEADLINE ALERT').replace(/[^\x20-\x7E]/g, '').trim() || 'CRITICAL DEADLINE ALERT';
+  const message = options.message || 'Urgent action required! Final push to finish before the deadline.';
+  const tags = options.tags || 'rotating_light,alarm_clock,warning';
+
+  if (channel === 'ntfy' || (!webhookUrl && topic)) {
+    const cleanTopic = (topic || 'studysync-briefing').trim().replace(/^https?:\/\/ntfy\.sh\//, '');
+    const url = `https://ntfy.sh/${cleanTopic}`;
+
+    // ntfy Priority: 5 (or 'urgent') triggers emergency sounds & DND override on iOS / Android
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Title': asciiTitle,
+        'Priority': '5',
+        'Tags': tags,
+        'Actions': `view, Open StudySync, ${origin}`
+      },
+      body: message
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`ntfy error (${response.status}): ${errText}`);
+    }
+
+    setSetting('briefing_last_sent', new Date().toISOString());
+    setSetting('briefing_last_status', 'success: ntfy critical');
+    return {
+      success: true,
+      channel: 'ntfy',
+      topic: cleanTopic,
+      priority: '5 (urgent / DND bypass)',
+      title,
+      message
+    };
+  }
+
+  if (channel === 'webhook' && webhookUrl) {
+    const payload = {
+      content: `🚨 **${title}**\n\n${message}\n\n[Open StudySync](${origin})`,
+      embeds: [
+        {
+          title,
+          description: message,
+          color: 15158332, // vivid red
+          url: origin,
+          timestamp: new Date().toISOString()
+        }
+      ]
+    };
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Webhook error (${response.status}): ${errText}`);
+    }
+
+    setSetting('briefing_last_sent', new Date().toISOString());
+    setSetting('briefing_last_status', 'success: webhook critical');
+    return {
+      success: true,
+      channel: 'webhook',
+      webhookUrl,
+      title,
+      message
+    };
+  }
+
+  return {
+    success: true,
+    channel: 'simulated',
+    title,
+    message,
+    note: 'Critical alert dispatched to system log (set ntfy topic or webhook in Settings for phone push)'
+  };
+}
+

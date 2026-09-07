@@ -13,12 +13,14 @@ import {
   addHomework, 
   updateHomework, 
   deleteHomework,
+  getAllStudyBlocks,
   getSetting,
   wipeAllData,
   wipeHomeworkOnly,
   wipeCanvasData
 } from '../server/db.js';
 import { syncCanvasICal, syncCanvasAPI } from '../server/canvasHandler.js';
+import { sendUrgentAlert } from '../server/briefing.js';
 import { format, parseISO, startOfDay } from 'date-fns';
 
 const server = new McpServer({
@@ -217,6 +219,85 @@ server.tool(
     deleteHomework(id);
     return {
       content: [{ type: 'text', text: `Successfully deleted homework ID: ${id}` }]
+    };
+  }
+);
+
+// 8b. add_personal_event
+server.tool(
+  'add_personal_event',
+  'Add a personal appointment, meeting, doctor visit, work shift, or general calendar reminder.',
+  {
+    title: z.string().describe('Title of the appointment or event, e.g. "Doctor Appointment"'),
+    date: z.string().describe('Date in YYYY-MM-DD format'),
+    time: z.string().optional().describe('Time in HH:mm 24-hour format (e.g. "14:30")'),
+    priority: z.enum(['low', 'medium', 'high']).optional().describe('Priority level (default "medium")'),
+    estimatedMinutes: z.number().optional().describe('Estimated duration in minutes (default 60)'),
+    description: z.string().optional().describe('Notes, location, doctor name, clinic address')
+  },
+  async (args) => {
+    const hw = addHomework({
+      title: args.title,
+      dueDate: args.date,
+      dueTime: args.time || '12:00',
+      courseId: null,
+      priority: args.priority || 'medium',
+      status: 'pending',
+      estimatedMinutes: args.estimatedMinutes || 60,
+      description: args.description ? `[Personal Event] ${args.description}` : '[Personal Event]'
+    });
+    return {
+      content: [{ type: 'text', text: `Created personal event "${hw.title}" on ${hw.dueDate} at ${hw.dueTime} (ID: ${hw.id})` }]
+    };
+  }
+);
+
+// 8c. send_critical_alert
+server.tool(
+  'send_critical_alert',
+  'Dispatch a critical emergency alert (Priority 5) via ntfy.sh or webhook to bypass Do-Not-Disturb on mobile for urgent deadlines.',
+  {
+    title: z.string().describe('Alert title, e.g. "🚨 CRITICAL DEADLINE: Final Push"'),
+    message: z.string().describe('Urgent message body'),
+    tags: z.string().optional().describe('Notification tags (e.g. "rotating_light,alarm_clock")')
+  },
+  async (args) => {
+    const res = await sendUrgentAlert(args);
+    return {
+      content: [{ type: 'text', text: `Dispatched critical notification: "${args.title}" via ${res.channel}` }]
+    };
+  }
+);
+
+// 8d. search_schedule
+server.tool(
+  'search_schedule',
+  'Full-text search across courses, homework, syllabus descriptions, and study blocks by keyword or query.',
+  {
+    query: z.string().describe('Search query, e.g. "physics", "quiz", "doctor", "exam"'),
+    includeCompleted: z.boolean().optional().describe('Whether to include completed tasks')
+  },
+  async ({ query, includeCompleted = true }) => {
+    const q = query.toLowerCase();
+    const courses = getAllCourses().filter(c => 
+      c.code.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      (c.instructor && c.instructor.toLowerCase().includes(q)) ||
+      (c.room && c.room.toLowerCase().includes(q))
+    );
+    const homework = getAllHomework().filter(h => {
+      if (!includeCompleted && h.status === 'completed') return false;
+      return h.title.toLowerCase().includes(q) || (h.description && h.description.toLowerCase().includes(q));
+    });
+    const blocks = getAllStudyBlocks().filter(b => b.title.toLowerCase().includes(q));
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          query,
+          results: { courses, homework, studyBlocks: blocks }
+        }, null, 2)
+      }]
     };
   }
 );

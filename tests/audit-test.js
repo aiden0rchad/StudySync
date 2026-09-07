@@ -321,6 +321,66 @@ async function runTests() {
     assert.ok(Array.isArray(gen.cards));
   });
 
+  // 11. AI Assistant Capabilities: Pop Quiz, Doctor Appointment, Critical Notification, and Search
+  await test('POST /api/ai/chat adds pop quiz for class', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'I have a pop quiz coming up and its not on there for CS 101, can you add it?'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('add_homework'));
+    assert.ok(data.actionsTaken.some(a => a.toLowerCase().includes('pop quiz')));
+  });
+
+  await test('POST /api/ai/chat adds doctor appointment as personal event', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'I have a doctors appointment at this day and time, add it please?'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('add_personal_event'));
+    assert.ok(data.actionsTaken.some(a => a.toLowerCase().includes('doctor')));
+  });
+
+  await test('POST /api/ai/chat sends critical priority notification for deadline push', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'can you give me a critical notification for this task at this time? Its the last push otherwise I\'m not gonna make the dead line'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('send_critical_alert'));
+    assert.ok(data.reply.includes('Priority 5') || data.reply.includes('Critical'));
+  });
+
+  await test('POST /api/ai/chat searches and queries calendar info', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'search schedule for physics and find when it is'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('get_schedule') || data.toolsCalled.includes('search_schedule'));
+  });
+
   console.log(`\n========================================`);
   console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);
