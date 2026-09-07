@@ -28,10 +28,17 @@
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Class Timetable",
-      "short_name": "Timetable",
-      "description": "View weekly schedule",
-      "url": "/?tab=week",
+      "name": "Brain Scroll Feed",
+      "short_name": "Feed",
+      "description": "Active recall study cards & flashcards",
+      "url": "/?tab=feed",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Focus Room",
+      "short_name": "Focus",
+      "description": "Pomodoro study lounge & Lock-In mode",
+      "url": "/?tab=focus",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],

@@ -27,7 +27,7 @@ export default function AIAssistantDrawer({
     {
       id: 'welcome',
       role: 'assistant',
-      content: `👋 Hi! I'm your StudySync AI Assistant.\n\nYou can tell me to schedule classes, add homework, or upload pictures/screenshots of your syllabus and assignment sheets so I can extract and add them automatically!`,
+      content: `👋 Hi! I'm your StudySync AI Assistant.\n\nYou can ask me to track assignments, advise on your Canvas grades & target GPA calculations, or upload pictures of your syllabus to auto-schedule your semester!`,
       actions: []
     }
   ]);
@@ -149,6 +149,8 @@ export default function AIAssistantDrawer({
   };
 
   const quickPrompts = [
+    { label: '📊 Grade Health Check', text: 'Analyze my current Canvas grades and tell me which courses need urgent attention or are at risk.' },
+    { label: '🎯 Target Grade Advice', text: 'What score do I need on my upcoming MATH 201 exams to achieve my target letter grade?' },
     { label: '🎮 Discord ADHD Nudge', text: 'Send an anti-procrastination ADHD nudge to Discord for my most urgent assignment' },
     { label: '🌶️ Spicy Discord Roast', text: 'Send a spicy Discord roast to motivate me to finish my homework' },
     { label: '📅 Today’s Schedule', text: 'What classes and assignments do I have today?' },
@@ -164,10 +166,10 @@ export default function AIAssistantDrawer({
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
     >
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col transition-colors">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full max-h-[100dvh] shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col transition-colors">
         
         {/* Drawer Header */}
-        <div className="px-5 py-3.5 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900 flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 pt-[max(0.875rem,calc(0.875rem+env(safe-area-inset-top,0px)))] border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
@@ -292,13 +294,13 @@ export default function AIAssistantDrawer({
         </div>
 
         {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 overflow-x-auto flex gap-1.5 scrollbar-none shrink-0">
+        <div className="px-4 py-2 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 overflow-x-auto flex gap-1.5 scrollbar-none shrink-0" style={{ WebkitOverflowScrolling: 'touch' }}>
           {quickPrompts.map((qp, idx) => (
             <button
               key={idx}
               disabled={isLoading}
               onClick={() => handleSend(qp.text)}
-              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg whitespace-nowrap transition-colors shadow-2xs"
+              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg whitespace-nowrap transition-colors shadow-2xs shrink-0"
             >
               {qp.label}
             </button>
@@ -331,7 +333,7 @@ export default function AIAssistantDrawer({
         )}
 
         {/* Input Footer */}
-        <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+        <div className="p-3 pb-[max(0.75rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))] border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();

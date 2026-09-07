@@ -399,6 +399,9 @@ export default function App() {
 
         {activeTab === 'focus' && (
           <FocusRoom
+            homework={homework}
+            courses={courses}
+            onToggleHomeworkStatus={handleToggleHomeworkStatus}
             onActionReward={triggerXPReward}
             onSessionComplete={refreshDataFromBackend}
           />
@@ -506,7 +509,7 @@ export default function App() {
       {/* Persistent Floating Ask AI Button (Bottom Right) */}
       <button
         onClick={() => setIsAIDrawerOpen(true)}
-        className={`fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 inline-flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 border border-white/20 dark:border-indigo-400/30 transition-all duration-200 group ${
+        className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3.5 sm:right-6 z-40 inline-flex items-center gap-2 px-3.5 py-2.5 sm:px-5 sm:py-3.5 rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 border border-white/20 dark:border-indigo-400/30 transition-all duration-200 group ${
           isAIDrawerOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'
         }`}
         title="Open AI Assistant (syllabus scanning, schedule analysis, tool calling)"

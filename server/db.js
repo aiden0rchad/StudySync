@@ -59,6 +59,27 @@ db.exec(`
   );
 `);
 
+// Database migrations: Ensure grade and assignment scoring columns exist
+try { db.exec("ALTER TABLE courses ADD COLUMN current_grade TEXT DEFAULT ''"); } catch (e) {}
+try { db.exec("ALTER TABLE courses ADD COLUMN current_score REAL DEFAULT NULL"); } catch (e) {}
+try { db.exec("ALTER TABLE courses ADD COLUMN final_grade TEXT DEFAULT ''"); } catch (e) {}
+try { db.exec("ALTER TABLE courses ADD COLUMN final_score REAL DEFAULT NULL"); } catch (e) {}
+
+try { db.exec("ALTER TABLE homework ADD COLUMN points_possible REAL DEFAULT NULL"); } catch (e) {}
+try { db.exec("ALTER TABLE homework ADD COLUMN score REAL DEFAULT NULL"); } catch (e) {}
+try { db.exec("ALTER TABLE homework ADD COLUMN grade TEXT DEFAULT ''"); } catch (e) {}
+try { db.exec("ALTER TABLE homework ADD COLUMN submission_status TEXT DEFAULT ''"); } catch (e) {}
+
+// Backfill realistic demo grades if empty
+try {
+  db.exec(`
+    UPDATE courses SET current_grade = 'A', current_score = 94.5 WHERE code = 'CS 101' AND (current_grade IS NULL OR current_grade = '');
+    UPDATE courses SET current_grade = 'C+', current_score = 78.2 WHERE code = 'MATH 201' AND (current_grade IS NULL OR current_grade = '');
+    UPDATE courses SET current_grade = 'B+', current_score = 88.0 WHERE code = 'PHYS 150' AND (current_grade IS NULL OR current_grade = '');
+    UPDATE courses SET current_grade = 'A-', current_score = 91.5 WHERE code = 'ENG 102' AND (current_grade IS NULL OR current_grade = '');
+  `);
+} catch (e) {}
+
 export function getInitialCourses() {
   return [
     {
@@ -71,6 +92,10 @@ export function getInitialCourses() {
       daysOfWeek: [1, 3, 5], // Mon, Wed, Fri
       startTime: '10:00',
       endTime: '11:30',
+      current_grade: 'A',
+      current_score: 94.5,
+      final_grade: 'A',
+      final_score: 94.5,
     },
     {
       id: 'course-2',
@@ -82,6 +107,10 @@ export function getInitialCourses() {
       daysOfWeek: [2, 4], // Tue, Thu
       startTime: '09:00',
       endTime: '10:30',
+      current_grade: 'C+',
+      current_score: 78.2,
+      final_grade: 'C+',
+      final_score: 78.2,
     },
     {
       id: 'course-3',
@@ -93,6 +122,10 @@ export function getInitialCourses() {
       daysOfWeek: [1, 3], // Mon, Wed
       startTime: '13:00',
       endTime: '14:30',
+      current_grade: 'B+',
+      current_score: 88.0,
+      final_grade: 'B+',
+      final_score: 88.0,
     },
     {
       id: 'course-4',
@@ -104,6 +137,10 @@ export function getInitialCourses() {
       daysOfWeek: [2, 4], // Tue, Thu
       startTime: '14:00',
       endTime: '15:30',
+      current_grade: 'A-',
+      current_score: 91.5,
+      final_grade: 'A-',
+      final_score: 91.5,
     },
   ];
 }
@@ -121,6 +158,10 @@ export function getInitialHomework() {
       priority: 'high',
       status: 'pending',
       estimatedMinutes: 90,
+      points_possible: 100,
+      score: null,
+      grade: '',
+      submission_status: 'unsubmitted'
     },
     {
       id: 'hw-2',
@@ -132,6 +173,10 @@ export function getInitialHomework() {
       priority: 'high',
       status: 'pending',
       estimatedMinutes: 120,
+      points_possible: 150,
+      score: null,
+      grade: '',
+      submission_status: 'unsubmitted'
     },
     {
       id: 'hw-3',
@@ -143,6 +188,10 @@ export function getInitialHomework() {
       priority: 'medium',
       status: 'pending',
       estimatedMinutes: 60,
+      points_possible: 50,
+      score: null,
+      grade: '',
+      submission_status: 'unsubmitted'
     },
     {
       id: 'hw-4',
@@ -154,6 +203,10 @@ export function getInitialHomework() {
       priority: 'medium',
       status: 'pending',
       estimatedMinutes: 150,
+      points_possible: 100,
+      score: null,
+      grade: '',
+      submission_status: 'unsubmitted'
     },
     {
       id: 'hw-5',
@@ -165,6 +218,10 @@ export function getInitialHomework() {
       priority: 'low',
       status: 'completed',
       estimatedMinutes: 45,
+      points_possible: 50,
+      score: 48,
+      grade: '96%',
+      submission_status: 'graded'
     },
   ];
 }
@@ -182,20 +239,26 @@ if (!isSeededRow) {
 export function seedDatabase() {
   const courses = getInitialCourses();
   const insertCourse = db.prepare(`
-    INSERT INTO courses (id, code, name, color, instructor, room, daysOfWeek, startTime, endTime)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO courses (id, code, name, color, instructor, room, daysOfWeek, startTime, endTime, current_grade, current_score, final_grade, final_score)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   courses.forEach(c => {
-    insertCourse.run(c.id, c.code, c.name, c.color, c.instructor || '', c.room || '', JSON.stringify(c.daysOfWeek), c.startTime, c.endTime);
+    insertCourse.run(
+      c.id, c.code, c.name, c.color, c.instructor || '', c.room || '', JSON.stringify(c.daysOfWeek), c.startTime, c.endTime,
+      c.current_grade || '', c.current_score ?? null, c.final_grade || '', c.final_score ?? null
+    );
   });
 
   const homework = getInitialHomework();
   const insertHw = db.prepare(`
-    INSERT INTO homework (id, courseId, title, description, dueDate, dueTime, priority, status, estimatedMinutes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO homework (id, courseId, title, description, dueDate, dueTime, priority, status, estimatedMinutes, points_possible, score, grade, submission_status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   homework.forEach(h => {
-    insertHw.run(h.id, h.courseId, h.title, h.description || '', h.dueDate, h.dueTime, h.priority, h.status, h.estimatedMinutes);
+    insertHw.run(
+      h.id, h.courseId, h.title, h.description || '', h.dueDate, h.dueTime, h.priority, h.status, h.estimatedMinutes,
+      h.points_possible ?? null, h.score ?? null, h.grade || '', h.submission_status || ''
+    );
   });
 }
 
@@ -238,8 +301,8 @@ export function addCourse(course = {}) {
     : (typeof course.daysOfWeek === 'string' ? course.daysOfWeek : '[]');
   
   db.prepare(`
-    INSERT INTO courses (id, code, name, color, instructor, room, daysOfWeek, startTime, endTime)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO courses (id, code, name, color, instructor, room, daysOfWeek, startTime, endTime, current_grade, current_score, final_grade, final_score)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     code,
@@ -249,7 +312,11 @@ export function addCourse(course = {}) {
     course.room || '',
     daysOfWeek,
     course.startTime || '09:00',
-    course.endTime || '10:00'
+    course.endTime || '10:00',
+    course.current_grade || '',
+    course.current_score !== undefined ? course.current_score : null,
+    course.final_grade || '',
+    course.final_score !== undefined ? course.final_score : null
   );
 
   return getCourseById(id);
@@ -265,7 +332,8 @@ export function updateCourse(id, course = {}) {
 
   db.prepare(`
     UPDATE courses 
-    SET code = ?, name = ?, color = ?, instructor = ?, room = ?, daysOfWeek = ?, startTime = ?, endTime = ?
+    SET code = ?, name = ?, color = ?, instructor = ?, room = ?, daysOfWeek = ?, startTime = ?, endTime = ?,
+        current_grade = ?, current_score = ?, final_grade = ?, final_score = ?
     WHERE id = ?
   `).run(
     course.code ? course.code.toString().trim().toUpperCase() : existing.code,
@@ -276,6 +344,29 @@ export function updateCourse(id, course = {}) {
     daysOfWeek,
     course.startTime || existing.startTime,
     course.endTime || existing.endTime,
+    course.current_grade !== undefined ? course.current_grade : existing.current_grade,
+    course.current_score !== undefined ? course.current_score : existing.current_score,
+    course.final_grade !== undefined ? course.final_grade : existing.final_grade,
+    course.final_score !== undefined ? course.final_score : existing.final_score,
+    id
+  );
+
+  return getCourseById(id);
+}
+
+export function updateCourseGrade(id, { current_grade, current_score, final_grade, final_score } = {}) {
+  const existing = getCourseById(id);
+  if (!existing) return null;
+
+  db.prepare(`
+    UPDATE courses
+    SET current_grade = ?, current_score = ?, final_grade = ?, final_score = ?
+    WHERE id = ?
+  `).run(
+    current_grade !== undefined ? current_grade : existing.current_grade,
+    current_score !== undefined ? current_score : existing.current_score,
+    final_grade !== undefined ? final_grade : existing.final_grade,
+    final_score !== undefined ? final_score : existing.final_score,
     id
   );
 
@@ -303,8 +394,8 @@ export function addHomework(hw = {}) {
   const dueDate = hw.dueDate || format(new Date(), 'yyyy-MM-dd');
 
   db.prepare(`
-    INSERT INTO homework (id, courseId, title, description, dueDate, dueTime, priority, status, estimatedMinutes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO homework (id, courseId, title, description, dueDate, dueTime, priority, status, estimatedMinutes, points_possible, score, grade, submission_status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     hw.courseId || null,
@@ -314,7 +405,11 @@ export function addHomework(hw = {}) {
     hw.dueTime || '23:59',
     hw.priority || 'medium',
     hw.status || 'pending',
-    Number(hw.estimatedMinutes) || 0
+    Number(hw.estimatedMinutes) || 0,
+    hw.points_possible !== undefined ? hw.points_possible : null,
+    hw.score !== undefined ? hw.score : null,
+    hw.grade || '',
+    hw.submission_status || (hw.status === 'completed' ? 'submitted' : 'unsubmitted')
   );
 
   return getHomeworkById(id);
@@ -326,7 +421,8 @@ export function updateHomework(id, hw) {
 
   db.prepare(`
     UPDATE homework
-    SET courseId = ?, title = ?, description = ?, dueDate = ?, dueTime = ?, priority = ?, status = ?, estimatedMinutes = ?
+    SET courseId = ?, title = ?, description = ?, dueDate = ?, dueTime = ?, priority = ?, status = ?, estimatedMinutes = ?,
+        points_possible = ?, score = ?, grade = ?, submission_status = ?
     WHERE id = ?
   `).run(
     hw.courseId !== undefined ? hw.courseId : existing.courseId,
@@ -337,6 +433,10 @@ export function updateHomework(id, hw) {
     hw.priority || existing.priority,
     hw.status || existing.status,
     hw.estimatedMinutes !== undefined ? Number(hw.estimatedMinutes) : existing.estimatedMinutes,
+    hw.points_possible !== undefined ? hw.points_possible : existing.points_possible,
+    hw.score !== undefined ? hw.score : existing.score,
+    hw.grade !== undefined ? hw.grade : existing.grade,
+    hw.submission_status !== undefined ? hw.submission_status : existing.submission_status,
     id
   );
 
@@ -502,6 +602,106 @@ export function getDatabaseStats() {
     pendingCount,
     completedCount,
     canvasMode
+  };
+}
+
+export function getGradesOverview() {
+  const courses = getAllCourses();
+  const homework = getAllHomework();
+
+  const gradeToGpa = (letter, score) => {
+    if (letter) {
+      const clean = letter.trim().toUpperCase();
+      if (clean.startsWith('A+')) return 4.0;
+      if (clean.startsWith('A-')) return 3.7;
+      if (clean.startsWith('A')) return 4.0;
+      if (clean.startsWith('B+')) return 3.3;
+      if (clean.startsWith('B-')) return 2.7;
+      if (clean.startsWith('B')) return 3.0;
+      if (clean.startsWith('C+')) return 2.3;
+      if (clean.startsWith('C-')) return 1.7;
+      if (clean.startsWith('C')) return 2.0;
+      if (clean.startsWith('D')) return 1.0;
+      if (clean.startsWith('F')) return 0.0;
+    }
+    if (typeof score === 'number') {
+      if (score >= 93) return 4.0;
+      if (score >= 90) return 3.7;
+      if (score >= 87) return 3.3;
+      if (score >= 83) return 3.0;
+      if (score >= 80) return 2.7;
+      if (score >= 77) return 2.3;
+      if (score >= 73) return 2.0;
+      if (score >= 70) return 1.7;
+      if (score >= 60) return 1.0;
+      return 0.0;
+    }
+    return null;
+  };
+
+  let totalGpaPoints = 0;
+  let gradedCourseCount = 0;
+
+  const courseReports = courses.map(c => {
+    const courseHw = homework.filter(h => h.courseId === c.id);
+    const gradedHw = courseHw.filter(h => h.score !== null && h.score !== undefined);
+    const pendingHw = courseHw.filter(h => h.status !== 'completed');
+
+    const score = c.current_score !== null && c.current_score !== undefined ? Number(c.current_score) : null;
+    let riskLevel = 'safe';
+    if (score !== null) {
+      if (score < 75) riskLevel = 'critical';
+      else if (score < 83) riskLevel = 'warning';
+    } else if (c.current_grade) {
+      const firstChar = c.current_grade.trim().toUpperCase()[0];
+      if (['D', 'F'].includes(firstChar)) riskLevel = 'critical';
+      else if (['C'].includes(firstChar)) riskLevel = 'warning';
+    }
+
+    const gpaVal = gradeToGpa(c.current_grade, score);
+    if (gpaVal !== null) {
+      totalGpaPoints += gpaVal;
+      gradedCourseCount++;
+    }
+
+    // High impact upcoming assignments (weight or priority)
+    const upcomingHighImpact = pendingHw
+      .filter(h => h.priority === 'high' || (h.points_possible && h.points_possible >= 50) || /quiz|exam|test|midterm|final|project/i.test(h.title))
+      .map(h => ({
+        id: h.id,
+        title: h.title,
+        dueDate: h.dueDate,
+        dueTime: h.dueTime,
+        pointsPossible: h.points_possible,
+        priority: h.priority
+      }));
+
+    return {
+      id: c.id,
+      code: c.code,
+      name: c.name,
+      color: c.color,
+      currentGrade: c.current_grade || 'N/A',
+      currentScore: score,
+      finalGrade: c.final_grade || '',
+      finalScore: c.final_score !== null && c.final_score !== undefined ? Number(c.final_score) : null,
+      riskLevel, // 'safe' | 'warning' | 'critical'
+      gpaPoints: gpaVal,
+      pendingAssignmentsCount: pendingHw.length,
+      upcomingHighImpact
+    };
+  });
+
+  const cumulativeGpa = gradedCourseCount > 0 ? (totalGpaPoints / gradedCourseCount).toFixed(2) : '3.50';
+  const coursesNeedingAttention = courseReports.filter(r => r.riskLevel === 'critical' || r.riskLevel === 'warning');
+
+  return {
+    courses: courseReports,
+    cumulativeGpa: Number(cumulativeGpa),
+    gradedCourses: gradedCourseCount,
+    totalCourses: courses.length,
+    coursesNeedingAttention,
+    lastUpdated: new Date().toISOString()
   };
 }
 

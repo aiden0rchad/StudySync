@@ -69,10 +69,10 @@ export default defineConfig({
       { text: 'Self-Hosting', link: '/operations/docker' },
       { text: 'Reference', link: '/reference/mcp-server' },
       {
-        text: 'v0.1.1',
+        text: 'v0.1.2',
         items: [
           { text: 'GitHub Repository', link: 'https://github.com/aiden0rchad/StudySync' },
-          { text: 'v0.1.1 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.1' },
+          { text: 'v0.1.2 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.2' },
           { text: 'Docker Compose Guide', link: '/operations/docker' }
         ]
       }

@@ -82,10 +82,10 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)] animate-in zoom-in-95 duration-200">
         
         {/* Header with Level & Scholar Rank */}
-        <div className="relative bg-gradient-to-tr from-indigo-600 via-violet-600 to-purple-600 p-6 text-white text-center">
+        <div className="relative bg-gradient-to-tr from-indigo-600 via-violet-600 to-purple-600 p-6 text-white text-center shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95"

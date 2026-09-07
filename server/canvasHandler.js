@@ -1,6 +1,7 @@
 import { 
   getAllCourses, 
   addCourse, 
+  updateCourse,
   getAllHomework, 
   addHomework, 
   updateHomework, 
@@ -301,8 +302,8 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
     'Accept': 'application/json'
   };
 
-  // 1. Fetch active courses
-  const coursesRes = await fetch(`${domain}/api/v1/courses?enrollment_state=active&per_page=50`, { headers });
+  // 1. Fetch active courses with total scores and grading periods
+  const coursesRes = await fetch(`${domain}/api/v1/courses?include[]=total_scores&include[]=current_grading_period_scores&enrollment_state=active&per_page=50`, { headers });
   if (!coursesRes.ok) {
     throw new Error(`Failed to connect to Canvas API (HTTP ${coursesRes.status}). Verify your domain and token.`);
   }
@@ -310,6 +311,29 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
   const canvasCourses = await coursesRes.json();
   if (!Array.isArray(canvasCourses)) {
     throw new Error('Invalid response from Canvas API');
+  }
+
+  // 1b. Fetch user enrollments to extract accurate student grades
+  const enrollmentMap = new Map();
+  try {
+    const enrollRes = await fetch(`${domain}/api/v1/users/self/enrollments?state[]=active&per_page=50`, { headers });
+    if (enrollRes.ok) {
+      const enrollments = await enrollRes.json();
+      if (Array.isArray(enrollments)) {
+        for (const en of enrollments) {
+          if (en.course_id && en.grades) {
+            enrollmentMap.set(en.course_id, {
+              current_grade: en.grades.current_grade || '',
+              current_score: en.grades.current_score !== undefined ? en.grades.current_score : null,
+              final_grade: en.grades.final_grade || '',
+              final_score: en.grades.final_score !== undefined ? en.grades.final_score : null
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Non-fatal if enrollments endpoint isn't supported
   }
 
   const existingCourses = getAllCourses();
@@ -332,9 +356,33 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
     const name = cc.name || code;
     const codeKey = code.toLowerCase();
 
+    // Extract student grades from enrollments
+    const enrollFromMap = enrollmentMap.get(cc.id);
+    const studentEnroll = (cc.enrollments || []).find(e => e.type === 'student' || e.role === 'StudentEnrollment') || cc.enrollments?.[0];
+    const currentGrade = enrollFromMap?.current_grade || studentEnroll?.computed_current_grade || studentEnroll?.current_grade || '';
+    const currentScore = enrollFromMap?.current_score !== undefined && enrollFromMap?.current_score !== null 
+      ? Number(enrollFromMap.current_score) 
+      : (studentEnroll?.computed_current_score !== undefined && studentEnroll?.computed_current_score !== null 
+        ? Number(studentEnroll.computed_current_score) 
+        : (studentEnroll?.current_score !== undefined && studentEnroll?.current_score !== null ? Number(studentEnroll.current_score) : null));
+    const finalGrade = enrollFromMap?.final_grade || studentEnroll?.computed_final_grade || studentEnroll?.final_grade || '';
+    const finalScore = enrollFromMap?.final_score !== undefined && enrollFromMap?.final_score !== null 
+      ? Number(enrollFromMap.final_score) 
+      : (studentEnroll?.computed_final_score !== undefined && studentEnroll?.computed_final_score !== null 
+        ? Number(studentEnroll.computed_final_score) 
+        : null);
+
     let studySyncCourseId = null;
     if (courseMap.has(codeKey)) {
       studySyncCourseId = courseMap.get(codeKey);
+      if (currentGrade || currentScore !== null) {
+        updateCourse(studySyncCourseId, {
+          current_grade: currentGrade,
+          current_score: currentScore,
+          final_grade: finalGrade,
+          final_score: finalScore
+        });
+      }
     } else {
       const color = COLOR_PALETTE[existingCourses.length % COLOR_PALETTE.length];
       const created = addCourse({
@@ -345,7 +393,11 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
         startTime: '10:00',
         endTime: '11:30',
         instructor: 'Canvas Instructor',
-        room: 'Canvas'
+        room: 'Canvas',
+        current_grade: currentGrade,
+        current_score: currentScore,
+        final_grade: finalGrade,
+        final_score: finalScore
       });
       studySyncCourseId = created.id;
       courseMap.set(codeKey, studySyncCourseId);
@@ -353,9 +405,9 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
       newCoursesCount++;
     }
 
-    // 2. Fetch assignments for this course
+    // 2. Fetch assignments for this course with submission details
     try {
-      const assignRes = await fetch(`${domain}/api/v1/courses/${cc.id}/assignments?bucket=upcoming&per_page=50`, { headers });
+      const assignRes = await fetch(`${domain}/api/v1/courses/${cc.id}/assignments?include[]=submission&bucket=upcoming&per_page=50`, { headers });
       if (assignRes.ok) {
         const assignments = await assignRes.json();
         if (Array.isArray(assignments)) {
@@ -372,13 +424,22 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
               return false;
             });
 
-            const hasSubmitted = a.has_submitted_submissions || false;
+            const hasSubmitted = a.has_submitted_submissions || Boolean(a.submission?.submitted_at);
+            const sub = a.submission;
+            const score = sub?.score !== undefined && sub?.score !== null ? Number(sub.score) : null;
+            const grade = sub?.grade ? String(sub.grade) : '';
+            const submissionStatus = sub?.workflow_state || (hasSubmitted ? 'submitted' : 'unsubmitted');
+            const pointsPossible = a.points_possible !== undefined && a.points_possible !== null ? Number(a.points_possible) : null;
 
             if (existingHw) {
               updateHomework(existingHw.id, {
                 status: hasSubmitted ? 'completed' : existingHw.status,
                 dueTime: timeStr,
-                description: a.description ? a.description.replace(/<[^>]+>/g, '').slice(0, 1000) : existingHw.description
+                description: a.description ? a.description.replace(/<[^>]+>/g, '').slice(0, 1000) : existingHw.description,
+                points_possible: pointsPossible !== null ? pointsPossible : existingHw.points_possible,
+                score: score !== null ? score : existingHw.score,
+                grade: grade || existingHw.grade,
+                submission_status: submissionStatus
               });
               updatedHomeworkCount++;
             } else {
@@ -388,10 +449,14 @@ export async function syncCanvasAPI(canvasDomain, apiToken) {
                 title: a.name,
                 dueDate: dateStr,
                 dueTime: timeStr,
-                priority: a.points_possible && a.points_possible >= 50 ? 'high' : 'medium',
+                priority: pointsPossible && pointsPossible >= 50 ? 'high' : 'medium',
                 status: hasSubmitted ? 'completed' : 'pending',
                 estimatedMinutes: 60,
-                description: a.description ? a.description.replace(/<[^>]+>/g, '').slice(0, 1000) : ''
+                description: a.description ? a.description.replace(/<[^>]+>/g, '').slice(0, 1000) : '',
+                points_possible: pointsPossible,
+                score,
+                grade,
+                submission_status: submissionStatus
               });
               existingHomework.push(newHw);
               newHomeworkCount++;

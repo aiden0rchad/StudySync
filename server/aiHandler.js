@@ -10,30 +10,65 @@ import {
   getSetting,
   wipeAllData,
   wipeHomeworkOnly,
-  wipeCanvasData
+  wipeCanvasData,
+  getGradesOverview
 } from './db.js';
 import { format, parseISO } from 'date-fns';
 import { syncCanvasICal, syncCanvasAPI } from './canvasHandler.js';
 import { sendUrgentAlert } from './briefing.js';
 import { sendDiscordNudge } from './discordHandler.js';
 
-// Assistant system prompt for schedule management and notifications
-const SYSTEM_PROMPT = `You are the StudySync calendar and task management assistant.
-The current date is ${format(new Date(), 'EEEE, MMMM d, yyyy')}.
+// Dynamic Assistant system prompt for schedule management, academic performance, and notifications
+export function getSystemPrompt() {
+  const dateStr = format(new Date(), 'EEEE, MMMM d, yyyy');
+  let gradeContext = '';
+  try {
+    const grades = getGradesOverview();
+    if (grades && grades.courses && grades.courses.length > 0) {
+      gradeContext = `\n\nCURRENT ACADEMIC PERFORMANCE & CANVAS GRADES (Estimated GPA: ${grades.cumulativeGpa}):\n` +
+        grades.courses.map(c => {
+          const scoreText = c.currentScore !== null ? `${c.currentScore}%` : 'No score yet';
+          const gradeText = c.currentGrade || 'Ungraded';
+          const alert = c.riskLevel === 'critical' 
+            ? ' ⚠️ [CRITICAL RISK: Grade below 75% / D/F - Needs immediate intervention!]'
+            : c.riskLevel === 'warning'
+            ? ' ⚡ [WARNING: Grade below 83% / C - Slipping, needs strategic focus]'
+            : ' [Good standing]';
+          const pendingCount = c.pendingAssignmentsCount > 0 ? ` (${c.pendingAssignmentsCount} pending assignments)` : '';
+          return `- ${c.code} (${c.name}): ${scoreText} (${gradeText})${alert}${pendingCount}`;
+        }).join('\n');
 
-You help students manage recurring weekly classes, study blocks, homework deadlines, assignments, exams, and personal events/appointments (e.g. doctor visits, dentist appointments, meetings, work shifts).
-You also provide motivational reminders, ADHD task-initiation micro-steps, and critical deadline alerts via Discord webhooks and push notifications.
-You have access to tools that can directly create, delete, search, notify, and manage classes, homework, personal events, and alerts in the user's database.
+      if (grades.coursesNeedingAttention && grades.coursesNeedingAttention.length > 0) {
+        gradeContext += `\n⚠️ CLASSES NEEDING IMMEDIATE ATTENTION:\n` +
+          grades.coursesNeedingAttention.map(c => `- ${c.code}: Current grade is ${c.currentGrade} (${c.currentScore}%). Advise the student to prioritize upcoming assignments for this class to raise their grade.`).join('\n');
+      }
+    }
+  } catch (e) {}
+
+  return `You are the StudySync calendar, academic advisor, and task management assistant.
+The current date is ${dateStr}.
+
+You help students manage recurring weekly classes, study blocks, homework deadlines, assignments, exams, and personal events/appointments.
+You also monitor Canvas LMS grades, warn students about endangered or slipping grades, calculate what scores are needed on upcoming exams or assignments to maintain or reach target letter grades, and provide motivational reminders, ADHD task-initiation micro-steps, and critical deadline alerts via Discord webhooks and push notifications.
+You have access to tools that can directly query grades, calculate target scores, create, delete, search, notify, and manage classes, homework, personal events, and alerts in the user's database.${gradeContext}
 
 Capabilities:
-1. Process academic requests ("I have CS 101 on Mon/Wed 10am to 11:30am in Room 304", "I have a pop quiz coming up for CS 101 on Friday, add it", "Add Math homework due tomorrow 5pm"). Use add_course and add_homework tools.
-2. Process personal appointments & life events ("I have a doctor's appointment on Thursday at 2:30pm, add it please", "Add dentist checkup next Tuesday 10am"). Use the add_personal_event tool.
-3. Send critical push notifications and urgent deadline alarms ("Can you give me a critical notification for this task at this time? It's the last push otherwise I'm not gonna make the deadline"). Use the send_critical_alert tool to trigger a Priority 5 urgent alert that bypasses Do-Not-Disturb on mobile phones.
-4. Discord study coach ("Nag me on Discord for my quiz", "Send an ADHD micro-step prompt to Discord for my essay", "Send a spicy roast to Discord"). Use the send_discord_nudge tool to deliver motivational embeds.
-5. Search, query, and inspect the entire schedule, past/current tasks, exams, syllabus notes, and study blocks using search_schedule or get_schedule.
-6. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
-7. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
-8. Provide concise, friendly confirmations highlighting what was added, updated, searched, or alerted.`;
+1. Academic performance & grade advisory:
+   - Provide grade health checks and semester GPA analysis.
+   - Proactively warn students when a class grade drops below B or is at risk (e.g. C, D, or F).
+   - Advise which upcoming assignments or tests have the highest point values and impact on final grades.
+   - Calculate required scores on upcoming finals/midterms to achieve a target letter grade (use calculate_target_grade or get_grades).
+2. Process academic requests ("I have CS 101 on Mon/Wed 10am to 11:30am in Room 304", "I have a pop quiz coming up for CS 101 on Friday, add it", "Add Math homework due tomorrow 5pm"). Use add_course and add_homework tools.
+3. Process personal appointments & life events ("I have a doctor's appointment on Thursday at 2:30pm, add it please", "Add dentist checkup next Tuesday 10am"). Use the add_personal_event tool.
+4. Send critical push notifications and urgent deadline alarms ("Can you give me a critical notification for this task at this time? It's the last push otherwise I'm not gonna make the deadline"). Use the send_critical_alert tool to trigger a Priority 5 urgent alert that bypasses Do-Not-Disturb on mobile phones.
+5. Discord study coach ("Nag me on Discord for my quiz", "Send an ADHD micro-step prompt to Discord for my essay", "Send a spicy roast to Discord"). Use the send_discord_nudge tool to deliver motivational embeds.
+6. Search, query, and inspect the entire schedule, past/current tasks, exams, syllabus notes, and study blocks using search_schedule or get_schedule.
+7. Process images (syllabi, handwritten homework lists, course schedule screenshots, assignment sheets). Extract course details, dates, times, and deadlines accurately.
+8. When adding classes, daysOfWeek should be integers: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
+9. Provide concise, friendly confirmations highlighting what was added, updated, searched, advised, or alerted.`;
+}
+
+export const SYSTEM_PROMPT = getSystemPrompt();
 
 
 // Top 8 LLM API Providers + Custom
@@ -474,12 +509,82 @@ export const AI_TOOLS = [
       },
       required: ['target', 'confirm']
     }
+  },
+  {
+    name: 'get_grades',
+    description: 'Get current grades, percentage scores, risk levels, and high-impact upcoming assignments across enrolled courses.',
+    parameters: {
+      type: 'object',
+      properties: {
+        courseCode: { type: 'string', description: 'Optional course code to filter, e.g. "MATH 201" or "CS 101"' }
+      }
+    }
+  },
+  {
+    name: 'calculate_target_grade',
+    description: 'Calculate what score is required on remaining assignments, midterms, or final exams to achieve a target letter grade (e.g. A, A-, B+).',
+    parameters: {
+      type: 'object',
+      properties: {
+        courseCode: { type: 'string', description: 'Course code, e.g. "MATH 201"' },
+        targetGrade: { type: 'string', description: 'Desired target letter grade (e.g. "A", "B+") or percentage (e.g. 90)' },
+        finalExamWeightPercent: { type: 'number', description: 'Weight of the final exam in percentage, defaults to 30%' }
+      },
+      required: ['courseCode', 'targetGrade']
+    }
   }
 ];
 
 export async function executeTool(toolName, args) {
   const courses = getAllCourses();
   const homework = getAllHomework();
+
+  if (toolName === 'get_grades') {
+    const grades = getGradesOverview();
+    if (args.courseCode) {
+      const match = grades.courses.find(c => c.code.toLowerCase().includes(args.courseCode.toLowerCase()));
+      if (!match) return { error: `Course not found: ${args.courseCode}` };
+      return { success: true, action: 'get_grades', course: match };
+    }
+    return { success: true, action: 'get_grades', ...grades };
+  }
+
+  if (toolName === 'calculate_target_grade') {
+    const grades = getGradesOverview();
+    const course = grades.courses.find(c => c.code.toLowerCase().includes(args.courseCode.toLowerCase()));
+    if (!course) return { error: `Course not found: ${args.courseCode}` };
+
+    const targetMap = {
+      'A+': 97, 'A': 93, 'A-': 90,
+      'B+': 87, 'B': 83, 'B-': 80,
+      'C+': 77, 'C': 73, 'C-': 70,
+      'D': 65
+    };
+    const targetPercent = targetMap[args.targetGrade.toUpperCase()] || parseFloat(args.targetGrade) || 90;
+    const currentScore = course.currentScore !== null ? course.currentScore : 85;
+    const finalWeight = (args.finalExamWeightPercent || 30) / 100;
+    const currentWeight = 1 - finalWeight;
+
+    const requiredFinal = (targetPercent - (currentScore * currentWeight)) / finalWeight;
+    const rounded = Math.round(requiredFinal * 10) / 10;
+    const isFeasible = rounded <= 100;
+
+    return {
+      success: true,
+      action: 'calculate_target_grade',
+      courseCode: course.code,
+      currentScore,
+      currentGrade: course.currentGrade,
+      targetGrade: args.targetGrade,
+      targetPercent,
+      finalExamWeightPercent: (finalWeight * 100) + '%',
+      requiredScoreOnFinal: rounded,
+      isFeasible,
+      advice: isFeasible
+        ? `To achieve an ${args.targetGrade} (${targetPercent}%) in ${course.code}, you need a ${rounded}% on the final exam.`
+        : `An ${args.targetGrade} in ${course.code} would mathematically require ${rounded}% on the final exam. Consider aiming for a realistic grade target or asking your professor for extra credit.`
+    };
+  }
 
   if (toolName === 'wipe_calendar') {
     if (!args.confirm) {
@@ -820,6 +925,72 @@ export async function processAIChat({ message, imageBase64, imageMimeType, histo
       }
     }
 
+    // 6. Target Grade Calculation & Final Exam Advice
+    if (textLower.includes('target grade') || textLower.includes('what do i need') || textLower.includes('what score') || textLower.includes('to get an a') || textLower.includes('to pass')) {
+      const grades = getGradesOverview();
+      const courses = grades.courses;
+      let targetCourse = courses.find(c => textLower.includes(c.code.toLowerCase()) || textLower.includes(c.name.toLowerCase())) || courses[0];
+      
+      let targetGrade = 'A';
+      if (textLower.includes('a-')) targetGrade = 'A-';
+      else if (textLower.includes('b+')) targetGrade = 'B+';
+      else if (textLower.includes('b-')) targetGrade = 'B-';
+      else if (textLower.includes('b')) targetGrade = 'B';
+      else if (textLower.includes('pass') || textLower.includes('c')) targetGrade = 'C';
+
+      const targetMap = { 'A+': 97, 'A': 93, 'A-': 90, 'B+': 87, 'B': 83, 'B-': 80, 'C+': 77, 'C': 73, 'C-': 70, 'D': 65 };
+      const targetPercent = targetMap[targetGrade] || 90;
+      const currentScore = targetCourse.currentScore !== null ? targetCourse.currentScore : 85;
+      const finalWeight = 0.3; // 30%
+      const currentWeight = 0.7;
+      const requiredFinal = Math.round(((targetPercent - (currentScore * currentWeight)) / finalWeight) * 10) / 10;
+      const isFeasible = requiredFinal <= 100;
+
+      actionsTaken.push(`Calculated target grade for ${targetCourse.code}`);
+      return {
+        reply: `🎯 **Academic Target Grade Calculation for ${targetCourse.code}**:\n\n` +
+          `• **Current Standing**: **${targetCourse.currentGrade}** (${currentScore}%)\n` +
+          `• **Target Goal**: **${targetGrade}** (${targetPercent}%)\n` +
+          `• **Assumed Final Exam Weight**: 30%\n` +
+          `• **Required Score on Final Exam**: **${requiredFinal}%**\n\n` +
+          (isFeasible 
+            ? `💡 **Strategy**: You need at least a **${requiredFinal}%** on the final exam. Since this is well within reach, focus on high-yield chapters and complete all upcoming problem sets for maximum buffer!`
+            : `⚠️ **Warning**: Mathematically reaching an ${targetGrade} requires a **${requiredFinal}%** on the final. Consider aiming for a ${targetGrade === 'A' ? 'B+' : 'solid passing grade'} and talk to your instructor about extra credit opportunities!`),
+        actionsTaken,
+        toolsCalled: ['calculate_target_grade']
+      };
+    }
+
+    // 7. Academic Performance & Canvas Grade Health Check
+    if (textLower.includes('grade') || textLower.includes('gpa') || textLower.includes('failing') || textLower.includes('how am i doing') || textLower.includes('warn me') || textLower.includes('academic standing')) {
+      const grades = getGradesOverview();
+      actionsTaken.push('analyzed_academic_grades');
+      
+      const attentionCourses = grades.coursesNeedingAttention;
+      let adviceBlock = '';
+      if (attentionCourses.length > 0) {
+        adviceBlock = `\n\n⚠️ **Academic Warnings & Immediate Advice**:\n` +
+          attentionCourses.map(c => `• **${c.code} (${c.currentGrade} / ${c.currentScore}%)**: Grade is below target. ${c.upcomingHighImpact.length > 0 ? `Upcoming high-impact task: **${c.upcomingHighImpact[0].title}** (Due ${c.upcomingHighImpact[0].dueDate}) — Prioritize this task first to boost your grade!` : 'Ensure all upcoming assignments are submitted on time.'}`).join('\n');
+      } else {
+        adviceBlock = `\n\n✨ **All courses in solid standing!** Keep up the steady progress.`;
+      }
+
+      const report = `📊 **Academic Performance & Canvas Grade Overview**\n` +
+        `**Estimated Semester GPA**: **${grades.cumulativeGpa}**\n\n` +
+        `**Course Standings**:\n` +
+        grades.courses.map(c => {
+          const badge = c.riskLevel === 'critical' ? '🔴 Critical Attention' : c.riskLevel === 'warning' ? '🟡 Warning' : '🟢 Solid';
+          return `• **${c.code}**: **${c.currentGrade}** (${c.currentScore !== null ? `${c.currentScore}%` : 'N/A'}) — ${badge}`;
+        }).join('\n') +
+        adviceBlock;
+
+      return {
+        reply: report,
+        actionsTaken,
+        toolsCalled: ['get_grades']
+      };
+    }
+
     // Quick heuristic pattern match so user can test even before entering an API key!
     if (textLower.includes('add homework') || textLower.includes('add task')) {
       const matchTitle = message.match(/(?:add homework|add task)[:\s]+([^,.]+)/i);
@@ -887,7 +1058,7 @@ async function handleGeminiCall({ message, imageBase64, imageMimeType, history, 
 
   const payload = {
     system_instruction: {
-      parts: [{ text: SYSTEM_PROMPT }]
+      parts: [{ text: getSystemPrompt() }]
     },
     tools: geminiTools,
     contents: [
@@ -957,7 +1128,7 @@ async function handleGeminiCall({ message, imageBase64, imageMimeType, history, 
     // Follow-up request with tool results to generate user-facing summary
     const followUpPayload = {
       system_instruction: {
-        parts: [{ text: SYSTEM_PROMPT }]
+        parts: [{ text: getSystemPrompt() }]
       },
       tools: geminiTools,
       contents: [
@@ -1037,7 +1208,7 @@ async function handleAnthropicCall({ message, imageBase64, imageMimeType, histor
     body: JSON.stringify({
       model: model || 'claude-3-5-sonnet-20241022',
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
+      system: getSystemPrompt(),
       messages,
       tools: anthropicTools
     })
@@ -1090,7 +1261,7 @@ async function handleAnthropicCall({ message, imageBase64, imageMimeType, histor
       body: JSON.stringify({
         model: model || 'claude-3-5-sonnet-20241022',
         max_tokens: 2048,
-        system: SYSTEM_PROMPT,
+        system: getSystemPrompt(),
         messages: [
           ...messages,
           { role: 'assistant', content: data.content },
@@ -1155,7 +1326,7 @@ async function handleOpenAICall({ message, imageBase64, imageMimeType, history, 
   }
 
   const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: getSystemPrompt() },
     ...history.map(h => ({ role: h.role, content: h.content })),
     { role: 'user', content: userContent.length === 1 && userContent[0].type === 'text' ? userContent[0].text : userContent }
   ];

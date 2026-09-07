@@ -1,7 +1,7 @@
 {
   "name": "studysync",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Student schedule and homework planner with Canvas LMS integration, Apple Calendar synchronization, and local SQLite storage",
   "repository": {
     "type": "git",
@@ -17,7 +17,11 @@
     "mcp": "node mcp/server.js",
     "test": "node tests/audit-test.js && node tests/security-check.js",
     "test:security": "node tests/security-check.js",
-    "test:audit": "node tests/audit-test.js"
+    "test:audit": "node tests/audit-test.js",
+    "docker:build": "docker build -t studysync:latest .",
+    "docker:build:arm64": "docker buildx build --platform linux/arm64 -t studysync:arm64 --load .",
+    "docker:build:amd64": "docker buildx build --platform linux/amd64 -t studysync:amd64 --load .",
+    "docker:build:multiarch": "docker buildx build --platform linux/amd64,linux/arm64 -t studysync:latest ."
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

@@ -443,3 +443,27 @@ export async function createStudyCardAPI(cardData) {
   if (!res.ok) throw new Error('Failed to create card');
   return await res.json();
 }
+
+export async function fetchGradesOverviewAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/grades`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch grades overview:', e);
+  }
+  return { courses: [], cumulativeGpa: 0, coursesNeedingAttention: [] };
+}
+
+export async function updateCourseGradeAPI(courseId, gradeData) {
+  const res = await fetch(`${API_BASE}/courses/${courseId}/grade`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(gradeData)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update course grade');
+  }
+  return await res.json();
+}
+

@@ -24,7 +24,9 @@ import {
   getAllStudyBlocks,
   addStudyBlock,
   deleteStudyBlock,
-  clearStudyBlocks
+  clearStudyBlocks,
+  updateCourseGrade,
+  getGradesOverview
 } from './db.js';
 import { processAIChat, fetchProviderModels, PROVIDERS } from './aiHandler.js';
 import { syncCanvasICal, syncCanvasAPI, getCanvasStatus, disconnectCanvas } from './canvasHandler.js';
@@ -103,6 +105,26 @@ app.delete('/api/courses/:id', (req, res) => {
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// Grades & Academic Performance
+app.get('/api/grades', (req, res) => {
+  try {
+    const grades = getGradesOverview();
+    res.json(grades);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/courses/:id/grade', (req, res) => {
+  try {
+    const course = updateCourseGrade(req.params.id, req.body);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.json(course);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 

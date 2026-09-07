@@ -89,6 +89,46 @@ export default function StudyFeed({
 
   const currentCard = cards[currentIndex];
 
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+  const touchEndY = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndY.current = e.changedTouches[0].clientY;
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipeGesture();
+  };
+
+  const handleSwipeGesture = () => {
+    const deltaY = touchStartY.current - touchEndY.current;
+    const deltaX = touchStartX.current - touchEndX.current;
+
+    // Dominant vertical swipe (like TikTok / Reels)
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 40) {
+      if (deltaY > 40) {
+        // Swiped up -> Next card
+        handleNext();
+      } else if (deltaY < -40) {
+        // Swiped down -> Previous card
+        handlePrev();
+      }
+    } else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 45) {
+      if (deltaX > 45) {
+        // Swiped left -> Next card
+        handleNext();
+      } else if (deltaX < -45) {
+        // Swiped right -> Previous card
+        handlePrev();
+      }
+    }
+  };
+
   const handleFlip = () => {
     audioFX.playCardFlip();
     setIsFlipped(prev => !prev);
@@ -258,8 +298,12 @@ export default function StudyFeed({
             </span>
           </div>
 
-          {/* Card Surface */}
-          <div className="w-full min-h-[380px] sm:min-h-[420px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col justify-between p-6 sm:p-8 transition-all duration-300 relative group">
+          {/* Card Surface with Touch Swipe */}
+          <div 
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="w-full min-h-[360px] sm:min-h-[420px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col justify-between p-5 sm:p-8 transition-all duration-300 relative group touch-pan-y"
+          >
             
             {/* Card Badge & Type Header */}
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-3 mb-4">
@@ -437,6 +481,11 @@ export default function StudyFeed({
             >
               <ChevronDown className="w-5 h-5" />
             </button>
+          </div>
+
+          {/* Mobile Gestures Hint */}
+          <div className="sm:hidden flex items-center justify-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-400">
+            <span>👆 Swipe up/down to browse • Tap card to flip</span>
           </div>
 
         </div>

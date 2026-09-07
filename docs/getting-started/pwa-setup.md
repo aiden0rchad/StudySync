@@ -31,7 +31,30 @@ StudySync will now appear on your home screen with its custom app icon. Tapping 
 Long-pressing the StudySync app icon on your home screen gives you instant jump shortcuts:
 * 📅 **Today Agenda**: Instant overview of today's classes and due items.
 * ✅ **Homework & Tasks**: Jump directly to your pending assignment checklist.
-* 🕒 **Class Timetable**: View your weekly class grid.
+* ⚡ **Brain Scroll Feed**: Launch active recall micro-learning cards.
+* 🎧 **Focus Room**: Jump straight into the Pomodoro study lounge and Lock-In mode.
+
+---
+
+## Mobile Ergonomics & Touch Gestures
+
+StudySync v0.1.2 includes dedicated mobile-first optimizations for single-handed smartphone use:
+
+### 1. TikTok / Reels-Style Swipe Feed
+In the **Study Feed** (`/?tab=feed`):
+* **Swipe Up**: Instantly transitions to the next curriculum question or flashcard with active recall scoring.
+* **Swipe Down**: Returns to the previous card.
+* **Tap Card**: Flips the card to reveal comprehensive concept breakdowns, formulas, and mnemonics.
+
+### 2. Mobile Month View & Tap-to-Inspect Drawer
+* On smartphone screens (`< 640px`), cramped multi-line text boxes are automatically replaced with sleek color-coded event dot indicators (courses, pending assignments, and priority badges).
+* **Tap to Inspect**: Tapping any day cell highlights the date and renders a full **Selected Day Agenda** card right beneath the grid, displaying meeting rooms, times, and 1-tap task completion toggles.
+
+### 3. Weekly Timetable Day Jump Strip
+* A sticky horizontal day pill bar (`Mon` through `Sun`) floats above the timetable on mobile, allowing instant 1-tap jumps to any day column without awkward horizontal drag.
+
+### 4. Virtual Keyboard Safety
+* All modal dialogs use `max-h-[calc(100dvh-2rem)] flex flex-col` with independent scrollable form bodies and sticky headers/footers. When the iOS or Android software keyboard appears, Save/Cancel buttons and form fields remain fully accessible without truncation.
 
 ---
 

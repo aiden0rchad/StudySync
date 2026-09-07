@@ -75,11 +75,64 @@ If the timer is paused or abandoned, the companion rests (`💤`). Completing a 
 All soundscapes are synthesized dynamically in JavaScript via the browser's native **Web Audio API**—requiring zero external audio file downloads:
 - **Brown Noise**: Deep, warm integrated low-pass rumble designed to drown out room distractions.
 - **Rain Ambiance**: Filtered pink noise with randomized high-frequency droplet impacts.
+- **Campfire**: Crackling embers and warm low-frequency roar.
+- **Cyber Drone**: Sci-fi sub-bass hum for laser-sharp coding and math focus.
+- **Lo-Fi Cafe**: Soft room murmurs and ambient background warmth.
 - **40Hz Gamma Focus**: Dual-carrier binaural tone (220Hz / 260Hz) generating a 40Hz beat frequency associated with analytical flow states.
 - **Mute / Silence**: Complete silence with timer-only operation.
+
+---
+
+## 🔒 "Lock In" Hyperfocus Sensory-Isolation Mode
+
+When faced with dozens of assignments, students—especially those with ADHD or severe procrastination tendencies—often suffer from **executive dysfunction paralysis**. Looking at a cluttered dashboard with 20+ pending tasks triggers overwhelm, leading straight into doomscrolling.
+
+StudySync solves this with **"Lock In" Mode**, an intense blackout study environment designed to force single-task isolation.
+
+```
+[Normal StudySync View] ──(Click "Lock In")──► [Sensory Blackout Overlay (#04060a)]
+                                                     │
+                                                     ├── Single Most Urgent Objective
+                                                     ├── Giant Countdown Clock
+                                                     ├── ADHD 3-Step Micro-Task Scaffold
+                                                     └── Procedural Ambient Soundscapes
+```
+
+### 1. Urgency Detection & Task Selection
+StudySync automatically inspects all active homework tasks and isolates the **highest-priority objective** using an urgency ranking algorithm:
+1. **Exams, Quizzes & Tests**: Quizzes and midterms due within 48 hours take top priority.
+2. **High Priority Items**: Marked with priority tags (`high`).
+3. **Earliest Due Date**: Sorts chronologically by deadline.
+
+If you prefer to work on a different task, use the objective switcher dropdown on the "Current Focus Objective" card to select any assignment.
+
+### 2. Fullscreen Sensory Blackout (`bg-[#04060a]/98`)
+Clicking **"Lock In"** activates a 98% deep black screen that covers the entire browser window:
+* Strips away top navigation headers, tabs, badges, and calendar grids.
+* Completely eliminates visual distraction and multi-tasking temptation.
+* Focuses 100% of your visual field onto a single card containing your chosen task.
+
+### 3. ADHD 3-Step Micro-Task Scaffold
+Large assignments (e.g. "Write 10-page research paper") induce paralysis because the brain cannot find an immediate entry point. Inside "Lock In" mode, StudySync automatically generates an **interactive 3-step micro-checklist**:
+* **Step 1: Open Materials**: Open syllabus, lecture notes, textbook, or IDE and clear your physical desk.
+* **Step 2: Draft Initial Section**: Write the first 2 paragraphs or solve the first 2 problem sets without judging quality.
+* **Step 3: Review & Submit**: Check requirements against rubrics and submit to Canvas.
+
+Checking off each step provides instant dopamine feedback and builds irresistible momentum.
+
+### 4. Direct Audio & Timer Controls
+Inside the blackout overlay, you can:
+* Adjust countdown duration (15m, 25m, 45m, or 60m).
+* Switch ambient soundscapes (Rain, Campfire, White Noise, Cyber Drone, Lo-Fi Cafe) with an inline volume slider.
+* Pause or restart the timer.
+
+### 5. Completion Reward & Emergency Exit
+* **Mark Completed & Lock In (`+150 XP`)**: Once finished, click the completion button to mark the homework task completed in the database, award 150 Scholar XP, trigger celebratory fanfare, and unlock the screen.
+* **Accessibility Escape Hatch**: Press <kbd>Esc</kbd> on your keyboard or click **Exit Lock In** in the top right at any time to instantly return to normal view.
 
 ---
 
 ## Sound FX & Privacy Control
 
 All UI sounds (completion chimes, level-up fanfares, quiz clicks) can be toggled on or off via the **Speaker Icon** in the top navigation header or inside the Scholar's Hall modal. Sound preferences are persisted in `localStorage`.
+

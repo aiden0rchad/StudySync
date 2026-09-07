@@ -429,6 +429,73 @@ async function runTests() {
     assert.ok(data.reply.toLowerCase().includes('discord'));
   });
 
+  // 13. Canvas LMS Grades & AI Academic Performance Advisor
+  await test('GET /api/grades returns GPA, course reports, and risk status', async () => {
+    const res = await fetch(`${BASE}/api/grades`);
+    assert.strictEqual(res.status, 200);
+    const grades = await res.json();
+    assert.ok(Array.isArray(grades.courses));
+    assert.strictEqual(typeof grades.cumulativeGpa, 'number');
+    assert.ok(grades.totalCourses >= 1);
+    assert.ok(Array.isArray(grades.coursesNeedingAttention));
+
+    const mathCourse = grades.courses.find(c => c.code && c.code.includes('MATH'));
+    if (mathCourse) {
+      assert.ok(mathCourse.currentScore !== null);
+      assert.ok(['warning', 'critical', 'safe'].includes(mathCourse.riskLevel));
+    }
+  });
+
+  await test('PUT /api/courses/:id/grade updates target grade and goal', async () => {
+    const coursesRes = await fetch(`${BASE}/api/courses`);
+    const courses = await coursesRes.json();
+    const firstCourse = courses[0];
+    assert.ok(firstCourse);
+
+    const updateRes = await fetch(`${BASE}/api/courses/${firstCourse.id}/grade`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        final_grade: 'A',
+        final_score: 95.0
+      })
+    });
+    assert.strictEqual(updateRes.status, 200);
+    const updated = await updateRes.json();
+    assert.strictEqual(updated.final_grade, 'A');
+    assert.strictEqual(Number(updated.final_score), 95.0);
+  });
+
+  await test('POST /api/ai/chat handles grade health check query via AI tool', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'How are my current grades looking? Are any classes slipping or at risk?'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('get_grades'));
+    assert.ok(data.reply.toLowerCase().includes('gpa') || data.reply.toLowerCase().includes('grade'));
+  });
+
+  await test('POST /api/ai/chat calculates required final score for target grade', async () => {
+    const res = await fetch(`${BASE}/api/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'What score do I need on my MATH 201 final to get a 90% in the class?'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.reply);
+    assert.ok(data.toolsCalled.includes('calculate_target_grade') || data.toolsCalled.includes('get_grades'));
+    assert.ok(data.reply.includes('%') || data.reply.toLowerCase().includes('score') || data.reply.toLowerCase().includes('need'));
+  });
+
   console.log(`\n========================================`);
   console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);

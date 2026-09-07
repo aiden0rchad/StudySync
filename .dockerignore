@@ -1,7 +1,14 @@
 node_modules
+dist
 .git
 .gitignore
-.env
-dist
-study_sync.db
+.github
+docs
+tests
+.env*
+study_sync.db*
+*.db
+*.db-journal
 *.log
+.DS_Store
+

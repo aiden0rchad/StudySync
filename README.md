@@ -13,19 +13,24 @@ StudySync connects your university Canvas courses to Apple Calendar and native i
 
 Your university account remains untouched. StudySync operates on an explicit read-only guarantee: it fetches assignments and timetable data using HTTP GET requests and never writes back to Canvas.
 
-## Current release: v0.1.1
+## Current release: v0.1.2
 
-Released September 6, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.1).
+Released September 6, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.2).
 
+- **Mobile Ergonomics & Touch Gestures**: Vertical swipe gestures (`onTouchStart`, `onTouchEnd`) on the Study Feed for fast, TikTok/Reels-style card browsing and active recall learning; compact event dot badges and tap-to-inspect daily agenda drawer on mobile Month View; horizontal 1-tap day jump strip on the weekly Timetable; and full mobile viewport keyboard adaptation (`max-h-[calc(100dvh-2rem)]`) across all modals.
+- **Canvas LMS Grades & AI Academic Advisor**: Automatic extraction of course percentage scores, current letter grades, and cumulative GPA directly from Canvas REST API. Integrated AI advisor computes required final exam scores to achieve your target letter grades and warns about at-risk courses.
+- **"Lock In" Hyperfocus Blackout Mode**: Sensory-isolation study mode in the Focus Room that blacks out all background distractions, isolating the single most urgent pending task with ADHD 3-step micro-action scaffolding, giant countdown timer, safe-area padding, and procedural soundscapes.
 - **Discord ADHD & Procrastination Coach**: Dedicated Discord webhook integration engineered specifically for neurodivergent students and chronic procrastinators. Features 4 distinct psychological motivation modes (ADHD Micro-Step, Spicy Duolingo-style roast, Gamified Boss Battle with ASCII HP bars, and Gentle Body-Doubling).
 - **Automated Quiz & Exam Discord Alerts**: Background daemon scans the schedule and automatically dispatches pre-quiz warnings 24 hours and 2 hours prior with live Discord relative countdown timestamps (`<t:UNIX:R>`).
 - **Unified Calendar Hub**: Consolidated Month, Week (Timetable), Day, and 14-Day Agenda into a single clutter-free view.
 - **Dopamine Study Feed & Focus Room**: Brain-Scroll active recall feed that replaces doomscrolling with micro-learning, paired with an ambient Pomodoro Focus Lounge and Scholar Rank XP gamification.
 - **Critical DND-Bypass Mobile Alerts**: Priority 5 emergency alerts via `ntfy.sh` that bypass Do Not Disturb / Silent mode on iOS and Android phones for imminent deadline pushes.
-- **Enhanced AI & 16-Tool MCP Server**: Dedicated tools for personal events/appointments (doctors, dentist, meetings), schedule-wide search, and on-demand Discord nudges.
+- **Enhanced AI & 17-Tool MCP Server**: Dedicated tools for personal events/appointments (doctors, dentist, meetings), schedule-wide search, on-demand Discord nudges, and target grade trajectory calculations.
 
 ## What it provides
 
+- **Canvas Grades & GPA Advisor**: Pulls live academic standings, scores, and letter grades from Canvas; lets you set goal grades and calculates required test scores to reach them.
+- **"Lock In" Hyperfocus Sensory Isolation**: Fullscreen blackout mode isolating only your next critical task with an escape hatch (`Esc`), countdown timer, and ADHD micro-step checklist.
 - **Discord ADHD & Procrastination Coach**: Psychologically engineered webhooks delivering micro-step prompts to overcome executive dysfunction, roast doomscrolling habits, or frame impending exams as high-stakes RPG boss battles.
 - **Dopamine Study Feed & Ambient Focus Lounge**: Bite-sized active recall quizzes, procedural ambient focus audio (Rain, White Noise, Campfire, Cyber Drone, Lo-Fi Cafe), and streak/level progression.
 - **Syllabus and schedule scanning**: Extract course codes, meeting times, locations, and assignment due dates from PDF files, syllabus images, or camera captures directly into your calendar.
@@ -72,9 +77,9 @@ sequenceDiagram
 
 ## Running StudySync
 
-### Option 1: Docker Compose
+### Option 1: Docker Compose (Multi-Arch: ARM64 & AMD64)
 
-Docker Compose runs the compiled web application, API server, and SQLite database in a single container with a persistent volume:
+StudySync's multi-stage container natively supports both **ARM64** (Apple Silicon M-series, AWS Graviton, Raspberry Pi 4/5) and **AMD64** (Intel/AMD x86_64). Because StudySync utilizes Node 22's built-in `node:sqlite`, there are no native C++ bindings (`node-gyp`) to compile.
 
 ```sh
 git clone https://github.com/aiden0rchad/StudySync.git
@@ -82,7 +87,14 @@ cd StudySync
 docker compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Data is stored in the persistent Docker volume `studysync_data`.
+Open [http://localhost:3000](http://localhost:3000). Data is persisted in the Docker volume `studysync_data`.
+
+To build for specific architectures explicitly:
+```sh
+npm run docker:build:arm64      # Apple Silicon / ARM64
+npm run docker:build:amd64      # Intel / AMD64
+npm run docker:build:multiarch  # Dual-manifest multi-arch
+```
 
 ### Option 2: Standalone Node.js
 

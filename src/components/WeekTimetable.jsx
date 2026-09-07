@@ -94,8 +94,33 @@ export default function WeekTimetable({
         </div>
       )}
 
+      {/* Mobile Quick Day Jump Strip */}
+      <div className="sm:hidden flex items-center justify-between gap-1 p-2 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-none shrink-0">
+        {weekDays.map((day) => {
+          const isCurrent = isToday(day);
+          const dateKey = format(day, 'yyyy-MM-dd');
+          return (
+            <button
+              key={`jump-${dateKey}`}
+              onClick={() => {
+                const el = document.getElementById(`day-col-${dateKey}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+              }}
+              className={`flex-1 min-w-[42px] py-1 px-1 rounded-xl text-center transition-all ${
+                isCurrent 
+                  ? 'bg-indigo-600 text-white shadow-2xs' 
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80'
+              }`}
+            >
+              <span className="block text-[9px] uppercase font-bold opacity-80">{format(day, 'EEE')}</span>
+              <span className="block text-xs font-black">{format(day, 'd')}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Horizontally scrollable wrapper on mobile */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scroll-smooth overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="min-w-[660px] md:min-w-0">
           {/* Timetable Header Row */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)] sm:grid-cols-[70px_repeat(7,1fr)] border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 sticky top-0 z-20">
@@ -113,6 +138,7 @@ export default function WeekTimetable({
           return (
             <div
               key={dateKey}
+              id={`day-col-${dateKey}`}
               className={`p-2.5 sm:p-3 text-center border-r border-slate-200 dark:border-slate-800 last:border-r-0 ${
                 isCurrentDay ? 'bg-indigo-50/50 dark:bg-indigo-950/40' : ''
               }`}
