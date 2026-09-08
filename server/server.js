@@ -46,7 +46,8 @@ import {
   getStudyCards,
   reviewStudyCard,
   createStudyCard,
-  generateStudyCardsFromSchedule
+  generateStudyCardsFromSchedule,
+  resetGamificationProgress
 } from './gamification.js';
 import { format } from 'date-fns';
 import os from 'node:os';
@@ -393,6 +394,9 @@ app.post('/api/admin/wipe', (req, res) => {
       result = wipeCoursesOnly();
     } else if (target === 'canvas') {
       result = wipeCanvasData();
+    } else if (target === 'progress' || target === 'gamification') {
+      const profile = resetGamificationProgress();
+      result = { success: true, target: 'progress', profile, message: 'Gamification progress, XP, and scholar levels reset to Level 1.' };
     } else {
       result = wipeAllData();
     }
@@ -783,6 +787,19 @@ app.post('/api/gamification/cards/generate', (req, res) => {
   try {
     const result = generateStudyCardsFromSchedule();
     res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gamification/reset', (req, res) => {
+  try {
+    const profile = resetGamificationProgress();
+    res.json({ 
+      success: true, 
+      profile, 
+      message: 'Gamification progress, XP, and levels have been reset to Level 1 (0 XP).' 
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

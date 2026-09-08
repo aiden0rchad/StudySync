@@ -228,6 +228,8 @@ async function runTests() {
     assert.strictEqual(typeof stats.homeworkCount, 'number');
     assert.strictEqual(typeof stats.studyBlocksCount, 'number');
     assert.ok(stats.dbSizeFormatted);
+    assert.ok(stats.gamification);
+    assert.strictEqual(typeof stats.gamification.level, 'number');
   });
 
   // 10. Gamification, Brain-Scroll & Focus Lounge
@@ -319,6 +321,31 @@ async function runTests() {
     const gen = await res.json();
     assert.strictEqual(typeof gen.count, 'number');
     assert.ok(Array.isArray(gen.cards));
+  });
+
+  await test('POST /api/gamification/reset resets XP to 0, level to 1, and streak to 0', async () => {
+    const res = await fetch(`${BASE}/api/gamification/reset`, {
+      method: 'POST'
+    });
+    assert.strictEqual(res.status, 200);
+    const body = await res.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.profile.xp, 0);
+    assert.strictEqual(body.profile.level, 1);
+    assert.strictEqual(body.profile.streak, 0);
+  });
+
+  await test('POST /api/admin/wipe with target progress resets gamification', async () => {
+    const res = await fetch(`${BASE}/api/admin/wipe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: 'progress' })
+    });
+    assert.strictEqual(res.status, 200);
+    const body = await res.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.target, 'progress');
+    assert.strictEqual(body.profile.level, 1);
   });
 
   // 11. AI Assistant Capabilities: Pop Quiz, Doctor Appointment, Critical Notification, and Search

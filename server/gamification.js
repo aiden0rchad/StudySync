@@ -580,3 +580,45 @@ function seedDefaultStudyCards() {
     createStudyCard(card);
   }
 }
+
+export function resetGamificationProgress() {
+  initGamificationSchema();
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Reset profile to baseline: Level 1, 0 XP, 0 streak, 2 streak freezes, 0 study minutes
+  db.prepare(`
+    UPDATE gamification_profile
+    SET xp = 0,
+        level = 1,
+        streak = 0,
+        last_active_date = ?,
+        streak_freezes = 2,
+        total_study_minutes = 0
+    WHERE id = 'user'
+  `).run(today);
+
+  // Reset achievements
+  db.prepare(`
+    UPDATE achievements
+    SET unlocked = 0,
+        unlocked_at = NULL
+  `).run();
+
+  // Reset daily quests
+  db.prepare(`
+    UPDATE daily_quests
+    SET current = 0,
+        completed = 0,
+        claimed = 0
+  `).run();
+
+  // Reset study card review counters
+  db.prepare(`
+    UPDATE study_cards
+    SET times_reviewed = 0,
+        times_correct = 0
+  `).run();
+
+  return getGamificationProfile();
+}
+

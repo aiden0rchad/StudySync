@@ -592,6 +592,19 @@ export function getDatabaseStats() {
     dbSizeBytes = stats.size;
   } catch (e) {}
 
+  let gamification = null;
+  try {
+    const p = db.prepare("SELECT * FROM gamification_profile WHERE id = 'user'").get();
+    if (p) {
+      gamification = {
+        xp: p.xp,
+        level: p.level,
+        streak: p.streak,
+        totalStudyMinutes: p.total_study_minutes
+      };
+    }
+  } catch (e) {}
+
   return {
     dbPath: DB_PATH,
     dbSizeBytes,
@@ -601,7 +614,8 @@ export function getDatabaseStats() {
     studyBlocksCount,
     pendingCount,
     completedCount,
-    canvasMode
+    canvasMode,
+    gamification
   };
 }
 

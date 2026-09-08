@@ -26,9 +26,17 @@ If you have connected your Canvas account, this single-click action:
 * Requires typing `WIPE` in all caps to confirm.
 * Sets `has_been_seeded = 1` so Docker container or server restarts **never** resurrect sample demo data.
 
-### 3. Selective Wipes
+### 3. Selective Wipes & Progress Reset
 * **Wipe Homework Only**: Keeps your class timetable while clearing all assignment tasks.
 * **Wipe Canvas Data Only**: Removes only imported Canvas records without touching manual courses.
+* **Reset Progress & Levels**: Resets your gamification Scholar Rank back to **Level 1 (Novice Scholar, 0 XP)**, resets your active daily study streak to **0**, relocks all earned achievements, and clears daily quest progress. Ideal for starting a fresh semester or testing XP progression from the beginning.
 
-### 4. Reload Sample Data
+### 4. Scholar Status & Diagnostics
+Admin mode displays live database diagnostics alongside your current Scholar status:
+* Total active courses, homework tasks, and completed counts.
+* SQLite database file size in KB.
+* Real-time Scholar Level, total XP, active streak days, and accumulated focus session minutes.
+
+### 5. Reload Sample Data
 Want to test features with sample data later? Click **Reload Sample Data** at any time to restore the demonstration semester.
+

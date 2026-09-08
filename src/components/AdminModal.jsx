@@ -13,15 +13,25 @@ import {
   CheckSquare, 
   Sparkles,
   HardDrive,
-  RefreshCw
+  RefreshCw,
+  Trophy,
+  Flame,
+  Clock,
+  Award
 } from 'lucide-react';
-import { fetchAdminStatsAPI, adminWipeAPI, adminSeedAPI, adminWipeAndSyncCanvasAPI } from '../utils/api';
+import { 
+  fetchAdminStatsAPI, 
+  adminWipeAPI, 
+  adminSeedAPI, 
+  adminWipeAndSyncCanvasAPI,
+  resetGamificationProgressAPI
+} from '../utils/api';
 import { clearAllStoredData, resetToDefaults } from '../utils/storage';
 
 export default function AdminModal({ isOpen, onClose, onDataChanged }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [confirmStep, setConfirmStep] = useState(null); // 'all' | 'homework' | 'canvas' | 'seed' | 'wipe_and_sync' | null
+  const [confirmStep, setConfirmStep] = useState(null); // 'all' | 'homework' | 'canvas' | 'seed' | 'wipe_and_sync' | 'progress' | null
   const [confirmText, setConfirmText] = useState('');
   const [statusMessage, setStatusMessage] = useState(null);
 
@@ -121,6 +131,24 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
       if (onDataChanged) onDataChanged({ courses: res.courses, homework: res.homework });
     } catch (e) {
       setStatusMessage({ type: 'error', text: e.message || 'Failed to reload sample data' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetProgress = async () => {
+    setLoading(true);
+    try {
+      const res = await resetGamificationProgressAPI();
+      setStatusMessage({ 
+        type: 'success', 
+        text: 'Gamification progress and levels reset! You are now back to Level 1 (Novice Scholar, 0 XP, 0-day streak).' 
+      });
+      setConfirmStep(null);
+      await loadStats();
+      if (onDataChanged) onDataChanged({ profile: res.profile });
+    } catch (e) {
+      setStatusMessage({ type: 'error', text: e.message || 'Failed to reset gamification progress' });
     } finally {
       setLoading(false);
     }
@@ -244,6 +272,39 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
                 </div>
               </div>
             </div>
+
+            {/* Gamification Scholar Status Banner */}
+            {stats?.gamification && (
+              <div className="mt-3 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-200/80 dark:border-purple-900/60 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-purple-950 dark:text-purple-200 flex items-center gap-2">
+                      <span>Scholar Rank: Level {stats.gamification.level}</span>
+                      <span className="text-[10px] font-mono bg-purple-200/60 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-1.5 py-0.5 rounded font-bold">
+                        {stats.gamification.xp} XP
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
+                      <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                        <Flame className="w-3 h-3 text-amber-500" />
+                        {stats.gamification.streak}-Day Streak
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400">
+                        <Clock className="w-3 h-3 text-indigo-500" />
+                        {stats.gamification.totalStudyMinutes || 0} Focus Mins
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100/80 dark:bg-purple-900/50 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800">
+                  Active Progress
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Action: Wipe Sample Data & Pull Fresh from Canvas */}
@@ -364,17 +425,17 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
           </div>
 
           {/* Action 2: Selective Wipes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             
             {/* Wipe Homework Only */}
             <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col justify-between">
               <div>
                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                   <CheckSquare className="w-3.5 h-3.5 text-indigo-500" />
-                  Wipe Homework Only
+                  Wipe Homework
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Keeps your class timetable, but wipes all {stats?.homeworkCount || 0} homework tasks and assignments.
+                  Keeps timetable, clears all {stats?.homeworkCount || 0} homework tasks.
                 </p>
               </div>
 
@@ -386,7 +447,7 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
                       disabled={loading}
                       className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors"
                     >
-                      {loading ? 'Wiping...' : 'Confirm Wipe'}
+                      {loading ? 'Wiping...' : 'Confirm'}
                     </button>
                     <button
                       onClick={() => setConfirmStep(null)}
@@ -400,7 +461,7 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
                     onClick={() => setConfirmStep('homework')}
                     className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline"
                   >
-                    Clear All Homework Tasks →
+                    Clear Homework →
                   </button>
                 )}
               </div>
@@ -411,10 +472,10 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
               <div>
                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                   <RotateCcw className="w-3.5 h-3.5 text-rose-500" />
-                  Wipe Canvas Data Only
+                  Wipe Canvas Data
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Removes locally synced Canvas assignments and courses from StudySync, resetting the connection. Never touches or deletes anything on your university's Canvas account.
+                  Clears locally synced Canvas items & resets connection. Canvas is untouched.
                 </p>
               </div>
 
@@ -426,7 +487,7 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
                       disabled={loading}
                       className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors"
                     >
-                      {loading ? 'Clearing...' : 'Confirm Clear'}
+                      {loading ? 'Clearing...' : 'Confirm'}
                     </button>
                     <button
                       onClick={() => setConfirmStep(null)}
@@ -440,7 +501,48 @@ export default function AdminModal({ isOpen, onClose, onDataChanged }) {
                     onClick={() => setConfirmStep('canvas')}
                     className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline"
                   >
-                    Clear Canvas Synced Items →
+                    Clear Canvas Data →
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Reset Progress & Levels */}
+            <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-purple-500" />
+                  Reset Levels & XP
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Resets Scholar Rank to Level 1 (0 XP), clears focus streak, and relocks achievements.
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700/60">
+                {confirmStep === 'progress' ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleResetProgress}
+                      disabled={loading}
+                      className="px-3 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition-colors inline-flex items-center gap-1"
+                    >
+                      {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+                      <span>Confirm Reset</span>
+                    </button>
+                    <button
+                      onClick={() => setConfirmStep(null)}
+                      className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmStep('progress')}
+                    className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    Reset Progress & Levels →
                   </button>
                 )}
               </div>

@@ -467,3 +467,16 @@ export async function updateCourseGradeAPI(courseId, gradeData) {
   return await res.json();
 }
 
+export async function resetGamificationProgressAPI() {
+  const res = await fetch(`${API_BASE}/gamification/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to reset gamification progress');
+  }
+  return await res.json();
+}
+
+
