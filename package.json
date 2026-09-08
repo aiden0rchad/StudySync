@@ -8,6 +8,7 @@
     "url": "git+https://github.com/aiden0rchad/StudySync.git"
   },
   "homepage": "https://aiden0rchad.github.io/StudySync/",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -3,7 +3,7 @@
 Self-hosted academic calendar and homework planner with Canvas LMS and Apple Calendar synchronization.
 
 [![Release](https://img.shields.io/github/v/release/aiden0rchad/StudySync)](https://github.com/aiden0rchad/StudySync/releases)
-[![License](https://img.shields.io/github/license/aiden0rchad/StudySync)](LICENSE)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-indigo.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-capabilities%20%26%20guides-2a78d6)](https://aiden0rchad.github.io/StudySync/)
 
 **[Explore the complete documentation →](https://aiden0rchad.github.io/StudySync/)**
@@ -150,6 +150,16 @@ The full documentation site is built with VitePress and deployed to GitHub Pages
   npm --prefix docs run dev
   ```
 
-## License
+## License & Usage
 
-Released under the [MIT License](LICENSE).
+Released under the **[PolyForm Noncommercial License 1.0.0](LICENSE)**.
+
+* **Free for Personal & Non-Commercial Use**: 100% free to view, download, modify, self-host, and inspect for students, personal study, researchers, homelabbers, and educational organizations.
+* **Commercial Restrictions**: For-profit companies and commercial entities may **not** sell, monetize, or package this code into commercial products without prior written authorization from the copyright holder.
+
+### Commercial Licensing & Permission Requests
+If you are an enterprise, institution, or commercial entity interested in using, white-labeling, or licensing StudySync, please reach out directly:
+* **Author**: Roland Leyco
+* **GitHub**: [@aiden0rchad](https://github.com/aiden0rchad)
+* **Inquiries**: Open a GitHub issue or contact via [https://github.com/aiden0rchad/StudySync](https://github.com/aiden0rchad/StudySync)
+

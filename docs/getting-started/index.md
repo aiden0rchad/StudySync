@@ -42,3 +42,5 @@ flowchart TD
 * **Apple Calendar Native Feed**: Generates standard RFC 5545 `.ics` webcal feeds with `REFRESH-INTERVAL: PT15M` directives.
 * **Hermes Agent & MCP Ready**: Built-in Model Context Protocol server lets local LLMs manage your timetable autonomously.
 * **Safe Clean Slate**: Wipe sample demo items at any time without ever affecting your school's Canvas account.
+* **Free for Personal & Non-Commercial Use**: Released under the **PolyForm Noncommercial License 1.0.0**. Free for all students, self-hosters, and personal study. Commercial use or monetization requires prior written permission from the author.
+
