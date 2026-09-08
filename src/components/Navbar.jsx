@@ -320,7 +320,7 @@ export default function Navbar({
                         className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
                       >
                         <CheckSquare className="w-4 h-4 text-indigo-500" />
-                        <span>New Homework Task</span>
+                        <span>New Task / Event</span>
                       </button>
                       <button
                         onClick={() => {

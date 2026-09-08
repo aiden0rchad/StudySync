@@ -132,7 +132,32 @@ Inside the blackout overlay, you can:
 
 ---
 
+## ADHD Task Wizard (Frictionless Creation)
+
+Monolithic forms with 8+ simultaneous text fields create executive dysfunction, cognitive fatigue, and procrastination ("wall of text" form paralysis). When clicking **Add Task** (`+`), StudySync opens a **progressive 3-step guided wizard**:
+
+### 1. "What do you want to do soon?" (1-Tap Category)
+- Select an activity card: **Homework** 📚, **Quiz** 📝, **Test / Exam** 🎯, **Appointment** 🩺, **Work / Shift** 💼, or **Personal / Other** 💡.
+- Automatic smart defaults: Selecting **Quiz** automatically sets urgency to High, estimated duration to 45m, and prefixes the title with `Quiz: ` so urgency filters and study blocks prioritize it.
+- Title input with activity-specific contextual placeholder.
+- Optional 1-tap course pill selection.
+
+### 2. "When is it due or scheduled?" (Low-Friction Timing)
+- **1-Tap Date Presets**: `Today`, `Tomorrow`, `In 2 Days`, `This Friday`, `Next Mon` with instant visual date feedback.
+- **1-Tap Time Presets**: `🌙 Midnight (11:59 PM)`, `🌆 Evening (5:00 PM)`, `☀️ Noon (12:00 PM)`, `🌅 Morning (9:00 AM)`.
+- Native date and time pickers for custom deadlines.
+
+### 3. "Focus Duration & Priority" (Bite-Sized Estimation)
+- **Duration Pills**: `15m`, `30m`, `45m`, `60m`, `90m`, `120m` eliminating mental math.
+- **Priority Badges**: `🟢 Low`, `🟡 Medium`, `🔴 High`.
+- **Collapsible Notes**: Clutter-free by default; expands only when additional notes or rubric reminders are needed.
+- **Live Preview Card**: Shows a real-time summary card before adding to schedule.
+- **Quick Form Toggle**: Power users and existing task edits jump directly to the classic single-screen form with a single toggle click.
+
+---
+
 ## Sound FX & Privacy Control
 
 All UI sounds (completion chimes, level-up fanfares, quiz clicks) can be toggled on or off via the **Speaker Icon** in the top navigation header or inside the Scholar's Hall modal. Sound preferences are persisted in `localStorage`.
+
 

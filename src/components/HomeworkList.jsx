@@ -188,7 +188,7 @@ export default function HomeworkList({
             className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Add Homework
+            Add Task
           </button>
         </div>
       ) : (
