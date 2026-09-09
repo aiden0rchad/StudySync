@@ -13,26 +13,30 @@ StudySync connects your university Canvas courses to Apple Calendar and native i
 
 Your university account remains untouched. StudySync operates on an explicit read-only guarantee: it fetches assignments and timetable data using HTTP GET requests and never writes back to Canvas.
 
-## Current release: v0.1.2
+## Current release: v0.1.3
 
-Released September 6, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.2).
+Released September 9, 2026. [Read the release notes](https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.3).
 
-- **Mobile Ergonomics & Touch Gestures**: Vertical swipe gestures (`onTouchStart`, `onTouchEnd`) on the Study Feed for fast, TikTok/Reels-style card browsing and active recall learning; compact event dot badges and tap-to-inspect daily agenda drawer on mobile Month View; horizontal 1-tap day jump strip on the weekly Timetable; and full mobile viewport keyboard adaptation (`max-h-[calc(100dvh-2rem)]`) across all modals.
-- **Canvas LMS Grades & AI Academic Advisor**: Automatic extraction of course percentage scores, current letter grades, and cumulative GPA directly from Canvas REST API. Integrated AI advisor computes required final exam scores to achieve your target letter grades and warns about at-risk courses.
-- **"Lock In" Hyperfocus Blackout Mode**: Sensory-isolation study mode in the Focus Room that blacks out all background distractions, isolating the single most urgent pending task with ADHD 3-step micro-action scaffolding, giant countdown timer, safe-area padding, and procedural soundscapes.
-- **Discord ADHD & Procrastination Coach**: Dedicated Discord webhook integration engineered specifically for neurodivergent students and chronic procrastinators. Features 4 distinct psychological motivation modes (ADHD Micro-Step, Spicy Duolingo-style roast, Gamified Boss Battle with ASCII HP bars, and Gentle Body-Doubling).
-- **Automated Quiz & Exam Discord Alerts**: Background daemon scans the schedule and automatically dispatches pre-quiz warnings 24 hours and 2 hours prior with live Discord relative countdown timestamps (`<t:UNIX:R>`).
-- **Unified Calendar Hub**: Consolidated Month, Week (Timetable), Day, and 14-Day Agenda into a single clutter-free view.
-- **Dopamine Study Feed & Focus Room**: Brain-Scroll active recall feed that replaces doomscrolling with micro-learning, paired with an ambient Pomodoro Focus Lounge and Scholar Rank XP gamification.
-- **Critical DND-Bypass Mobile Alerts**: Priority 5 emergency alerts via `ntfy.sh` that bypass Do Not Disturb / Silent mode on iOS and Android phones for imminent deadline pushes.
-- **Enhanced AI & 17-Tool MCP Server**: Dedicated tools for personal events/appointments (doctors, dentist, meetings), schedule-wide search, on-demand Discord nudges, and target grade trajectory calculations.
+- **ADHD Guided Task Wizard**: Progressive 3-step interactive questionnaire modal replacing monolithic "wall of text" inputs to eliminate executive dysfunction and form paralysis. Provides 1-tap category presets (Homework, Quiz, Exam, Appointment, Work, Personal) with contextual title placeholders, 1-tap date/time presets (`Today`, `Tomorrow`, `Midnight`, `Evening`), duration pills (`15m`–`120m`), priority tags, and collapsible notes.
+- **Authentic Royalty-Free 65s Soundscapes & 0ms Gapless Engine**: Studio recordings of Rain Drops, Crackling Campfire, and Midnight Cafe ambience, plus Deep Brown Noise, 40Hz Gamma Focus binaural beats, and Cyber Drone. Engineered with a 65.0s loop duration and a 5.0-second equal-power sinusoidal crossfade ($g_{out}^2 + g_{in}^2 = 1.0$) to eliminate audible loop seams and ear fatigue. Includes zero-latency synchronous audio start and automatic `AudioContext` resumption.
+- **Atmospheric Lofi Backdrops & Room Themes**: 5 high-resolution ambient environments (**Rainy Tokyo**, **Midnight Cafe**, **Gothic Library**, **Cyberpunk Terminal**, and **Zen Sanctuary**) tastefully integrated into the Focus Room and fullscreen Lock-In Mode with frosted glass cards.
+- **Clean Academic Telemetry & 5-Minute Momentum Gateway**: Replaced arcade elements with dignified scholar telemetry:
+  - **Exam Preparedness Target**: Live $0\% \rightarrow 100\%$ readiness progress bar calculating deep-work study minutes invested against upcoming exam weights.
+  - **5-Minute Momentum Gateway (Activation Protocol)**: Targeted 300-second friction-breaker countdown clock to conquer task initiation paralysis, with 1-click seamless rollover into 25m Pomodoro focus blocks.
+  - **10-Tier Scholarly Hierarchy**: Dignified progression from Apprentice Scholar to Distinguished Fellow.
+- **Consolidated Navigation Header Dock**: Clean icon dock (`[ 🔄 Sync ▾ | 🔊 | ☀️ | ⋮ ]`) that prevents visual clutter on mobile and desktop viewports.
+- **PolyForm Noncommercial 1.0.0 License**: 100% free for students, researchers, homelabbers, and personal academic study; commercial exploitation prohibited without prior written permission.
+- **Admin Progress Reset**: Direct progress/level wiping without affecting core courses or homework data (`POST /api/gamification/reset` and `POST /api/admin/wipe` with `target="progress"`).
 
 ## What it provides
 
+- **ADHD Guided Task Wizard**: 3-step friction-free questionnaire modal with 1-tap presets that makes adding assignments, quizzes, and personal events effortless.
 - **Canvas Grades & GPA Advisor**: Pulls live academic standings, scores, and letter grades from Canvas; lets you set goal grades and calculates required test scores to reach them.
-- **"Lock In" Hyperfocus Sensory Isolation**: Fullscreen blackout mode isolating only your next critical task with an escape hatch (`Esc`), countdown timer, and ADHD micro-step checklist.
-- **Discord ADHD & Procrastination Coach**: Psychologically engineered webhooks delivering micro-step prompts to overcome executive dysfunction, roast doomscrolling habits, or frame impending exams as high-stakes RPG boss battles.
-- **Dopamine Study Feed & Ambient Focus Lounge**: Bite-sized active recall quizzes, procedural ambient focus audio (Rain, White Noise, Campfire, Cyber Drone, Lo-Fi Cafe), and streak/level progression.
+- **"Lock In" Hyperfocus Sensory Isolation**: Fullscreen blackout mode isolating only your next critical task with an escape hatch (`Esc`), countdown timer, atmospheric backdrops, and ADHD micro-step checklist.
+- **Authentic 65s Studio Soundscapes & Lofi Themes**: Zero-latency 0ms gapless looping of real studio rain, campfire, cafe, brown noise, cyber drone, and 40Hz gamma focus tones across 5 aesthetic environments.
+- **Exam Preparedness & Momentum Telemetry**: $0\% \rightarrow 100\%$ exam readiness tracking paired with a 5-minute activation gateway to defeat executive dysfunction.
+- **Discord ADHD & Procrastination Coach**: Psychologically engineered webhooks delivering micro-step prompts to overcome executive dysfunction, roast doomscrolling habits, or frame impending exams as high-stakes battles.
+- **Dopamine Study Feed & Active Recall**: Bite-sized flashcards and micro-quizzes with vertical touch swipe navigation, spaced repetition scoring, and streak tracking.
 - **Syllabus and schedule scanning**: Extract course codes, meeting times, locations, and assignment due dates from PDF files, syllabus images, or camera captures directly into your calendar.
 - **Zero-touch capture and iOS Shortcuts**: Dedicated webhook (`POST /api/capture`) with pre-configured Apple Shortcuts for the iOS Share Sheet and Siri, plus Scriptable widgets for the iPhone Home and Lock Screen.
 - **Smart alarms and Apple Maps geotags**: Generates tailored `VALARM` triggers (15m before class, 24h and 2h before exams) and embeds `GEO` / `X-APPLE-STRUCTURED-LOCATION` tags for native iOS "Time to Leave" walking alerts.
@@ -41,7 +45,7 @@ Released September 6, 2026. [Read the release notes](https://github.com/aiden0rc
 - **Daily background synchronization**: A local scheduler queries Canvas daily at 5:00 AM to pull syllabus and assignment changes. If your server or laptop was asleep at 5:00 AM, it catches up automatically upon waking.
 - **Apple Calendar and iCloud subscription**: Exposes a `webcal://` feed formatted with RFC 5545 compliance. When added to Apple Calendar on macOS, iCloud propagates the feed across your iPhone, iPad, and Apple Watch.
 - **Progressive Web App (PWA)**: Standalone mobile UI with safe-area padding for the iPhone notch and home indicator (`pb-safe`), offline asset caching, and touch-optimized controls without iOS input zoom.
-- **Model Context Protocol (MCP) server**: 16 RFC-compliant MCP tools integrating directly with Claude Desktop, Cursor, and Hermes Agent to inspect deadlines, dispatch Discord nudges, and manage courses.
+- **Model Context Protocol (MCP) server**: 17 RFC-compliant MCP tools integrating directly with Claude Desktop, Cursor, and Hermes Agent to inspect deadlines, dispatch Discord nudges, and manage courses.
 - **Self-hosting and Tailscale support**: Runs either via Docker Compose or standalone Node.js. Server-side host detection automatically rewrites webcal subscription URLs to match incoming Tailscale MagicDNS hostnames.
 
 ## Security, Safety & Project Boundaries

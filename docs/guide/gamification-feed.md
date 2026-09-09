@@ -59,34 +59,28 @@ Refreshed automatically every morning at 5:00 AM:
 
 ---
 
-## Gamified Focus Room & Ambient Soundscapes
-
-Located under the **Focus** tab, the Focus Room combines a Pomodoro timer with an ambient flow visualizer and procedural soundscapes.
-
-### Ambient Visualizer Modes
-- **Zenith Flow Orb**: Concentric breathing aura circles that expand and pulse synchronously with focus blocks.
-- **Botanical Sanctuary**: Organic botanical node that breathes and stabilizes cognitive energy.
-- **Cognitive Telemetry**: Real-time waveform frequency telemetry displaying analytical flow state metrics (40Hz Gamma sync).
-
-If the timer is paused or abandoned, the companion rests (`💤`). Completing a full focus block awards `+100 XP` and logs study minutes to your daily profile.
-
-### Procedural Web Audio Generators
-All soundscapes are synthesized dynamically in JavaScript via the browser's native **Web Audio API**—requiring zero external audio file downloads:
-- **Brown Noise**: Deep, warm integrated low-pass rumble designed to drown out room distractions.
-- **Rain Ambiance**: Filtered pink noise with randomized high-frequency droplet impacts.
-- **Campfire**: Crackling embers and warm low-frequency roar.
-- **Cyber Drone**: Sci-fi sub-bass hum for laser-sharp coding and math focus.
-- **Lo-Fi Cafe**: Soft room murmurs and ambient background warmth.
-- **40Hz Gamma Focus**: Dual-carrier binaural tone (220Hz / 260Hz) generating a 40Hz beat frequency associated with analytical flow states.
-- **Mute / Silence**: Complete silence with timer-only operation.
-
 ---
 
-## 🔒 "Lock In" Hyperfocus Sensory-Isolation Mode
+## Focus Room, Authentic Soundscapes & Hyperfocus
 
-When faced with dozens of assignments, students—especially those with ADHD or severe procrastination tendencies—often suffer from **executive dysfunction paralysis**. Looking at a cluttered dashboard with 20+ pending tasks triggers overwhelm, leading straight into doomscrolling.
+Located under the **Focus** tab (🎧), the Focus Room combines a Pomodoro timer with authentic studio ambient soundscapes, 5 lofi room themes, and academic focus telemetry.
 
-StudySync solves this with **"Lock In" Mode**, an intense blackout study environment designed to force single-task isolation.
+> [!TIP]
+> For an in-depth technical breakdown of the audio crossfade mathematics, lofi themes, and blackout mode, read the dedicated [Focus Room & Ambient Soundscapes Guide](/guide/focus-room).
+
+### Authentic 65-Second Studio Soundscapes
+StudySync v0.1.3 features real acoustic recordings with an equal-power sinusoidal crossfade ($g_{out}^2 + g_{in}^2 = 1.0$) and sample-accurate Web Audio looping:
+- **Rain Drops**: Real rain on windows and foliage (Gravity Sound, CC BY 4.0).
+- **Crackling Campfire**: Real pine firewood crackling with sub-bass warmth (Archive.org, CC0).
+- **Midnight Cafe**: Ambient coffeehouse murmurs, porcelain cups, and gentle background warmth (Marble Toast, CC0).
+- **Deep Brown Noise**: 6dB/octave integrated low-pass rumble for maximum noise masking.
+- **40Hz Gamma Focus**: Dual-carrier binaural tone (220Hz / 260Hz) generating an analytical flow state frequency.
+- **Cyber Drone**: Low-frequency sci-fi sub-bass hum for laser-sharp coding and problem solving.
+
+### 🔒 "Lock In" Hyperfocus Sensory-Isolation Mode
+When faced with dozens of assignments, students often experience **executive dysfunction paralysis**. Looking at a cluttered dashboard with 20+ pending tasks triggers overwhelm, leading straight into doomscrolling.
+
+StudySync solves this with **"Lock In" Mode**, an intense blackout study environment designed to force single-task isolation:
 
 ```
 [Normal StudySync View] ──(Click "Lock In")──► [Sensory Blackout Overlay (#04060a)]
@@ -94,40 +88,15 @@ StudySync solves this with **"Lock In" Mode**, an intense blackout study environ
                                                      ├── Single Most Urgent Objective
                                                      ├── Giant Countdown Clock
                                                      ├── ADHD 3-Step Micro-Task Scaffold
-                                                     └── Procedural Ambient Soundscapes
+                                                     ├── Atmospheric Lofi Theme Backdrop
+                                                     └── Seamless 65s Studio Ambient Audio
 ```
 
-### 1. Urgency Detection & Task Selection
-StudySync automatically inspects all active homework tasks and isolates the **highest-priority objective** using an urgency ranking algorithm:
-1. **Exams, Quizzes & Tests**: Quizzes and midterms due within 48 hours take top priority.
-2. **High Priority Items**: Marked with priority tags (`high`).
-3. **Earliest Due Date**: Sorts chronologically by deadline.
-
-If you prefer to work on a different task, use the objective switcher dropdown on the "Current Focus Objective" card to select any assignment.
-
-### 2. Fullscreen Sensory Blackout (`bg-[#04060a]/98`)
-Clicking **"Lock In"** activates a 98% deep black screen that covers the entire browser window:
-* Strips away top navigation headers, tabs, badges, and calendar grids.
-* Completely eliminates visual distraction and multi-tasking temptation.
-* Focuses 100% of your visual field onto a single card containing your chosen task.
-
-### 3. ADHD 3-Step Micro-Task Scaffold
-Large assignments (e.g. "Write 10-page research paper") induce paralysis because the brain cannot find an immediate entry point. Inside "Lock In" mode, StudySync automatically generates an **interactive 3-step micro-checklist**:
-* **Step 1: Open Materials**: Open syllabus, lecture notes, textbook, or IDE and clear your physical desk.
-* **Step 2: Draft Initial Section**: Write the first 2 paragraphs or solve the first 2 problem sets without judging quality.
-* **Step 3: Review & Submit**: Check requirements against rubrics and submit to Canvas.
-
-Checking off each step provides instant dopamine feedback and builds irresistible momentum.
-
-### 4. Direct Audio & Timer Controls
-Inside the blackout overlay, you can:
-* Adjust countdown duration (15m, 25m, 45m, or 60m).
-* Switch ambient soundscapes (Rain, Campfire, White Noise, Cyber Drone, Lo-Fi Cafe) with an inline volume slider.
-* Pause or restart the timer.
-
-### 5. Completion Reward & Emergency Exit
-* **Mark Completed & Lock In (`+150 XP`)**: Once finished, click the completion button to mark the homework task completed in the database, award 150 Scholar XP, trigger celebratory fanfare, and unlock the screen.
-* **Accessibility Escape Hatch**: Press <kbd>Esc</kbd> on your keyboard or click **Exit Lock In** in the top right at any time to instantly return to normal view.
+Inside Lock In mode:
+* **Urgency Detection**: Automatically prioritizes impending exams, quizzes due within 48 hours, high-priority tags, or nearest deadlines.
+* **ADHD 3-Step Micro-Checklist**: Step 1: Open Materials $\rightarrow$ Step 2: Draft Initial Section $\rightarrow$ Step 3: Review & Submit.
+* **Direct Controls**: Full countdown and ambient soundscape controls without leaving the blackout overlay.
+* **Escape Hatch**: Press <kbd>Esc</kbd> or click **Exit Lock In** at any time.
 
 ---
 
@@ -167,12 +136,7 @@ Select between 5 curated sensory ambiences:
 - **Cyberpunk Terminal (👾)**: Neon emerald matrix scanlines, holographic purple hues, and high-tech command center.
 - **Zen Garden (🎋)**: Sage green calming bamboo mist, stone accents, and peaceful minimalist serenity.
 
-### 2. Desk Tamagotchi Companions
-Choose your personal desk study buddy:
-- **Sprout 🌱**: Evolves from a tiny seedling into a blooming bonsai as you log focus sessions.
-- **Study Cat 🐾**: An animated feline companion that furiously taps on a mini laptop keyboard with glowing screen reflections while you study, and takes adorable catnaps with boba tea when you're on a break.
-
-### 3. ASMR Mechanical Keyboard "Thocky" Clicks
+#### 2. ASMR Mechanical Keyboard "Thocky" Clicks
 Toggle **"Thocky Keys ⌨️"** to hear tactile mechanical keyboard switches every time you press a key in StudySync.
 - Synthesized in real-time with the Web Audio API using a dual-pulse circuit: a crisp 1850Hz transient stem strike coupled with an exponential dampened 280Hz $\rightarrow$ 110Hz housing bottom-out.
 - Dynamic pitch jitter prevents audio repetition fatigue.
@@ -180,15 +144,25 @@ Toggle **"Thocky Keys ⌨️"** to hear tactile mechanical keyboard switches eve
 
 ---
 
-## 🚀 Anti-Procrastination Launchpad ("Just Give Me 5 Minutes")
+## 🚀 5-Minute Momentum Gateway (Activation Protocol)
 
-ADHD and chronic procrastination are often driven by **task initiation paralysis**: the psychological dread of committing to 25 or 60 minutes of studying. Behavioral science proves that if you can endure just 5 minutes, task inertia takes over and finishing becomes easy.
+ADHD and chronic procrastination are driven by **task initiation paralysis**: the psychological dread of committing to 25 or 60 minutes of studying. Behavioral science proves that if you can endure just 5 minutes, task inertia takes over and finishing becomes easy.
 
-The **Anti-Procrastination Launchpad** bridges this gap:
+The **5-Minute Momentum Gateway** breaks this friction:
 1. **Single Micro-Goal**: Prompts you to enter one trivial step (e.g. *"Read slide 1"* or *"Open IDE"*).
 2. **300-Second Friction-Breaker**: A dedicated 5-minute countdown clock designed specifically to overcome initial friction.
 3. **Instant Victory (+40 XP)**: Completing the 5 minutes awards instant XP and confetti.
 4. **"Keep Rolling" One-Click Roll-Over**: With momentum established, click **"Keep Rolling (25m Focus)"** to effortlessly transition straight into a standard Pomodoro block.
+
+---
+
+## 🎯 Exam Preparedness Target Telemetry
+
+StudySync replaces cartoonish arcade mechanics with dignified, actionable scholarly telemetry.
+
+1. **Calculated Readiness**: Upcoming quizzes, tests, and midterms from your schedule are evaluated against your total deep-work minutes logged.
+2. **Progress Telemetry ($0\% \rightarrow 100\%$)**: A clean, studio-grade readiness target shows whether your preparation volume aligns with upcoming exam weights.
+3. **Actionable Feedback**: When readiness is below target, StudySync recommends 25-minute Pomodoro study blocks for the specific course subject.
 
 ---
 
@@ -198,25 +172,6 @@ When you switch tabs or open another window while a focus session is running, St
 - Dynamically updates the browser tab title to: `🚨 GET BACK TO WORK! | StudySync Focus`.
 - Plays a gentle wake-up chime when you switch back.
 - Keeps your timer running accurately in the background without dropping state.
-
----
-
-## ⚔️ Exam Raid Bosses (Turn Tests into RPG Battles)
-
-Upcoming exams, midterms, and finals often generate intense anxiety. StudySync turns that dread into an epic RPG dungeon crawl:
-
-1. **Boss Generation**: Upcoming quizzes, tests, and exams from your schedule are automatically converted into **Exam Raid Bosses** with calculated Health Points:
-   - Pop Quizzes: `800 HP`
-   - Midterm Tests: `1,800 HP`
-   - Final Exams: `3,000 HP`
-2. **Interactive Battle Actions**:
-   - **Deep Focus Strike (-150 HP)**: Study for 25 minutes to deal massive critical damage.
-   - **Card Recall Jab (-50 HP)**: Review a study card in the feed for a quick jab.
-   - **Homework Slay (-250 HP)**: Complete an assignment related to the course.
-3. **Dynamic Visuals & Audio**:
-   - Animated HP health bar that shifts from emerald $\rightarrow$ amber $\rightarrow$ crimson.
-   - Floating damage numbers on hit with sub-bass strike audio (`playBossHit`).
-   - Boss Defeated fanfare (`+250 XP` and celebratory victory chimes).
 
 ---
 
@@ -243,6 +198,6 @@ Click the **"Wrapped 🎁"** button in the top navigation bar or Scholar's Hall 
 
 ## Sound FX & Privacy Control
 
-All UI sounds (completion chimes, level-up fanfares, mechanical keyboard clicks, raid boss hits) can be toggled on or off via the **Speaker Icon** in the top navigation header or inside the Scholar's Hall modal. Sound preferences are persisted in `localStorage`.
+All UI sounds (completion chimes, level-up fanfares, mechanical keyboard clicks, ambient soundscapes) can be toggled on or off via the **Speaker Icon** in the top navigation header dock or inside the Scholar's Hall modal. Sound preferences are persisted in `localStorage`.
 
 

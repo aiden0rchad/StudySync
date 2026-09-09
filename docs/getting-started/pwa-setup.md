@@ -38,7 +38,7 @@ Long-pressing the StudySync app icon on your home screen gives you instant jump 
 
 ## Mobile Ergonomics & Touch Gestures
 
-StudySync v0.1.2 includes dedicated mobile-first optimizations for single-handed smartphone use:
+StudySync includes dedicated mobile-first optimizations for single-handed smartphone use:
 
 ### 1. TikTok / Reels-Style Swipe Feed
 In the **Study Feed** (`/?tab=feed`):

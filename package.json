@@ -1,7 +1,7 @@
 {
   "name": "studysync",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Student schedule and homework planner with Canvas LMS integration, Apple Calendar synchronization, and local SQLite storage",
   "repository": {
     "type": "git",

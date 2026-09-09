@@ -4,6 +4,47 @@ All notable changes to StudySync are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-09-09
+
+### Added
+- **ADHD Guided Task Wizard**:
+  - Progressive 3-step interactive questionnaire modal replacing monolithic "wall of text" inputs to eliminate executive dysfunction and form paralysis.
+  - Step 1: 1-tap category selection (**Homework** 📚, **Quiz** 📝, **Test / Exam** 🎯, **Appointment** 🩺, **Work / Shift** 💼, **Personal / Other** 💡) with contextual title placeholders and automatic urgency/duration defaults (e.g., quizzes automatically configure High priority and 45m duration).
+  - Step 2: 1-tap date presets (`Today`, `Tomorrow`, `In 2 Days`, `This Friday`, `Next Mon`) with date previews, and 1-tap time presets (`🌙 Midnight`, `🌆 Evening`, `☀️ Noon`, `🌅 Morning`).
+  - Step 3: Duration pills (`15m`, `30m`, `45m`, `60m`, `90m`, `120m`), priority tags, collapsible notes, and a live summary preview card before saving.
+  - Seamless 1-click toggle to standard single-screen form for power users and existing task updates.
+- **Atmospheric Lofi Backdrops & Room Themes**:
+  - 5 curated high-resolution 16:9 ambient environments designed for calming, focused study sessions:
+    - **Rainy Tokyo**: Midnight blue twilight, gentle raindrops, and neon reflection glow.
+    - **Midnight Cafe**: Warm candlelight, rich espresso mahogany tones, and cozy study booth ambience.
+    - **Gothic Library**: Stately bookshelves, antique study lanterns, and quiet scholarly prestige.
+    - **Cyberpunk Terminal**: Matrix emerald scanlines, violet phosphor accents, and high-tech terminal telemetry.
+    - **Zen Sanctuary**: Calming bamboo mist, smooth stone garden accents, and minimalist equilibrium.
+  - Tasteful backdrop integration across both the **Focus Room** and fullscreen **Lock-In Mode** with frosted glass cards and subtle ambient blending.
+- **Authentic Royalty-Free 65s Soundscapes & 0ms Gapless Loop Engine**:
+  - Real studio recordings replacing thin procedural synthesizers:
+    - **Rain Drops**: Natural rain on windows and rooftops (Gravity Sound, CC BY 4.0).
+    - **Campfire**: Crackling pine logs and embers with warm low-end rumble (Archive.org, CC0).
+    - **Midnight Cafe**: Soft room murmurs, porcelain cups, and espresso warmth (Marble Toast, CC0).
+    - **Brown Noise**: Deep, warm integrated low-pass noise for sound masking.
+    - **40Hz Gamma Focus**: Dual-carrier binaural tone (220Hz / 260Hz) generating an analytical flow state beat frequency.
+    - **Cyber Drone**: Sci-fi sub-bass hum for laser-sharp coding and problem solving.
+  - Extended loop length to **65.0 seconds** with a **5.0-second equal-power sinusoidal crossfade** ($g_{out}^2 + g_{in}^2 = 1.0$), completely eliminating audible repetition seams, clicks, and cognitive ear fatigue.
+  - Zero-latency synchronous HTML5 Audio starter + sample-accurate Web Audio looper, with automatic `AudioContext` resumption and un-mute intent handling on user tap.
+- **Clean & Dignified Telemetry Overhaul**:
+  - **Exam Preparedness Target**: Live $0\% \rightarrow 100\%$ readiness metric dynamically calculating total deep-work minutes invested against impending exam weights.
+  - **5-Minute Momentum Gateway (Activation Protocol)**: Targeted 300-second friction-breaker countdown clock to conquer task initiation paralysis, with 1-click seamless rollover into 25m Pomodoro focus blocks.
+  - **10-Tier Scholarly Hierarchy**: Dignified scholarly progression from Apprentice Scholar $\rightarrow$ Distinguished Fellow, stripping childish arcade/meme tropes in favor of clean academic mastery.
+- **Admin Progress & Level Reset**:
+  - Added direct progress/level wiping without affecting core courses or homework data (`POST /api/gamification/reset` and `POST /api/admin/wipe` with `target="progress"`). Resets Scholar Level to 1 (0 XP), active streaks to 0, and clears achievements/quests.
+
+### Changed
+- **License Change**: Transitioned from MIT to the **PolyForm Noncommercial License 1.0.0**—100% free for students, researchers, personal study, and homelabbers, while preventing unauthorized commercial monetization.
+- **Header Dock Consolidation**: Consolidated the top navigation header dock into an uncluttered icon pill dock (`[ 🔄 Sync ▾ | 🔊 | ☀️ | ⋮ ]`), removing redundant student labels and freeing up vertical real estate on mobile and desktop.
+- Replaced arcade/childish gamification elements (bouncing cat, floating damage numbers) with dignified academic focus telemetry.
+
+---
+
 ## [0.1.2] - 2026-09-06
 
 ### Added

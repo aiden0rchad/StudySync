@@ -8,6 +8,7 @@ const start = [
 
 const guides = [
   { text: 'Security & Safety Policy', link: '/guide/security-safety' },
+  { text: 'Focus Room & Ambient Soundscapes', link: '/guide/focus-room' },
   { text: 'Gamification & Study Feed', link: '/guide/gamification-feed' },
   { text: 'Discord ADHD & Procrastination Coach', link: '/guide/discord-adhd-coach' },
   { text: 'AI Multimodal Assistant', link: '/guide/ai-assistant' },
@@ -69,10 +70,10 @@ export default defineConfig({
       { text: 'Self-Hosting', link: '/operations/docker' },
       { text: 'Reference', link: '/reference/mcp-server' },
       {
-        text: 'v0.1.2',
+        text: 'v0.1.3',
         items: [
           { text: 'GitHub Repository', link: 'https://github.com/aiden0rchad/StudySync' },
-          { text: 'v0.1.2 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.2' },
+          { text: 'v0.1.3 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.3' },
           { text: 'Docker Compose Guide', link: '/operations/docker' }
         ]
       }
@@ -99,7 +100,7 @@ export default defineConfig({
     ],
     footer: {
       message: 'Student Academic Schedule Planner · 100% Read-Only Canvas Integration',
-      copyright: 'MIT License · Built for Students & Homelabbers',
+      copyright: 'PolyForm Noncommercial 1.0.0 · Built for Students & Homelabbers',
     },
     darkModeSwitchLabel: 'Theme',
     sidebarMenuLabel: 'Menu',

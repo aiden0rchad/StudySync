@@ -189,21 +189,28 @@ export async function sendUrgentAlert(options = {}) {
     const cleanTopic = (topic || 'studysync-briefing').trim().replace(/^https?:\/\/ntfy\.sh\//, '');
     const url = `https://ntfy.sh/${cleanTopic}`;
 
-    // ntfy Priority: 5 (or 'urgent') triggers emergency sounds & DND override on iOS / Android
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Title': asciiTitle,
-        'Priority': '5',
-        'Tags': tags,
-        'Actions': `view, Open StudySync, ${origin}`
-      },
-      body: message
-    });
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Title': asciiTitle,
+          'Priority': '5',
+          'Tags': tags,
+          'Actions': `view, Open StudySync, ${origin}`
+        },
+        body: message,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`ntfy error (${response.status}): ${errText}`);
+      if (!response.ok) {
+        const errText = await response.text();
+        console.warn(`ntfy response warning (${response.status}): ${errText}`);
+      }
+    } catch (netErr) {
+      console.warn(`ntfy network notice (offline / timeout): ${netErr.message}`);
     }
 
     setSetting('briefing_last_sent', new Date().toISOString());

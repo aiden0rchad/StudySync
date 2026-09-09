@@ -41,6 +41,7 @@ StudySync exposes a clean, fast JSON REST API on port `3000` (or `3001` in split
 * `GET /api/gamification/cards` — Retrieve active recall flashcards and micro-quizzes for the Feed (`courseId`, `limit`).
 * `POST /api/gamification/cards/:id/review` — Record study card review and answer accuracy.
 * `POST /api/gamification/cards/generate` — Extract micro-learning cards from upcoming assignments.
+* `POST /api/gamification/reset` — Resets gamification progress, Scholar level to 1, XP to 0, streak to 0, and clears achievements/quests without altering course or homework data.
 
 ## Canvas LMS & 5:00 AM Scheduler
 * `GET /api/canvas/status` — Get connection mode (`none`, `ical`, `api`), last sync timestamp, and scheduler status.
@@ -67,7 +68,7 @@ StudySync exposes a clean, fast JSON REST API on port `3000` (or `3001` in split
 
 ## Admin Mode
 * `GET /api/admin/stats` — SQLite database size, course counts, and completed task tallies.
-* `POST /api/admin/wipe` — Purge calendar records (`all`, `homework`, or `canvas`).
+* `POST /api/admin/wipe` — Purge calendar records or reset progress (`target`: `'all'`, `'homework'`, `'courses'`, `'canvas'`, or `'progress'`).
 * `POST /api/admin/wipe-and-sync-canvas` — Purge sample data and immediately pull fresh real records from Canvas.
 * `POST /api/admin/seed` — Reload sample university demo schedule.
 

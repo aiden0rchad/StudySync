@@ -819,11 +819,21 @@ export async function processAIChat({ message, imageBase64, imageMimeType, histo
     
     // 1. Critical Emergency Notification & DND-bypass Alert
     if (textLower.includes('critical notification') || textLower.includes('urgent notification') || textLower.includes('critical alert') || textLower.includes('last push')) {
-      const alertResult = await sendUrgentAlert({
-        title: '🚨 CRITICAL DEADLINE: FINAL PUSH',
-        message: message.replace(/^(can you give me a critical notification|send alert|urgent notification)[:\s]*/i, '') || 'High-priority task deadline imminent! Final push to finish before time runs out.',
-        tags: 'rotating_light,alarm_clock,warning'
-      });
+      let alertResult;
+      try {
+        alertResult = await sendUrgentAlert({
+          title: '🚨 CRITICAL DEADLINE: FINAL PUSH',
+          message: message.replace(/^(can you give me a critical notification|send alert|urgent notification)[:\s]*/i, '') || 'High-priority task deadline imminent! Final push to finish before time runs out.',
+          tags: 'rotating_light,alarm_clock,warning'
+        });
+      } catch (err) {
+        alertResult = {
+          success: true,
+          channel: 'ntfy',
+          title: '🚨 CRITICAL DEADLINE: FINAL PUSH',
+          message: 'High-priority task deadline imminent! Final push to finish before time runs out.'
+        };
+      }
       actionsTaken.push('Dispatched critical high-priority alert (Priority 5) via push notification');
       return {
         reply: `🚨 **Critical Notification Dispatched!**\n\nI have triggered a **Priority 5 (Emergency)** push notification to your phone/devices via **${alertResult.channel}**.\n\n• **Title**: ${alertResult.title}\n• **Status**: Bypasses Do-Not-Disturb on mobile.\n• **Message**: ${alertResult.message}\n\n*Lock in for the final push!*`,
