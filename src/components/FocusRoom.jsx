@@ -10,40 +10,131 @@ import {
   CloudRain, 
   Radio, 
   Flame, 
-  Award,
-  CheckCircle2,
-  Sliders,
-  Lock,
-  Unlock,
-  Target,
-  AlertTriangle,
-  X,
-  Check,
-  Zap,
-  Calendar,
-  Clock
+  Award, 
+  CheckCircle2, 
+  Sliders, 
+  Lock, 
+  Unlock, 
+  Target, 
+  AlertTriangle, 
+  X, 
+  Check, 
+  Zap, 
+  Calendar, 
+  Clock,
+  Keyboard,
+  Moon,
+  Palette,
+  Eye,
+  Cat,
+  Sprout as SproutIcon
 } from 'lucide-react';
 import { audioFX } from '../utils/audioFX';
 import { triggerLevelUpConfetti, triggerTaskConfetti } from '../utils/confetti';
 import { recordFocusSessionAPI } from '../utils/api';
 import { getRelativeDueDate, formatTime } from '../utils/dateUtils';
-import { getColorById } from '../utils/storage';
+import AntiProcrastinationLaunchpad from './AntiProcrastinationLaunchpad';
+import ExamRaidBossCard from './ExamRaidBossCard';
+
+const ROOM_THEMES = [
+  { 
+    id: 'rainy_tokyo', 
+    name: 'Rainy Tokyo', 
+    icon: '🌧️', 
+    bgGradient: 'from-slate-950 via-slate-900 to-indigo-950', 
+    cardBg: 'bg-slate-900/90 border-indigo-500/30',
+    accentText: 'text-indigo-400',
+    defaultAmbient: 'rain'
+  },
+  { 
+    id: 'midnight_cafe', 
+    name: 'Midnight Cafe', 
+    icon: '☕', 
+    bgGradient: 'from-[#170e08] via-[#24150b] to-[#120904]', 
+    cardBg: 'bg-[#1e1109]/90 border-amber-500/30',
+    accentText: 'text-amber-400',
+    defaultAmbient: 'cafe'
+  },
+  { 
+    id: 'gothic_library', 
+    name: 'Gothic Library', 
+    icon: '📚', 
+    bgGradient: 'from-[#071712] via-[#09221b] to-[#04100c]', 
+    cardBg: 'bg-[#0a1f18]/90 border-emerald-500/30',
+    accentText: 'text-emerald-400',
+    defaultAmbient: 'brown_noise'
+  },
+  { 
+    id: 'cyberpunk', 
+    name: 'Cyberpunk HUD', 
+    icon: '🌌', 
+    bgGradient: 'from-[#0d071b] via-[#170a2f] to-[#090314]', 
+    cardBg: 'bg-[#15092a]/90 border-purple-500/30',
+    accentText: 'text-purple-400',
+    defaultAmbient: 'cyber_drone'
+  },
+  { 
+    id: 'zen_garden', 
+    name: 'Zen Garden', 
+    icon: '🌿', 
+    bgGradient: 'from-slate-900 via-stone-900 to-emerald-950', 
+    cardBg: 'bg-stone-900/90 border-teal-500/30',
+    accentText: 'text-teal-400',
+    defaultAmbient: 'binaural_40hz'
+  }
+];
 
 export default function FocusRoom({ 
   onActionReward, 
   onSessionComplete,
   homework = [],
   courses = [],
-  onToggleHomeworkStatus
+  onToggleHomeworkStatus,
+  onOpenStudyFeed
 }) {
   const [minutes, setMinutes] = useState(25);
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [mode, setMode] = useState('focus'); // 'focus' | 'short_break' | 'long_break'
-  const [ambientType, setAmbientType] = useState('brown_noise'); // 'rain' | 'brown_noise' | 'binaural_40hz' | 'off'
+  
+  // Theme & Soundscape State
+  const [roomTheme, setRoomTheme] = useState(() => {
+    try {
+      return localStorage.getItem('studysync_room_theme') || 'rainy_tokyo';
+    } catch (e) {
+      return 'rainy_tokyo';
+    }
+  });
+
+  const [ambientType, setAmbientType] = useState('brown_noise');
   const [ambientVolume, setAmbientVolume] = useState(0.4);
   const [isSoundMuted, setIsSoundMuted] = useState(() => !audioFX.isSoundEnabled());
   const [sessionsCompletedToday, setSessionsCompletedToday] = useState(0);
+
+  // Companion Type: 'sprout' or 'cat'
+  const [companionType, setCompanionType] = useState(() => {
+    try {
+      return localStorage.getItem('studysync_companion_type') || 'cat';
+    } catch (e) {
+      return 'cat';
+    }
+  });
+
+  // Mechanical Keyboard ASMR State
+  const [keyboardASMR, setKeyboardASMR] = useState(() => {
+    try {
+      return localStorage.getItem('studysync_keyboard_asmr') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  // Tab Defection Alarm State
+  const [tabDefections, setTabDefections] = useState(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+
+  // 5-Minute Launchpad Modal
+  const [is5MinLaunchpadOpen, setIs5MinLaunchpadOpen] = useState(false);
 
   // Lock In Mode States
   const [isLockInMode, setIsLockInMode] = useState(false);
@@ -52,7 +143,7 @@ export default function FocusRoom({
 
   const initialDuration = useRef(25 * 60);
 
-  // Sort pending tasks by urgency (quizzes/exams first, then high priority, then earliest due)
+  // Sort pending tasks by urgency
   const pendingTasks = useMemo(() => {
     return homework
       .filter(h => h.status !== 'completed')
@@ -141,6 +232,68 @@ export default function FocusRoom({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isLockInMode]);
 
+  // Tab Defection Alarm
+  useEffect(() => {
+    const originalTitle = document.title;
+    const handleVisibilityChange = () => {
+      if (document.hidden && isActive) {
+        document.title = '🚨 GET BACK TO WORK! • StudySync';
+        setTabDefections(prev => prev + 1);
+      } else if (!document.hidden && isActive) {
+        document.title = isLockInMode ? '🔒 Locked In • StudySync' : '⏱️ Focusing • StudySync';
+        setShowTabWarning(true);
+        setTimeout(() => setShowTabWarning(false), 3500);
+      } else if (!isActive) {
+        document.title = originalTitle;
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.title = originalTitle;
+    };
+  }, [isActive, isLockInMode]);
+
+  // Mechanical Keyboard ASMR Listener
+  useEffect(() => {
+    if (!keyboardASMR) return;
+    const handleKeyDown = (e) => {
+      if (['Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(e.key)) return;
+      audioFX.playMechanicalClick();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [keyboardASMR]);
+
+  const handleSelectTheme = (thId) => {
+    setRoomTheme(thId);
+    try {
+      localStorage.setItem('studysync_room_theme', thId);
+    } catch (e) {}
+    const themeObj = ROOM_THEMES.find(t => t.id === thId);
+    if (themeObj && themeObj.defaultAmbient) {
+      setAmbientType(themeObj.defaultAmbient);
+    }
+  };
+
+  const handleToggleCompanion = () => {
+    const next = companionType === 'cat' ? 'sprout' : 'cat';
+    setCompanionType(next);
+    try {
+      localStorage.setItem('studysync_companion_type', next);
+    } catch (e) {}
+  };
+
+  const handleToggleKeyboardASMR = () => {
+    const next = !keyboardASMR;
+    setKeyboardASMR(next);
+    try {
+      localStorage.setItem('studysync_keyboard_asmr', String(next));
+    } catch (e) {}
+    if (next) audioFX.playMechanicalClick();
+  };
+
   const handleEnterLockIn = () => {
     audioFX.playClick();
     setIsLockInMode(true);
@@ -155,7 +308,7 @@ export default function FocusRoom({
 
   const handleCompleteCurrentTaskInLockIn = async () => {
     if (!currentTask) return;
-    audioFX.playSuccess();
+    audioFX.playTaskComplete();
     triggerLevelUpConfetti();
     if (onToggleHomeworkStatus) {
       onToggleHomeworkStatus(currentTask.id);
@@ -227,7 +380,7 @@ export default function FocusRoom({
         onActionReward(100, `🌳 Deep Work Completed! +100 XP (${sessionMinutes}m Focus)`);
       }
       try {
-        await recordFocusSessionAPI(sessionMinutes);
+        await recordFocusSessionAPI(sessionMinutes, currentTask?.id, currentTask?.courseId);
       } catch (e) {}
 
       // Switch to short break
@@ -278,35 +431,52 @@ export default function FocusRoom({
   const currentSecs = minutes * 60 + seconds;
   const progressPercent = Math.max(0, Math.min(100, Math.round(((totalSecs - currentSecs) / totalSecs) * 100)));
 
-  // Companion growth stage based on progress
-  const getCompanionStage = () => {
-    if (!isActive && currentSecs === totalSecs) return 'seedling';
-    if (progressPercent < 30) return 'seedling';
-    if (progressPercent < 70) return 'sprout';
-    if (progressPercent < 100) return 'flowering';
-    return 'bonsai';
-  };
-
-  const companionStage = getCompanionStage();
+  const activeThemeObj = ROOM_THEMES.find(t => t.id === roomTheme) || ROOM_THEMES[0];
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col items-center py-4 px-3 sm:px-6">
+    <div className="max-w-2xl mx-auto flex flex-col items-center py-4 px-3 sm:px-6 space-y-6">
       
+      {/* 5-Minute Anti-Procrastination Launchpad Modal */}
+      <AntiProcrastinationLaunchpad
+        isOpen={is5MinLaunchpadOpen}
+        onClose={() => setIs5MinLaunchpadOpen(false)}
+        activeTask={currentTask}
+        onActionReward={onActionReward}
+        onStartFullSession={(mins) => {
+          setIs5MinLaunchpadOpen(false);
+          handleSwitchPreset(mins, 'focus');
+          setIsActive(true);
+        }}
+      />
+
+      {/* Tab Defection Alert Banner */}
+      {showTabWarning && (
+        <div className="w-full bg-amber-500/20 border border-amber-500/40 text-amber-300 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-400" />
+            <span>Welcome back! You switched tabs ({tabDefections}x). Re-anchor your focus!</span>
+          </div>
+          <button onClick={() => setShowTabWarning(false)} className="text-amber-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* ===================== FULLSCREEN HYPERFOCUS LOCK-IN BLACKOUT OVERLAY ===================== */}
       {isLockInMode && currentTask && (
-        <div className="fixed inset-0 z-50 bg-[#04060a]/98 text-white flex flex-col justify-between pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] px-4 sm:px-8 backdrop-blur-3xl overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+        <div className={`fixed inset-0 z-50 bg-gradient-to-b ${activeThemeObj.bgGradient} text-white flex flex-col justify-between pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] px-4 sm:px-8 backdrop-blur-3xl overflow-y-auto animate-in fade-in zoom-in-95 duration-200`}>
           
-          {/* Top Bar: Status, Audio & Escape */}
+          {/* Top Bar */}
           <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
               <span className="text-[11px] sm:text-xs font-black tracking-widest text-rose-400 uppercase">
-                🔒 Lock-In Active
+                🔒 Lock-In Active • {activeThemeObj.name}
               </span>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Audio soundscape switcher */}
+              {/* Soundscape Selector */}
               <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full text-xs min-h-[36px]">
                 <Radio className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                 <select
@@ -317,6 +487,9 @@ export default function FocusRoom({
                   <option value="brown_noise" className="text-slate-900">Brown Noise (Deep Focus)</option>
                   <option value="binaural_40hz" className="text-slate-900">40Hz Gamma (Flow State)</option>
                   <option value="rain" className="text-slate-900">Rain Drops (Calm)</option>
+                  <option value="campfire" className="text-slate-900">Campfire (Cozy)</option>
+                  <option value="cafe" className="text-slate-900">Midnight Cafe (Murmur)</option>
+                  <option value="cyber_drone" className="text-slate-900">Cyber Drone (Sci-Fi)</option>
                   <option value="off" className="text-slate-900">Silence</option>
                 </select>
               </div>
@@ -333,10 +506,9 @@ export default function FocusRoom({
             </div>
           </div>
 
-          {/* Center Showcase: Only the Single Focus Task */}
-          <div className="w-full max-w-2xl mx-auto my-auto py-8 flex flex-col items-center text-center">
+          {/* Center Showcase */}
+          <div className="w-full max-w-2xl mx-auto my-auto py-6 flex flex-col items-center text-center">
             
-            {/* Course Code Tag */}
             {currentCourse ? (
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-black tracking-wide mb-3">
                 <span>{currentCourse.code}</span>
@@ -345,60 +517,32 @@ export default function FocusRoom({
               </div>
             ) : (
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-500/20 border border-slate-500/40 text-slate-300 text-xs font-black tracking-wide mb-3">
-                General Task
+                General Objective
               </div>
             )}
 
-            {/* Huge Task Title */}
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-3 leading-tight max-w-xl">
               {currentTask.title}
             </h1>
 
-            {/* Urgency Badge */}
-            <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold mb-6 ${
+            <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold mb-4 ${
               isUrgent 
                 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-xs shadow-rose-500/20'
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
             }`}>
               {isUrgent ? <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" /> : <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />}
-              <span>{isUrgent ? `🚨 Top Priority: Due ${currentTask.dueDate} ${currentTask.dueTime ? `at ${currentTask.dueTime}` : ''}` : '🌱 Steady Flow: No deadline emergency, take your time.'}</span>
+              <span>{isUrgent ? `🚨 Top Priority: Due ${currentTask.dueDate}` : '🌱 Steady Flow: Focused progress.'}</span>
             </div>
 
             {/* Giant Countdown Display */}
-            <div className="text-6xl sm:text-7xl font-black font-mono tracking-widest text-white mb-6 drop-shadow-2xl">
+            <div className="text-6xl sm:text-7xl font-black font-mono tracking-widest text-white mb-5 drop-shadow-2xl">
               {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
             </div>
 
-            {/* Timer Controls */}
-            <div className="flex items-center gap-3 mb-6 sm:mb-8">
-              <button
-                onClick={() => {
-                  audioFX.playClick();
-                  setIsActive(!isActive);
-                }}
-                className="px-6 py-3 rounded-full bg-white hover:bg-slate-200 text-slate-950 font-black text-xs sm:text-sm transition-all flex items-center gap-2 shadow-lg shadow-white/10 active:scale-95 min-h-[44px]"
-              >
-                {isActive ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
-                <span>{isActive ? 'Pause Timer' : 'Resume Timer'}</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  audioFX.playClick();
-                  setMinutes(prev => prev + 5);
-                  initialDuration.current += 5 * 60;
-                }}
-                className="px-4 py-3 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-all active:scale-95 min-h-[44px]"
-                title="Add 5 minutes buffer"
-              >
-                +5m Buffer
-              </button>
-            </div>
-
-            {/* ADHD Micro-Step Scaffolding Checklist */}
+            {/* ADHD Micro-Steps Scaffolding */}
             {microSteps.length > 0 && (
-              <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 text-left mb-6 backdrop-blur-md">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+              <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-left mb-6 backdrop-blur-md">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
                   <Target className="w-3.5 h-3.5 text-indigo-400" />
                   <span>ADHD Micro-Steps (Zero-Inertia Kickoff)</span>
                 </div>
@@ -431,7 +575,7 @@ export default function FocusRoom({
               </div>
             )}
 
-            {/* Big Complete Button */}
+            {/* Complete Button */}
             <button
               onClick={handleCompleteCurrentTaskInLockIn}
               className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:from-emerald-400 hover:to-indigo-500 text-white font-black text-sm shadow-xl shadow-emerald-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 min-h-[48px]"
@@ -441,37 +585,89 @@ export default function FocusRoom({
             </button>
           </div>
 
-          {/* Bottom Escape Guidance */}
-          <div className="w-full text-center text-[11px] text-slate-500">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono">Esc</kbd> anytime to unlock screen and exit
+          {/* Escape guidance */}
+          <div className="w-full text-center text-[11px] text-slate-500 pb-2">
+            Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono">Esc</kbd> anytime to unlock
           </div>
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="w-full text-center mb-4">
+      {/* Header & Aesthetic Controls */}
+      <div className="w-full flex flex-col items-center text-center space-y-2">
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center justify-center gap-2">
-          <span>Focus Room & Study Lounge</span>
+          <span>Focus Lounge & Study Room</span>
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            Pomodoro Companion
+            {activeThemeObj.name}
           </span>
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Lock in with procedural soundscapes and nurture your study companion.
-        </p>
+
+        {/* Lofi Theme Selector Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap justify-center pt-1">
+          {ROOM_THEMES.map(theme => {
+            const isSelected = roomTheme === theme.id;
+            return (
+              <button
+                key={theme.id}
+                onClick={() => handleSelectTheme(theme.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <span>{theme.icon}</span>
+                <span>{theme.name}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Focus Objective & Lock In Showcase Card */}
-      {currentTask ? (
-        <div className="w-full mb-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 border border-indigo-500/30 shadow-xl relative overflow-hidden group">
-          <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-          
+      {/* Emergency Anti-Procrastination Launchpad Trigger */}
+      <div className="w-full bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-indigo-500/15 border border-amber-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold shrink-0">
+            <Zap className="w-5 h-5 fill-amber-400 text-amber-400" />
+          </div>
+          <div className="text-left">
+            <div className="text-xs font-black text-slate-800 dark:text-white">
+              Struggling with Task Initiation?
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              Commit to 300 seconds without pressure. Break executive paralysis.
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIs5MinLaunchpadOpen(true)}
+          className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 shrink-0 active:scale-95 transition-all"
+        >
+          Just 5 Mins ⚡
+        </button>
+      </div>
+
+      {/* Exam Raid Boss Card */}
+      <ExamRaidBossCard
+        homework={homework}
+        courses={courses}
+        onStartFocus={() => {
+          handleSwitchPreset(25, 'focus');
+          setIsActive(true);
+        }}
+        onOpenStudyFeed={onOpenStudyFeed}
+        onActionReward={onActionReward}
+      />
+
+      {/* Active Focus Task Banner */}
+      {currentTask && (
+        <div className="w-full bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 border border-indigo-500/30 shadow-xl relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-            <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="space-y-1 flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                   isUrgent 
-                    ? 'bg-rose-500 text-white shadow-xs shadow-rose-500/30 animate-pulse'
+                    ? 'bg-rose-500 text-white animate-pulse'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 }`}>
                   {isUrgent ? '🚨 Top Priority' : '🌱 Steady Flow'}
@@ -482,31 +678,22 @@ export default function FocusRoom({
                     {currentCourse.code}
                   </span>
                 )}
-
                 <span className="text-[11px] text-slate-400">
-                  Due {currentTask.dueDate} {currentTask.dueTime ? `at ${currentTask.dueTime}` : ''}
+                  Due {currentTask.dueDate}
                 </span>
               </div>
 
               <h3 className="text-base sm:text-lg font-black text-white truncate">
                 {currentTask.title}
               </h3>
-
-              {currentTask.description && (
-                <p className="text-xs text-slate-300 line-clamp-1">
-                  {currentTask.description}
-                </p>
-              )}
             </div>
 
-            {/* Lock In Button & Task Switcher */}
             <div className="flex items-center gap-2 shrink-0">
               {pendingTasks.length > 1 && (
                 <select
                   value={currentTask.id}
                   onChange={(e) => setSelectedTaskId(e.target.value)}
-                  className="bg-slate-800/80 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none cursor-pointer max-w-[140px] truncate"
-                  title="Switch Focus Task"
+                  className="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none cursor-pointer max-w-[130px] truncate"
                 >
                   {pendingTasks.map(t => (
                     <option key={t.id} value={t.id} className="bg-slate-900 text-white">
@@ -518,8 +705,7 @@ export default function FocusRoom({
 
               <button
                 onClick={handleEnterLockIn}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg shadow-rose-600/30 active:scale-95 transition-all flex items-center gap-2"
-                title="Black out everything and hyperfocus on this task"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg active:scale-95 transition-all flex items-center gap-1.5"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Lock In</span>
@@ -527,16 +713,9 @@ export default function FocusRoom({
             </div>
           </div>
         </div>
-      ) : (
-        <div className="w-full mb-6 bg-slate-100 dark:bg-slate-800/60 rounded-3xl p-4 text-center border border-slate-200 dark:border-slate-700">
-          <p className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>All tasks complete! You are fully locked in on your academic goals.</span>
-          </p>
-        </div>
       )}
 
-      {/* Main Focus Card */}
+      {/* Main Focus Clock Card */}
       <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl flex flex-col items-center relative overflow-hidden">
         
         {/* Preset Selector Tabs */}
@@ -573,22 +752,46 @@ export default function FocusRoom({
           </button>
         </div>
 
-        {/* Digital Companion Avatar */}
-        <div className="relative flex flex-col items-center justify-center my-2">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-b from-indigo-50 to-emerald-50 dark:from-slate-800 dark:to-emerald-950/40 flex items-center justify-center text-4xl shadow-inner border border-slate-200/60 dark:border-slate-700/60">
-            {companionStage === 'seedling' && <span className={isActive ? 'animate-bounce' : 'opacity-80'}>🌱</span>}
-            {companionStage === 'sprout' && <span className={isActive ? 'animate-pulse' : ''}>🌿</span>}
-            {companionStage === 'flowering' && <span className={isActive ? 'animate-bounce' : ''}>🌸</span>}
-            {companionStage === 'bonsai' && <span className="animate-spin-slow">🌳</span>}
+        {/* Desk Tamagotchi Companion Display */}
+        <div className="relative flex flex-col items-center justify-center my-1 group">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-b from-indigo-50 to-emerald-50 dark:from-slate-800 dark:to-emerald-950/40 flex items-center justify-center text-4xl shadow-inner border border-slate-200/60 dark:border-slate-700/60 relative">
+            {companionType === 'cat' ? (
+              isActive ? (
+                <div className="flex flex-col items-center animate-bounce">
+                  <span className="text-3xl">🐱</span>
+                  <span className="text-[11px] -mt-1 font-mono">⌨️🐾</span>
+                </div>
+              ) : mode === 'short_break' ? (
+                <span className="animate-pulse text-3xl">🧋🐱</span>
+              ) : (
+                <span className="opacity-80 text-3xl">💤😺</span>
+              )
+            ) : (
+              isActive ? (
+                <span className="animate-bounce text-4xl">🌿✨</span>
+              ) : mode === 'short_break' ? (
+                <span className="text-4xl">🌸</span>
+              ) : (
+                <span className="opacity-80 text-4xl">🌱💤</span>
+              )
+            )}
           </div>
 
-          <span className="text-[11px] font-bold text-slate-400 mt-2">
-            {!isActive && currentSecs === totalSecs
-              ? 'Ready to Grow'
-              : isActive
-              ? 'Companion is thriving! ✨'
-              : 'Companion is resting 💤'}
-          </span>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              {companionType === 'cat'
+                ? isActive ? 'Study Cat is typing with you! 🐾' : 'Study Cat is napping 💤'
+                : isActive ? 'Sprout is thriving! ✨' : 'Sprout is resting 🌱'}
+            </span>
+
+            <button
+              onClick={handleToggleCompanion}
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
+              title="Switch Companion (Cat / Sprout)"
+            >
+              Switch to {companionType === 'cat' ? 'Sprout 🌱' : 'Cat 🐾'}
+            </button>
+          </div>
         </div>
 
         {/* Large Countdown Display */}
@@ -648,23 +851,38 @@ export default function FocusRoom({
           </button>
         </div>
 
-        {/* Procedural Ambient Sound Generator Section */}
-        <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-5 mt-2">
-          <div className="flex items-center justify-between mb-3">
+        {/* Ambient Soundscapes & ASMR Controls */}
+        <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-5 mt-2 space-y-4">
+          
+          <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Radio className="w-4 h-4 text-indigo-500" />
-              <span>Procedural Ambient Soundscapes</span>
+              <span>Procedural Soundscapes</span>
             </span>
-            <span className="text-[10px] text-slate-400 font-semibold">100% Native Web Audio (No Downloads)</span>
+            
+            {/* Keyboard ASMR Toggle Button */}
+            <button
+              onClick={handleToggleKeyboardASMR}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                keyboardASMR
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <Keyboard className="w-3.5 h-3.5" />
+              <span>Thocky ASMR {keyboardASMR ? 'ON' : 'OFF'}</span>
+            </button>
           </div>
 
           {/* Sound selection pills */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
               { id: 'brown_noise', label: 'Brown Noise', icon: Coffee, desc: 'Deep Focus' },
-              { id: 'rain', label: 'Rain Drops', icon: CloudRain, desc: 'Cozy Study' },
+              { id: 'rain', label: 'Rain Drops', icon: CloudRain, desc: 'Cozy Window' },
+              { id: 'campfire', label: 'Campfire', icon: Flame, desc: 'Warm Crackle' },
+              { id: 'cafe', label: 'Midnight Cafe', icon: Coffee, desc: 'Room Murmur' },
               { id: 'binaural_40hz', label: '40Hz Gamma', icon: Radio, desc: 'Flow State' },
-              { id: 'off', label: 'Silence', icon: VolumeX, desc: 'Pure Focus' },
+              { id: 'cyber_drone', label: 'Cyber Drone', icon: Zap, desc: 'Sci-Fi Hum' },
             ].map(item => {
               const Icon = item.icon;
               const isSelected = ambientType === item.id;
@@ -714,14 +932,14 @@ export default function FocusRoom({
       </div>
 
       {/* Session Stats Banner */}
-      <div className="w-full grid grid-cols-2 gap-3 mt-4">
+      <div className="w-full grid grid-cols-2 gap-3">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex items-center gap-3 shadow-xs">
           <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
             <Flame className="w-4 h-4 fill-amber-500" />
           </div>
           <div>
             <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{sessionsCompletedToday} Sessions Today</div>
-            <div className="text-[10px] text-slate-400">Keep your focus streak burning</div>
+            <div className="text-[10px] text-slate-400">Keep focus streak alive</div>
           </div>
         </div>
 
@@ -730,8 +948,8 @@ export default function FocusRoom({
             <Award className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">+100 XP per Session</div>
-            <div className="text-[10px] text-slate-400">Level up your scholar rank</div>
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">+100 XP per Focus</div>
+            <div className="text-[10px] text-slate-400">Nurture study companion</div>
           </div>
         </div>
       </div>

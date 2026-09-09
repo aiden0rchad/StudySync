@@ -269,6 +269,26 @@ async function runTests() {
     assert.ok(result.xpAdded > 0);
   });
 
+  await test('GET /api/gamification/heatmap returns 12-week activity grid and summary', async () => {
+    const res = await fetch(`${BASE}/api/gamification/heatmap`);
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(Array.isArray(data.days));
+    assert.strictEqual(data.days.length, 84);
+    assert.ok(data.summary.totalDays === 84);
+    assert.ok(typeof data.summary.totalMinutes === 'number');
+  });
+
+  await test('GET /api/gamification/wrapped generates student recap and share text', async () => {
+    const res = await fetch(`${BASE}/api/gamification/wrapped`);
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(typeof data.level === 'number');
+    assert.ok(typeof data.rankTitle === 'string');
+    assert.ok(typeof data.shareText === 'string');
+    assert.ok(data.shareText.includes('Scholar Wrapped'));
+  });
+
   await test('GET /api/gamification/quests returns dynamic daily quests', async () => {
     const res = await fetch(`${BASE}/api/gamification/quests`);
     assert.strictEqual(res.status, 200);

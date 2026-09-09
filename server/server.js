@@ -47,7 +47,9 @@ import {
   reviewStudyCard,
   createStudyCard,
   generateStudyCardsFromSchedule,
-  resetGamificationProgress
+  resetGamificationProgress,
+  getHeatmapData,
+  getScholarWrappedData
 } from './gamification.js';
 import { format } from 'date-fns';
 import os from 'node:os';
@@ -719,9 +721,27 @@ app.post('/api/gamification/action', (req, res) => {
 
 app.post('/api/gamification/focus', (req, res) => {
   try {
-    const { minutes = 25 } = req.body;
-    const result = addFocusMinutes(Number(minutes));
+    const { minutes = 25, taskId = null, courseId = null } = req.body;
+    const result = addFocusMinutes(Number(minutes), taskId, courseId);
     res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/gamification/heatmap', (req, res) => {
+  try {
+    const heatmap = getHeatmapData();
+    res.json(heatmap);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/gamification/wrapped', (req, res) => {
+  try {
+    const wrapped = getScholarWrappedData();
+    res.json(wrapped);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

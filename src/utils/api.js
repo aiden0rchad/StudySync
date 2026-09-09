@@ -361,16 +361,36 @@ export async function recordGamificationAction(xp = 15, type = 'action') {
   return null;
 }
 
-export async function recordFocusSessionAPI(minutes = 25) {
+export async function recordFocusSessionAPI(minutes = 25, taskId = null, courseId = null) {
   try {
     const res = await fetch(`${API_BASE}/gamification/focus`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ minutes })
+      body: JSON.stringify({ minutes, taskId, courseId })
     });
     if (res.ok) return await res.json();
   } catch (e) {
     console.warn('Failed to record focus session:', e);
+  }
+  return null;
+}
+
+export async function fetchHeatmapAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/heatmap`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch activity heatmap:', e);
+  }
+  return { days: [], summary: {} };
+}
+
+export async function fetchScholarWrappedAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/wrapped`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Failed to fetch scholar wrapped data:', e);
   }
   return null;
 }

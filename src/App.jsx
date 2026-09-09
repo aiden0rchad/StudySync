@@ -16,6 +16,7 @@ import AutomationModal from './components/AutomationModal';
 import StudyFeed from './components/StudyFeed';
 import FocusRoom from './components/FocusRoom';
 import TrophyModal from './components/TrophyModal';
+import ScholarWrappedModal from './components/ScholarWrappedModal';
 import XPToast from './components/XPToast';
 import { audioFX } from './utils/audioFX';
 import { triggerTaskConfetti, triggerLevelUpConfetti } from './utils/confetti';
@@ -50,6 +51,7 @@ export default function App() {
   const [studyBlocks, setStudyBlocks] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [isTrophyModalOpen, setIsTrophyModalOpen] = useState(false);
+  const [isWrappedOpen, setIsWrappedOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => audioFX.isSoundEnabled());
   const [xpEvents, setXpEvents] = useState([]);
 
@@ -352,6 +354,7 @@ export default function App() {
         onOpenTrophies={() => setIsTrophyModalOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={handleToggleSound}
+        onOpenWrapped={() => setIsWrappedOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -404,6 +407,7 @@ export default function App() {
             onToggleHomeworkStatus={handleToggleHomeworkStatus}
             onActionReward={triggerXPReward}
             onSessionComplete={refreshDataFromBackend}
+            onOpenStudyFeed={() => setActiveTab('feed')}
           />
         )}
       </main>
@@ -501,6 +505,12 @@ export default function App() {
         isOpen={isTrophyModalOpen}
         onClose={() => setIsTrophyModalOpen(false)}
         onActionReward={triggerXPReward}
+      />
+
+      {/* Scholar Wrapped Story Modal */}
+      <ScholarWrappedModal
+        isOpen={isWrappedOpen}
+        onClose={() => setIsWrappedOpen(false)}
       />
 
       {/* Floating XP Gain Animations */}

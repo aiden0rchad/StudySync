@@ -156,8 +156,94 @@ Monolithic forms with 8+ simultaneous text fields create executive dysfunction, 
 
 ---
 
+## 🎨 Lofi Room Themes & Desk Tamagotchi Companion
+
+Inside the **Focus Room** (🎧) and during **Lock-In Mode**, students can personalize their study sanctuary with dynamic visual themes and animated companions:
+
+### 1. Aesthetic Lofi Room Themes
+Select between 5 curated sensory ambiences:
+- **Rainy Tokyo (🌧️)**: Midnight blue neon tint, ambient rain streaks, and lofi window glow.
+- **Midnight Cafe (☕)**: Warm amber candlelight, espresso tones, and cozy study booth vibe.
+- **Gothic Library (🕯️)**: Deep burgundy mahogany bookshelves, antique lanterns, and vintage academic quiet.
+- **Cyberpunk Terminal (👾)**: Neon emerald matrix scanlines, holographic purple hues, and high-tech command center.
+- **Zen Garden (🎋)**: Sage green calming bamboo mist, stone accents, and peaceful minimalist serenity.
+
+### 2. Desk Tamagotchi Companions
+Choose your personal desk study buddy:
+- **Sprout 🌱**: Evolves from a tiny seedling into a blooming bonsai as you log focus sessions.
+- **Study Cat 🐾**: An animated feline companion that furiously taps on a mini laptop keyboard with glowing screen reflections while you study, and takes adorable catnaps with boba tea when you're on a break.
+
+### 3. ASMR Mechanical Keyboard "Thocky" Clicks
+Toggle **"Thocky Keys ⌨️"** to hear tactile mechanical keyboard switches every time you press a key in StudySync.
+- Synthesized in real-time with the Web Audio API using a dual-pulse circuit: a crisp 1850Hz transient stem strike coupled with an exponential dampened 280Hz $\rightarrow$ 110Hz housing bottom-out.
+- Dynamic pitch jitter prevents audio repetition fatigue.
+- Zero audio files downloaded; operates 100% offline with zero latency.
+
+---
+
+## 🚀 Anti-Procrastination Launchpad ("Just Give Me 5 Minutes")
+
+ADHD and chronic procrastination are often driven by **task initiation paralysis**: the psychological dread of committing to 25 or 60 minutes of studying. Behavioral science proves that if you can endure just 5 minutes, task inertia takes over and finishing becomes easy.
+
+The **Anti-Procrastination Launchpad** bridges this gap:
+1. **Single Micro-Goal**: Prompts you to enter one trivial step (e.g. *"Read slide 1"* or *"Open IDE"*).
+2. **300-Second Friction-Breaker**: A dedicated 5-minute countdown clock designed specifically to overcome initial friction.
+3. **Instant Victory (+40 XP)**: Completing the 5 minutes awards instant XP and confetti.
+4. **"Keep Rolling" One-Click Roll-Over**: With momentum established, click **"Keep Rolling (25m Focus)"** to effortlessly transition straight into a standard Pomodoro block.
+
+---
+
+## 🚨 Tab Defection Alarm (Distraction Detection)
+
+When you switch tabs or open another window while a focus session is running, StudySync automatically detects tab visibility loss:
+- Dynamically updates the browser tab title to: `🚨 GET BACK TO WORK! | StudySync Focus`.
+- Plays a gentle wake-up chime when you switch back.
+- Keeps your timer running accurately in the background without dropping state.
+
+---
+
+## ⚔️ Exam Raid Bosses (Turn Tests into RPG Battles)
+
+Upcoming exams, midterms, and finals often generate intense anxiety. StudySync turns that dread into an epic RPG dungeon crawl:
+
+1. **Boss Generation**: Upcoming quizzes, tests, and exams from your schedule are automatically converted into **Exam Raid Bosses** with calculated Health Points:
+   - Pop Quizzes: `800 HP`
+   - Midterm Tests: `1,800 HP`
+   - Final Exams: `3,000 HP`
+2. **Interactive Battle Actions**:
+   - **Deep Focus Strike (-150 HP)**: Study for 25 minutes to deal massive critical damage.
+   - **Card Recall Jab (-50 HP)**: Review a study card in the feed for a quick jab.
+   - **Homework Slay (-250 HP)**: Complete an assignment related to the course.
+3. **Dynamic Visuals & Audio**:
+   - Animated HP health bar that shifts from emerald $\rightarrow$ amber $\rightarrow$ crimson.
+   - Floating damage numbers on hit with sub-bass strike audio (`playBossHit`).
+   - Boss Defeated fanfare (`+250 XP` and celebratory victory chimes).
+
+---
+
+## 🎁 Scholar Wrapped & Activity Heatmap
+
+Celebrate your consistency and share your academic grind with friends and social communities:
+
+### 1. 12-Week Activity Heatmap (84 Days)
+Located in the **Scholar's Hall** (`TrophyModal`):
+- Modeled after GitHub's developer contribution graph.
+- Tracks 84 consecutive days across 5 color intensity tiers (Empty $\rightarrow$ Light Indigo $\rightarrow$ Medium Violet $\rightarrow$ Deep Purple $\rightarrow$ Golden Flame).
+- Hover over any cell to see exact study minutes, sessions logged, and homework tasks completed on that date.
+- Summary analytics show total days active, cumulative focus hours, and total sessions completed.
+
+### 2. Scholar Wrapped Season Story
+Click the **"Wrapped 🎁"** button in the top navigation bar or Scholar's Hall to launch a 4-slide animated story recap:
+- **Slide 1: Deep Work Volume**: Total focus hours logged, equivalent to binge-watching entire course lectures.
+- **Slide 2: Boss Slayer / Top Subject**: Your most studied course code and assignments crushed.
+- **Slide 3: Scholar Chronotype**: Analyzes your peak study hours (e.g. *"Night Owl Vigilante"* for midnight grind vs *"Early Bird Tactician"* for morning sessions).
+- **Slide 4: Grand Hologram Share Card**: A sleek gradient trophy card summarizing your level, streak, rank, and hours.
+- **1-Click Share & Copy**: Copies a stylized text summary ready for Discord, Instagram DMs, or TikTok with one tap, or triggers the native Web Share API on mobile devices.
+
+---
+
 ## Sound FX & Privacy Control
 
-All UI sounds (completion chimes, level-up fanfares, quiz clicks) can be toggled on or off via the **Speaker Icon** in the top navigation header or inside the Scholar's Hall modal. Sound preferences are persisted in `localStorage`.
+All UI sounds (completion chimes, level-up fanfares, mechanical keyboard clicks, raid boss hits) can be toggled on or off via the **Speaker Icon** in the top navigation header or inside the Scholar's Hall modal. Sound preferences are persisted in `localStorage`.
 
 

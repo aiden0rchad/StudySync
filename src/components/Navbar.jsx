@@ -56,6 +56,7 @@ export default function Navbar({
   onOpenInstall,
   userProfile,
   onOpenTrophies,
+  onOpenWrapped,
   soundEnabled = true,
   onToggleSound
 }) {
@@ -362,6 +363,20 @@ export default function Navbar({
                 </div>
               </button>
 
+              {/* Scholar Wrapped Button */}
+              {onOpenWrapped && (
+                <button
+                  onClick={onOpenWrapped}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-rose-500/10 hover:from-purple-500/20 hover:to-rose-500/20 border border-purple-300/40 dark:border-purple-500/30 text-slate-800 dark:text-slate-100 transition-all active:scale-95 shadow-2xs group text-xs font-bold"
+                  title="View your Scholar Wrapped Season Recap Story"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-pink-500 group-hover:rotate-12 transition-transform" />
+                  <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                    Wrapped 🎁
+                  </span>
+                </button>
+              )}
+
               {/* System Utilities Mini-Dock (Sound FX | Dark Mode | More) */}
               <div className="flex items-center bg-slate-100/70 dark:bg-slate-800/50 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 gap-0.5">
                 {/* Audio Effects Toggle */}
@@ -460,6 +475,17 @@ export default function Navbar({
                         >
                           <Gamepad2 className="w-3.5 h-3.5 text-[#5865F2]" />
                           <span>Discord ADHD Coach</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            if (onOpenWrapped) onOpenWrapped();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-left"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-pink-500" />
+                          <span>Scholar Wrapped (Story Recap)</span>
                         </button>
 
                         <div className="border-t border-slate-100 dark:border-slate-800 my-1" />

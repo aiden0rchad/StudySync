@@ -23,14 +23,17 @@ import {
 } from '../utils/api';
 import { audioFX } from '../utils/audioFX';
 import { triggerMiniConfetti, triggerLevelUpConfetti } from '../utils/confetti';
+import ActivityHeatmap from './ActivityHeatmap';
+import ScholarWrappedModal from './ScholarWrappedModal';
 
 export default function TrophyModal({ isOpen, onClose, onActionReward }) {
   const [profile, setProfile] = useState(null);
   const [quests, setQuests] = useState([]);
   const [achievements, setAchievements] = useState([]);
-  const [activeTab, setActiveTab] = useState('quests'); // 'quests' | 'achievements'
+  const [activeTab, setActiveTab] = useState('quests'); // 'quests' | 'heatmap' | 'achievements'
   const [claiming, setClaiming] = useState(null);
   const [soundEnabled, setSoundEnabled] = useState(() => audioFX.isSoundEnabled());
+  const [isWrappedOpen, setIsWrappedOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -86,13 +89,24 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
         
         {/* Header with Level & Scholar Rank */}
         <div className="relative bg-gradient-to-tr from-indigo-600 via-violet-600 to-purple-600 p-6 text-white text-center shrink-0">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="absolute top-4 right-4 flex items-center gap-1.5">
+            <button
+              onClick={() => setIsWrappedOpen(true)}
+              className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-xs transition-all active:scale-95 flex items-center gap-1 border border-white/20 shadow-xs"
+              title="Open Scholar Wrapped Story"
+            >
+              <span>Wrapped</span>
+              <span>🎁</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-xs font-black uppercase tracking-wider mb-2">
             <Trophy className="w-3.5 h-3.5 text-amber-300" />
@@ -149,7 +163,7 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 pt-3 gap-6">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 pt-3 gap-5">
           <button
             onClick={() => setActiveTab('quests')}
             className={`pb-2 text-xs font-bold transition-all relative ${
@@ -161,6 +175,16 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
             Daily Quests (3)
           </button>
           <button
+            onClick={() => setActiveTab('heatmap')}
+            className={`pb-2 text-xs font-bold transition-all relative ${
+              activeTab === 'heatmap'
+                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            Activity Heatmap
+          </button>
+          <button
             onClick={() => setActiveTab('achievements')}
             className={`pb-2 text-xs font-bold transition-all relative ${
               activeTab === 'achievements'
@@ -168,7 +192,7 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            Achievements & Badges
+            Badges & Titles
           </button>
         </div>
 
@@ -246,6 +270,13 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
             </div>
           )}
 
+          {/* TAB: ACTIVITY HEATMAP */}
+          {activeTab === 'heatmap' && (
+            <div className="space-y-3">
+              <ActivityHeatmap />
+            </div>
+          )}
+
           {/* TAB: ACHIEVEMENTS */}
           {activeTab === 'achievements' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -303,15 +334,29 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
             </button>
           </div>
 
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs transition-all"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsWrappedOpen(true)}
+              className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+            >
+              Story Replay 🎁
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs transition-all"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
       </div>
+
+      {/* Scholar Wrapped Modal */}
+      <ScholarWrappedModal
+        isOpen={isWrappedOpen}
+        onClose={() => setIsWrappedOpen(false)}
+      />
     </div>
   );
 }

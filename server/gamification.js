@@ -106,6 +106,15 @@ export function initGamificationSchema() {
       unlocked_at TEXT,
       category TEXT DEFAULT 'academic'
     );
+
+    CREATE TABLE IF NOT EXISTS focus_logs (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      minutes INTEGER NOT NULL,
+      task_id TEXT,
+      course_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Ensure default profile exists
@@ -128,6 +137,44 @@ export function initGamificationSchema() {
   const cardCount = db.prepare("SELECT COUNT(*) as c FROM study_cards").get().c;
   if (cardCount === 0) {
     seedDefaultStudyCards();
+  }
+
+  // Seed default focus logs if empty (past 2-3 weeks of study activity)
+  const logCount = db.prepare("SELECT COUNT(*) as c FROM focus_logs").get().c;
+  if (logCount === 0) {
+    seedDefaultFocusLogs();
+  }
+}
+
+function seedDefaultFocusLogs() {
+  const insertStmt = db.prepare(`
+    INSERT INTO focus_logs (id, date, minutes, task_id, course_id, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const now = new Date();
+  const sampleDays = [
+    { daysAgo: 0, mins: 45, hour: 14 },
+    { daysAgo: 1, mins: 50, hour: 16 },
+    { daysAgo: 2, mins: 75, hour: 20 },
+    { daysAgo: 3, mins: 25, hour: 11 },
+    { daysAgo: 5, mins: 90, hour: 19 },
+    { daysAgo: 6, mins: 45, hour: 15 },
+    { daysAgo: 8, mins: 60, hour: 21 },
+    { daysAgo: 9, mins: 120, hour: 22 },
+    { daysAgo: 11, mins: 30, hour: 10 },
+    { daysAgo: 12, mins: 45, hour: 16 },
+    { daysAgo: 14, mins: 80, hour: 18 },
+    { daysAgo: 16, mins: 50, hour: 20 },
+    { daysAgo: 18, mins: 110, hour: 23 },
+    { daysAgo: 21, mins: 45, hour: 14 }
+  ];
+
+  for (const s of sampleDays) {
+    const d = subDays(now, s.daysAgo);
+    const dateStr = format(d, 'yyyy-MM-dd');
+    const timeStr = `${dateStr}T${String(s.hour).padStart(2, '0')}:30:00.000Z`;
+    insertStmt.run(`flog_seed_${s.daysAgo}`, dateStr, s.mins, null, null, timeStr);
   }
 }
 
@@ -216,7 +263,7 @@ export function recordUserActivity(xpToAdd = 0, activityType = 'action', skipMil
   };
 }
 
-export function addFocusMinutes(minutes = 25) {
+export function addFocusMinutes(minutes = 25, taskId = null, courseId = null) {
   initGamificationSchema();
   const xpReward = Math.round(minutes * 3.5); // 25 mins = ~88-90 XP
   db.prepare(`
@@ -224,6 +271,16 @@ export function addFocusMinutes(minutes = 25) {
     SET total_study_minutes = total_study_minutes + ?
     WHERE id = 'user'
   `).run(minutes);
+
+  // Record granular log entry
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const logId = `flog_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  try {
+    db.prepare(`
+      INSERT INTO focus_logs (id, date, minutes, task_id, course_id)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(logId, today, minutes, taskId || null, courseId || null);
+  } catch (e) {}
 
   const result = recordUserActivity(xpReward, 'focus_session');
   // Check focus achievement
@@ -619,6 +676,165 @@ export function resetGamificationProgress() {
         times_correct = 0
   `).run();
 
+  // Reset focus logs
+  try {
+    db.prepare("DELETE FROM focus_logs").run();
+  } catch (e) {}
+
   return getGamificationProfile();
+}
+
+// 12-Week Activity Heatmap (Past 84 Days)
+export function getHeatmapData() {
+  initGamificationSchema();
+  const now = new Date();
+  const days = [];
+  const TOTAL_DAYS = 84; // 12 weeks
+
+  // Query aggregated focus minutes by date
+  const focusRows = db.prepare(`
+    SELECT date, SUM(minutes) as totalMins, COUNT(*) as sessions
+    FROM focus_logs
+    GROUP BY date
+  `).all();
+  const focusMap = {};
+  for (const r of focusRows) {
+    focusMap[r.date] = { minutes: r.totalMins, sessions: r.sessions };
+  }
+
+  // Query completed homework tasks
+  const hwRows = db.prepare(`
+    SELECT dueDate as date, COUNT(*) as count
+    FROM homework
+    WHERE status = 'completed'
+    GROUP BY dueDate
+  `).all();
+  const hwMap = {};
+  for (const r of hwRows) {
+    hwMap[r.date] = r.count;
+  }
+
+  let totalMinutes = 0;
+  let activeDays = 0;
+
+  for (let i = TOTAL_DAYS - 1; i >= 0; i--) {
+    const d = subDays(now, i);
+    const dateStr = format(d, 'yyyy-MM-dd');
+    const dayOfWeek = d.getDay(); // 0 = Sun, 1 = Mon ...
+    const focus = focusMap[dateStr] || { minutes: 0, sessions: 0 };
+    const tasks = hwMap[dateStr] || 0;
+
+    let intensity = 0;
+    if (focus.minutes >= 120 || tasks >= 4) intensity = 4;
+    else if (focus.minutes >= 60 || tasks >= 2) intensity = 3;
+    else if (focus.minutes >= 30 || tasks >= 1) intensity = 2;
+    else if (focus.minutes > 0) intensity = 1;
+
+    if (focus.minutes > 0 || tasks > 0) {
+      activeDays++;
+      totalMinutes += focus.minutes;
+    }
+
+    days.push({
+      date: dateStr,
+      dayOfWeek,
+      minutes: focus.minutes,
+      sessions: focus.sessions,
+      tasksCompleted: tasks,
+      intensity
+    });
+  }
+
+  return {
+    days,
+    summary: {
+      totalDays: TOTAL_DAYS,
+      activeDays,
+      totalMinutes,
+      totalHours: (totalMinutes / 60).toFixed(1),
+      consistencyPercent: Math.round((activeDays / TOTAL_DAYS) * 100)
+    }
+  };
+}
+
+// Scholar Wrapped Story Generation
+export function getScholarWrappedData() {
+  initGamificationSchema();
+  const profile = getGamificationProfile();
+  const courses = getAllCourses();
+  const homework = getAllHomework();
+
+  // Completed tasks
+  const completedHomework = homework.filter(h => h.status === 'completed');
+  const completedCount = completedHomework.length;
+
+  // Heatmap summary
+  const heatmap = getHeatmapData();
+
+  // Determine top course
+  const courseCountMap = {};
+  for (const h of completedHomework) {
+    if (h.courseId) {
+      courseCountMap[h.courseId] = (courseCountMap[h.courseId] || 0) + 1;
+    }
+  }
+  let topCourseId = null;
+  let topCourseCount = 0;
+  for (const [cId, count] of Object.entries(courseCountMap)) {
+    if (count > topCourseCount) {
+      topCourseCount = count;
+      topCourseId = cId;
+    }
+  }
+  const topCourseObj = courses.find(c => c.id === topCourseId) || courses[0] || null;
+
+  // Time of day archetype from focus logs
+  const logs = db.prepare("SELECT created_at FROM focus_logs ORDER BY created_at DESC LIMIT 50").all();
+  let nightCount = 0;
+  let afternoonCount = 0;
+  let morningCount = 0;
+
+  for (const l of logs) {
+    if (!l.created_at) continue;
+    const hour = new Date(l.created_at).getHours();
+    if (hour >= 20 || hour < 4) nightCount++;
+    else if (hour >= 12 && hour < 20) afternoonCount++;
+    else morningCount++;
+  }
+
+  let timeArchetype = 'Night Owl Polymath';
+  let peakTimeStr = 'Night (8 PM - 2 AM)';
+  if (morningCount >= afternoonCount && morningCount >= nightCount) {
+    timeArchetype = 'Early Bird Tactician';
+    peakTimeStr = 'Morning (6 AM - 11 AM)';
+  } else if (afternoonCount >= morningCount && afternoonCount >= nightCount) {
+    timeArchetype = 'Afternoon Flow Master';
+    peakTimeStr = 'Afternoon (12 PM - 6 PM)';
+  }
+
+  // Scholar Archetype based on level and focus
+  let persona = 'Deep Work Architect';
+  if (profile.level >= 8) persona = 'Certified Academic Weapon';
+  else if (profile.level >= 5) persona = 'Syllabus Slayer';
+  else if (completedCount >= 5) persona = 'Assignment Crusher';
+
+  const totalMins = profile.total_study_minutes || heatmap.summary.totalMinutes || 50;
+  const totalHours = (totalMins / 60).toFixed(1);
+
+  return {
+    scholarName: 'Scholar',
+    level: profile.level,
+    rankTitle: profile.title,
+    currentXP: profile.xp,
+    streak: profile.streak,
+    totalMinutes: totalMins,
+    totalHours,
+    completedTasksCount: completedCount,
+    topCourse: topCourseObj ? { code: topCourseObj.code, name: topCourseObj.name, tasksCleared: topCourseCount } : null,
+    timeArchetype,
+    peakTimeStr,
+    persona,
+    shareText: `🎓 StudySync Scholar Wrapped 2026\n⚡ Rank: ${profile.title} (Level ${profile.level})\n⏱️ Time Locked In: ${totalHours} Hours\n🎯 Tasks Slain: ${completedCount} Completed\n🏆 Top Course: ${topCourseObj ? topCourseObj.code : 'All Courses'}\n🦉 Archetype: ${timeArchetype}\n🔥 Streak: ${profile.streak} Days\n\nSelf-hosted with StudySync 🚀`
+  };
 }
 
