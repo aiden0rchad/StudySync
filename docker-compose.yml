@@ -1,5 +1,6 @@
 services:
   studysync:
+    image: ghcr.io/aiden0rchad/studysync:latest
     build:
       context: .
       dockerfile: Dockerfile

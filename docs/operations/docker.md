@@ -17,13 +17,14 @@ StudySync images and source builds natively target both **ARM64** (Apple Silicon
 
 ## Docker Compose Setup
 
-A ready-to-run `docker-compose.yml` is included in the repository. It automatically compiles or runs for your host architecture:
+A ready-to-run `docker-compose.yml` is included in the repository. It automatically pulls the pre-built multi-arch image from GitHub Container Registry (GHCR) or compiles locally:
 
 ```yaml
 version: '3.8'
 
 services:
   studysync:
+    image: ghcr.io/aiden0rchad/studysync:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -43,9 +44,19 @@ volumes:
     driver: local
 ```
 
-### Start the Container
+### Option A: Run via Docker Compose
 ```bash
 docker compose up -d
+```
+
+### Option B: Run Directly from GHCR (No Git Clone Needed)
+```bash
+docker run -d \
+  --name studysync \
+  -p 3000:3000 \
+  -v studysync_data:/app/data \
+  --restart unless-stopped \
+  ghcr.io/aiden0rchad/studysync:latest
 ```
 
 ### View Logs

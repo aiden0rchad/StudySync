@@ -92,6 +92,16 @@ cd StudySync
 docker compose up -d
 ```
 
+Or run directly from GitHub Container Registry without cloning:
+```sh
+docker run -d \
+  --name studysync \
+  -p 3000:3000 \
+  -v studysync_data:/app/data \
+  --restart unless-stopped \
+  ghcr.io/aiden0rchad/studysync:latest
+```
+
 Open [http://localhost:3000](http://localhost:3000). Data is persisted in the Docker volume `studysync_data`.
 
 To build for specific architectures explicitly:
