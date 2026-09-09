@@ -42,7 +42,7 @@ To connect this MCP server to **Hermes Agent**:
 
 Or run directly with Hermes:
 ```bash
-hermes --tools-mcp-config /Users/rolandleyco/.gemini/antigravity/scratch/study-calendar-app/hermes-mcp.json
+hermes --tools-mcp-config mcp/hermes-mcp.json
 ```
 
 ---

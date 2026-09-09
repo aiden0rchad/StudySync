@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "studysync": {
+      "command": "node",
+      "args": [
+        "./mcp/server.js"
+      ],
+      "env": {
+        "NODE_ENV": "production",
+        "API_BASE": "http://localhost:3000/api"
+      }
+    }
+  }
+}
+

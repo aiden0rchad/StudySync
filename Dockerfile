@@ -22,7 +22,6 @@ RUN npm install --omit=dev
 # Copy server and MCP scripts
 COPY server ./server
 COPY mcp ./mcp
-COPY hermes-mcp.json ./
 
 # Copy built frontend from builder stage
 COPY --from=builder /app/dist ./dist

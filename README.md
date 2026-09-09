@@ -52,7 +52,7 @@ Released September 9, 2026. [Read the release notes](https://github.com/aiden0rc
 
 > **Disclaimer**: Tested on my end by the author, but has not been independently audited by a third-party cybersecurity firm. I tried my best to inspect, look, update, and patch vulnerabilities.
 
-For full technical details, threat models, and safe deployment guides, see [SECURITY.md](SECURITY.md) and [SAFETY.md](SAFETY.md).
+For full technical details, threat models, and safe deployment guides, see [.github/SECURITY.md](.github/SECURITY.md) and the [Security & Safety Documentation](https://aiden0rchad.github.io/StudySync/guide/security-safety).
 
 - **Read-only Canvas guarantee**: StudySync strictly communicates with Canvas LMS via HTTP `GET` requests. It contains no API endpoints, database mutations, or code paths that send `POST`, `PUT`, `PATCH`, or `DELETE` requests to Canvas. Wiping or editing items in StudySync only alters your local SQLite database (`study_sync.db`).
 - **Local-first storage & zero telemetry**: All user data, courses, tasks, and credentials reside in your local SQLite database or browser storage. No data is sent to external servers other than direct LLM inference requests to your configured AI provider (or 100% offline via local Ollama).

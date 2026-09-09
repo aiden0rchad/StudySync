@@ -1,8 +1,8 @@
-# Security Policy
+# Security & Safety Policy
 
 ## Disclaimer
 
-> **Important Notice**: StudySync has been inspected, tested, and patched on our end by the author, but it has **not been independently audited by a third-party cybersecurity firm**. We have made our best efforts to review the code, harden endpoints, prevent common vulnerabilities (SSRF, SQL injection, CRLF injection), and keep dependencies updated. If you plan to deploy StudySync outside a private local network, please review the security guidelines below.
+> **Important Notice**: StudySync has been inspected, tested, and patched on our end by the author, but it has **not been independently audited by a third-party cybersecurity firm**. We have made our best efforts to review the code, harden endpoints, prevent common vulnerabilities (SSRF, SQL injection, CRLF injection), and keep dependencies updated. If you plan to deploy StudySync outside a private local network, please review the security and safety guidelines below.
 
 ---
 
@@ -10,10 +10,10 @@
 
 Security updates and patches are provided for the latest minor release line:
 
-| Version | Supported          | Status                                      |
-| ------- | ------------------ | ------------------------------------------- |
-| 0.1.x   | :white_check_mark: | Actively supported and patched              |
-| < 0.1.0 | :x:                | Legacy preview builds (please update)       |
+| Version | Supported | Status |
+| :--- | :---: | :--- |
+| `0.1.x` | :white_check_mark: | Actively supported and patched |
+| `< 0.1.0` | :x: | Legacy preview builds (please update) |
 
 ---
 
@@ -51,6 +51,41 @@ StudySync fetches external feeds for Canvas calendars and delivers outbound noti
   1. Synchronizing with your university Canvas feed.
   2. Sending automated notifications to your configured Discord webhook or ntfy topic.
   3. Sending prompt text and syllabus images to your chosen AI provider (or running 100% locally with Ollama).
+
+---
+
+## Safety Guidelines & Academic Integrity
+
+### 1. Academic Safety & Honor Code Compliance
+- StudySync is designed as a personal organization and executive function scaffolding tool for students.
+- **Honor Code Compliance**: StudySync is an organization planner and study coach. It does not complete homework, generate unauthorized academic submissions, or circumvent institutional access controls.
+- **Official Submissions**: Always verify assignment instructions and submit final coursework directly through your university's official portal (e.g. Canvas, Blackboard, Gradescope, Moodle). StudySync is a personal calendar aid, not an official submission record.
+
+### 2. Data Safety & Backup Strategy
+All courses, tasks, study blocks, and settings are stored locally in a single SQLite database file: `study_sync.db` (or inside the persistent Docker volume `/data`).
+
+Because StudySync does not sync your data to an external proprietary cloud, maintaining your own backup is simple and recommended:
+
+- **Standalone Node.js**:
+  ```bash
+  # Create a timestamped backup
+  cp study_sync.db study_sync_backup_$(date +%Y%m%d).db
+  ```
+- **Docker Volume**:
+  ```bash
+  # Export the SQLite database from the running container
+  docker compose exec studysync cp /data/study_sync.db /data/study_sync_backup.db
+  ```
+
+### 3. Accidental Reset Prevention
+- Database wipe operations in the Admin UI require explicit user confirmation.
+- Once cleared, the database sets a persistent flag (`has_been_seeded: 1`), ensuring that container restarts or server reboots do not overwrite your calendar with default sample courses.
+
+### 4. Privacy & AI Model Safety
+StudySync supports both cloud-hosted AI providers (OpenAI, Google Gemini, Anthropic Claude, Groq, Mistral, DeepSeek) and 100% local, offline models (Ollama, LM Studio).
+
+- **Local-Only Air-Gapped Mode**: If you prefer that no course syllabi, assignment details, or notes ever leave your machine, run Ollama locally (`ollama run hermes3`) with Base URL `http://localhost:11434/v1`. Inference runs entirely on your local hardware with zero external network transmission.
+- **Cloud AI Providers**: If you choose cloud providers, only the specific text, syllabus image, or question you submit is transmitted to the provider's API. API keys are stored locally in your SQLite database and are never sent anywhere else.
 
 ---
 
