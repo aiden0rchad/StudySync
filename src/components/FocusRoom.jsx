@@ -389,6 +389,11 @@ export default function FocusRoom({
 
   const handleSelectAmbientSound = (soundId) => {
     audioFX.playClick();
+    audioFX.resume();
+    if (isSoundMuted) {
+      audioFX.setSoundEnabled(true);
+      setIsSoundMuted(false);
+    }
     if (ambientType === soundId && isAmbientPlaying) {
       setAmbientType('off');
       setIsAmbientPlayingManual(false);
@@ -401,6 +406,11 @@ export default function FocusRoom({
 
   const handleToggleManualAmbient = () => {
     audioFX.playClick();
+    audioFX.resume();
+    if (isSoundMuted) {
+      audioFX.setSoundEnabled(true);
+      setIsSoundMuted(false);
+    }
     if (isAmbientPlaying) {
       setAmbientType('off');
       setIsAmbientPlayingManual(false);
@@ -449,6 +459,11 @@ export default function FocusRoom({
 
   const handleToggleTimer = () => {
     audioFX.playClick();
+    audioFX.resume();
+    if (isSoundMuted && !isActive) {
+      audioFX.setSoundEnabled(true);
+      setIsSoundMuted(false);
+    }
     setIsActive(prev => !prev);
   };
 

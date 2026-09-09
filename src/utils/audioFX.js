@@ -27,9 +27,18 @@ class SoundManager {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
     return this.ctx;
+  }
+
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+    if (this.ambientAudioEl && this.ambientAudioEl.paused && this.currentAmbientType && this.currentAmbientType !== 'off') {
+      this.ambientAudioEl.play().catch(() => {});
+    }
   }
 
   isSoundEnabled() {
@@ -316,9 +325,9 @@ class SoundManager {
   }
 
   // Ambient Soundscapes (Rain, Campfire, Midnight Cafe, Brown Noise, 40Hz Gamma, Cyber Drone)
-  async startAmbient(type = 'brown_noise', volume = 0.5) {
+  startAmbient(type = 'brown_noise', volume = 0.5) {
     this.stopAmbient();
-    if (!this.soundEnabled) return;
+    if (!this.soundEnabled || type === 'off') return;
 
     this.currentAmbientType = type;
     const clampedVol = Math.max(0.05, Math.min(1.0, volume));
@@ -329,26 +338,11 @@ class SoundManager {
       return;
     }
 
-    // 1. Primary: High-fidelity Web Audio sample-accurate buffer looper (100% gapless)
+    // 1. If Web Audio is active and buffer is cached, use sample-accurate buffer looper
     const ctx = this.initContext();
-    if (ctx) {
+    if (ctx && ctx.state === 'running' && this.audioBufferCache.has(type)) {
       try {
-        if (ctx.state === 'suspended') {
-          await ctx.resume().catch(() => {});
-        }
-
-        let audioBuffer = this.audioBufferCache.get(type);
-        if (!audioBuffer) {
-          const resp = await fetch(`/sounds/${type}.mp3`);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const arrayBuffer = await resp.arrayBuffer();
-          audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-          this.audioBufferCache.set(type, audioBuffer);
-        }
-
-        // Ensure user hasn't switched ambient or stopped while downloading/decoding
-        if (this.currentAmbientType !== type) return;
-
+        const audioBuffer = this.audioBufferCache.get(type);
         const gainNode = ctx.createGain();
         gainNode.gain.setValueAtTime(clampedVol, ctx.currentTime);
         gainNode.connect(ctx.destination);
@@ -365,11 +359,11 @@ class SoundManager {
         this.ambientSource = source;
         return;
       } catch (err) {
-        console.warn(`Web Audio seamless buffer looper fallback for ${type}:`, err);
+        console.warn(`Web Audio buffer looper error for ${type}:`, err);
       }
     }
 
-    // 2. Fallback: HTML5 Audio
+    // 2. Primary / Fast-start: HTML5 Audio (Plays immediately in 0ms, robust across all browsers)
     if (typeof Audio !== 'undefined') {
       try {
         const audio = new Audio(`/sounds/${type}.mp3`);
@@ -393,6 +387,16 @@ class SoundManager {
             } catch (e) {}
           }
         };
+
+        // In the background, pre-decode buffer for Web Audio if context is available
+        if (ctx && !this.audioBufferCache.has(type)) {
+          fetch(`/sounds/${type}.mp3`)
+            .then(res => res.arrayBuffer())
+            .then(buf => ctx.decodeAudioData(buf))
+            .then(decoded => this.audioBufferCache.set(type, decoded))
+            .catch(() => {});
+        }
+
         return;
       } catch (e) {
         console.warn('HTML Audio instantiation error:', e);
