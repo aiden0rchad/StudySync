@@ -9,6 +9,7 @@ class SoundManager {
     this.ambientAudioEl = null;
     this.currentAmbientType = null;
     this.soundEnabled = true;
+    this.audioBufferCache = new Map();
 
     try {
       const saved = localStorage.getItem('studysync_sound_enabled');
@@ -315,16 +316,61 @@ class SoundManager {
   }
 
   // Ambient Soundscapes (Rain, Campfire, Midnight Cafe, Brown Noise, 40Hz Gamma, Cyber Drone)
-  startAmbient(type = 'brown_noise', volume = 0.5) {
+  async startAmbient(type = 'brown_noise', volume = 0.5) {
     this.stopAmbient();
     if (!this.soundEnabled) return;
 
     this.currentAmbientType = type;
     const clampedVol = Math.max(0.05, Math.min(1.0, volume));
 
-    // 1. For realistic recorded/synthesized audio files, use HTML5 Audio
     const audioFiles = ['rain', 'campfire', 'cafe', 'brown_noise', 'binaural_40hz', 'cyber_drone'];
-    if (audioFiles.includes(type) && typeof Audio !== 'undefined') {
+    if (!audioFiles.includes(type)) {
+      this.startProceduralAmbient(type, volume);
+      return;
+    }
+
+    // 1. Primary: High-fidelity Web Audio sample-accurate buffer looper (100% gapless)
+    const ctx = this.initContext();
+    if (ctx) {
+      try {
+        if (ctx.state === 'suspended') {
+          await ctx.resume().catch(() => {});
+        }
+
+        let audioBuffer = this.audioBufferCache.get(type);
+        if (!audioBuffer) {
+          const resp = await fetch(`/sounds/${type}.mp3`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const arrayBuffer = await resp.arrayBuffer();
+          audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+          this.audioBufferCache.set(type, audioBuffer);
+        }
+
+        // Ensure user hasn't switched ambient or stopped while downloading/decoding
+        if (this.currentAmbientType !== type) return;
+
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(clampedVol, ctx.currentTime);
+        gainNode.connect(ctx.destination);
+        this.ambientGain = gainNode;
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = true;
+        source.loopStart = 0;
+        source.loopEnd = audioBuffer.duration;
+        source.connect(gainNode);
+        source.start(0);
+
+        this.ambientSource = source;
+        return;
+      } catch (err) {
+        console.warn(`Web Audio seamless buffer looper fallback for ${type}:`, err);
+      }
+    }
+
+    // 2. Fallback: HTML5 Audio
+    if (typeof Audio !== 'undefined') {
       try {
         const audio = new Audio(`/sounds/${type}.mp3`);
         audio.loop = true;
@@ -334,7 +380,7 @@ class SoundManager {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.catch(err => {
-            console.warn(`Audio playback error for /sounds/${type}.mp3, falling back to procedural:`, err);
+            console.warn(`HTML5 audio playback error for ${type}:`, err);
             this.startProceduralAmbient(type, volume);
           });
         }
@@ -349,11 +395,11 @@ class SoundManager {
         };
         return;
       } catch (e) {
-        console.warn('HTML Audio instantiation error, falling back to procedural:', e);
+        console.warn('HTML Audio instantiation error:', e);
       }
     }
 
-    // 2. Otherwise (or as fallback), synthesize natively in Web Audio API
+    // 3. Fallback: Web Audio API procedural synthesis
     this.startProceduralAmbient(type, volume);
   }
 
@@ -537,7 +583,7 @@ class SoundManager {
       } catch (e) {}
     }
     if (this.ambientGain && this.ctx) {
-      this.ambientGain.gain.setValueAtTime(clampedVol * 0.7, this.ctx.currentTime);
+      this.ambientGain.gain.setValueAtTime(clampedVol, this.ctx.currentTime);
     }
   }
 
@@ -555,7 +601,12 @@ class SoundManager {
       } catch (e) {}
       this.ambientSource = null;
     }
-    this.ambientGain = null;
+    if (this.ambientGain) {
+      try {
+        this.ambientGain.disconnect();
+      } catch (e) {}
+      this.ambientGain = null;
+    }
     this.currentAmbientType = null;
   }
 }
