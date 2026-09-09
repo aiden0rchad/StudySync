@@ -322,8 +322,9 @@ class SoundManager {
     this.currentAmbientType = type;
     const clampedVol = Math.max(0.05, Math.min(1.0, volume));
 
-    // 1. For realistic recorded/synthesized audio files (rain, campfire, cafe), use HTML5 Audio
-    if (['rain', 'campfire', 'cafe'].includes(type) && typeof Audio !== 'undefined') {
+    // 1. For realistic recorded/synthesized audio files, use HTML5 Audio
+    const audioFiles = ['rain', 'campfire', 'cafe', 'brown_noise', 'binaural_40hz', 'cyber_drone'];
+    if (audioFiles.includes(type) && typeof Audio !== 'undefined') {
       try {
         const audio = new Audio(`/sounds/${type}.mp3`);
         audio.loop = true;
@@ -360,22 +361,34 @@ class SoundManager {
     const ctx = this.initContext();
     if (!ctx) return;
 
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
     const gainNode = ctx.createGain();
     const clampedVol = Math.max(0.05, Math.min(1.0, volume));
-    gainNode.gain.setValueAtTime(clampedVol * 0.25, ctx.currentTime);
+    gainNode.gain.setValueAtTime(clampedVol * 0.7, ctx.currentTime);
     gainNode.connect(ctx.destination);
     this.ambientGain = gainNode;
 
     if (type === 'binaural_40hz') {
-      // 40Hz Gamma focus: Carrier 220Hz in left ear, 260Hz in right ear (40Hz offset)
+      // 40Hz Gamma focus: Carrier 216Hz in left ear, 256Hz in right ear (40Hz offset)
       const oscL = ctx.createOscillator();
       const oscR = ctx.createOscillator();
+      const pad = ctx.createOscillator();
+      const padGain = ctx.createGain();
       const merger = ctx.createChannelMerger(2);
 
       oscL.type = 'sine';
-      oscL.frequency.value = 220; // A3
+      oscL.frequency.value = 216;
       oscR.type = 'sine';
-      oscR.frequency.value = 260; // 220 + 40Hz beat
+      oscR.frequency.value = 256;
+
+      pad.type = 'sine';
+      pad.frequency.value = 220;
+      padGain.gain.value = 0.2;
+      pad.connect(padGain);
+      padGain.connect(gainNode);
 
       oscL.connect(merger, 0, 0);
       oscR.connect(merger, 0, 1);
@@ -383,40 +396,47 @@ class SoundManager {
 
       oscL.start();
       oscR.start();
+      pad.start();
 
       this.ambientSource = {
         stop: () => {
           try {
             oscL.stop();
             oscR.stop();
+            pad.stop();
           } catch (e) {}
         }
       };
     } else if (type === 'cyber_drone') {
-      // Hypnotic Sci-Fi Drone: Detuned sub-bass + resonant low-pass filter
+      // Hypnotic Sci-Fi Drone: Detuned analog saw/sub + resonant filter
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
+      const osc3 = ctx.createOscillator();
       const sub = ctx.createOscillator();
 
       osc1.type = 'sawtooth';
-      osc1.frequency.value = 55;
+      osc1.frequency.value = 110;
       osc2.type = 'sawtooth';
-      osc2.frequency.value = 56.5;
+      osc2.frequency.value = 110.8;
+      osc3.type = 'triangle';
+      osc3.frequency.value = 164.81;
       sub.type = 'sine';
-      sub.frequency.value = 27.5;
+      sub.frequency.value = 55;
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 160;
-      filter.Q.value = 4.0;
+      filter.frequency.value = 280;
+      filter.Q.value = 2.5;
 
       osc1.connect(filter);
       osc2.connect(filter);
+      osc3.connect(filter);
       sub.connect(filter);
       filter.connect(gainNode);
 
       osc1.start();
       osc2.start();
+      osc3.start();
       sub.start();
 
       this.ambientSource = {
@@ -424,6 +444,7 @@ class SoundManager {
           try {
             osc1.stop();
             osc2.stop();
+            osc3.stop();
             sub.stop();
           } catch (e) {}
         }
@@ -487,7 +508,7 @@ class SoundManager {
         filter.frequency.value = 1400;
       } else if (type === 'brown_noise') {
         filter.type = 'lowpass';
-        filter.frequency.value = 400;
+        filter.frequency.value = 550;
       } else if (type === 'campfire') {
         filter.type = 'lowpass';
         filter.frequency.value = 850;
@@ -516,7 +537,7 @@ class SoundManager {
       } catch (e) {}
     }
     if (this.ambientGain && this.ctx) {
-      this.ambientGain.gain.setValueAtTime(clampedVol * 0.25, this.ctx.currentTime);
+      this.ambientGain.gain.setValueAtTime(clampedVol * 0.7, this.ctx.currentTime);
     }
   }
 
