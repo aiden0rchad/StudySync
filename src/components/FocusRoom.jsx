@@ -44,6 +44,8 @@ const ROOM_THEMES = [
   { 
     id: 'rainy_tokyo', 
     name: 'Rainy Tokyo', 
+    subtitle: 'Calm city rainfall & nocturnal reflections',
+    image: '/themes/rainy_tokyo.jpg',
     icon: CloudRain, 
     bgGradient: 'from-slate-950 via-slate-900 to-indigo-950', 
     cardBg: 'bg-slate-900/90 border-indigo-500/30',
@@ -53,6 +55,8 @@ const ROOM_THEMES = [
   { 
     id: 'midnight_cafe', 
     name: 'Midnight Cafe', 
+    subtitle: 'Warm amber glow & quiet espresso bar',
+    image: '/themes/midnight_cafe.jpg',
     icon: Coffee, 
     bgGradient: 'from-[#170e08] via-[#24150b] to-[#120904]', 
     cardBg: 'bg-[#1e1109]/90 border-amber-500/30',
@@ -62,6 +66,8 @@ const ROOM_THEMES = [
   { 
     id: 'gothic_library', 
     name: 'Gothic Library', 
+    subtitle: 'Arched stained glass & leather-bound stillness',
+    image: '/themes/gothic_library.jpg',
     icon: BookOpen, 
     bgGradient: 'from-[#071712] via-[#09221b] to-[#04100c]', 
     cardBg: 'bg-[#0a1f18]/90 border-emerald-500/30',
@@ -71,6 +77,8 @@ const ROOM_THEMES = [
   { 
     id: 'cyberpunk', 
     name: 'Cyberpunk Terminal', 
+    subtitle: 'Futuristic horizon & late-night code flow',
+    image: '/themes/cyberpunk.jpg',
     icon: Terminal, 
     bgGradient: 'from-[#0d071b] via-[#170a2f] to-[#090314]', 
     cardBg: 'bg-[#15092a]/90 border-purple-500/30',
@@ -80,6 +88,8 @@ const ROOM_THEMES = [
   { 
     id: 'zen_garden', 
     name: 'Zen Sanctuary', 
+    subtitle: 'Misty bamboo, stone ripples & tranquil clarity',
+    image: '/themes/zen_garden.jpg',
     icon: Compass, 
     bgGradient: 'from-slate-900 via-stone-900 to-emerald-950', 
     cardBg: 'bg-stone-900/90 border-teal-500/30',
@@ -471,7 +481,14 @@ export default function FocusRoom({
 
       {/* ===================== FULLSCREEN HYPERFOCUS LOCK-IN BLACKOUT OVERLAY ===================== */}
       {isLockInMode && currentTask && (
-        <div className={`fixed inset-0 z-50 bg-gradient-to-b ${activeThemeObj.bgGradient} text-white flex flex-col justify-between pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] px-4 sm:px-8 backdrop-blur-3xl overflow-y-auto animate-in fade-in zoom-in-95 duration-200`}>
+        <div className="fixed inset-0 z-50 text-white flex flex-col justify-between pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] px-4 sm:px-8 backdrop-blur-3xl overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+          
+          {/* Subtle Ambient Artwork Backdrop with Deep Vignette */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center -z-10 scale-105 opacity-20 transition-all duration-1000"
+            style={{ backgroundImage: `url(${activeThemeObj.image})` }}
+          />
+          <div className={`absolute inset-0 bg-gradient-to-b ${activeThemeObj.bgGradient} opacity-95 -z-10`} />
           
           {/* Top Bar */}
           <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-3 flex-wrap">
@@ -599,31 +616,56 @@ export default function FocusRoom({
         </div>
       )}
 
-      {/* Header & Aesthetic Controls */}
-      <div className="w-full flex flex-col items-center text-center space-y-2">
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center justify-center gap-2">
-          <span>Focus Lounge & Study Room</span>
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            {activeThemeObj.name}
-          </span>
-        </h2>
+      {/* Ambient Theme Scene Window & Header */}
+      <div className="w-full rounded-3xl overflow-hidden relative border border-slate-200/80 dark:border-slate-800 shadow-xl group">
+        <div className="h-44 sm:h-52 w-full overflow-hidden relative">
+          <img 
+            src={activeThemeObj.image} 
+            alt={activeThemeObj.name} 
+            className="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-105"
+          />
+          {/* Subtle vignette gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-black/20 flex flex-col justify-between p-4 sm:p-5 text-white">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-slate-200">
+                Focus Sanctuary
+              </span>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-xs font-semibold text-slate-200">
+                <Radio className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="capitalize">{ambientType.replace('_', ' ')}</span>
+              </div>
+            </div>
 
-        {/* Lofi Theme Selector Pills */}
-        <div className="flex items-center gap-1.5 flex-wrap justify-center pt-1">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+                {activeThemeObj.name}
+              </h2>
+              <p className="text-xs text-slate-300 font-medium">
+                {activeThemeObj.subtitle}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Theme Selector Strip */}
+        <div className="bg-slate-900/90 dark:bg-slate-900/95 backdrop-blur-md p-2.5 flex items-center gap-1.5 overflow-x-auto justify-start sm:justify-center border-t border-white/10">
           {ROOM_THEMES.map(theme => {
             const isSelected = roomTheme === theme.id;
-            const ThemeIcon = theme.icon;
             return (
               <button
                 key={theme.id}
                 onClick={() => handleSelectTheme(theme.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shrink-0 ${
                   isSelected
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                    : 'bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                    : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
                 }`}
               >
-                <ThemeIcon className="w-3.5 h-3.5 shrink-0" />
+                <img 
+                  src={theme.image} 
+                  alt="" 
+                  className="w-4 h-4 rounded-md object-cover ring-1 ring-white/20 shrink-0" 
+                />
                 <span>{theme.name}</span>
               </button>
             );
