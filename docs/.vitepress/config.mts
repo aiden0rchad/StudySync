@@ -56,7 +56,20 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#0f172a', media: '(prefers-color-scheme: dark)' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'StudySync Documentation' }],
-    ['meta', { property: 'og:description', content: 'Self-hosted academic calendar with AI, Canvas LMS pull, and Apple Calendar sync.' }]
+    ['meta', { property: 'og:description', content: 'Self-hosted academic calendar with AI, Canvas LMS pull, and Apple Calendar sync.' }],
+    ['script', {
+      type: 'text/javascript',
+      src: 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js',
+      'data-name': 'bmc-button',
+      'data-slug': 'aiden0rchad',
+      'data-color': '#FFDD00',
+      'data-emoji': '',
+      'data-font': 'Cookie',
+      'data-text': 'Buy me a coffee',
+      'data-outline-color': '#000000',
+      'data-font-color': '#000000',
+      'data-coffee-color': '#ffffff'
+    }]
   ],
   markdown: {
     lineNumbers: true,
@@ -69,12 +82,14 @@ export default defineConfig({
       { text: 'Guides', link: '/guide/discord-adhd-coach' },
       { text: 'Self-Hosting', link: '/operations/docker' },
       { text: 'Reference', link: '/reference/mcp-server' },
+      { text: '☕ Sponsor', link: 'https://buymeacoffee.com/aiden0rchad' },
       {
         text: 'v0.1.3',
         items: [
           { text: 'GitHub Repository', link: 'https://github.com/aiden0rchad/StudySync' },
           { text: 'v0.1.3 Release Notes', link: 'https://github.com/aiden0rchad/StudySync/releases/tag/v0.1.3' },
-          { text: 'Docker Compose Guide', link: '/operations/docker' }
+          { text: 'Docker Compose Guide', link: '/operations/docker' },
+          { text: '☕ Buy Me a Coffee', link: 'https://buymeacoffee.com/aiden0rchad' }
         ]
       }
     ],
@@ -99,7 +114,7 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/aiden0rchad/StudySync' },
     ],
     footer: {
-      message: 'Student Academic Schedule Planner · 100% Read-Only Canvas Integration',
+      message: 'Student Academic Schedule Planner · 100% Read-Only Canvas Integration · <a href="https://buymeacoffee.com/aiden0rchad" target="_blank" rel="noopener">☕ Buy Me a Coffee</a>',
       copyright: 'PolyForm Noncommercial 1.0.0 · Built for Students & Homelabbers',
     },
     darkModeSwitchLabel: 'Theme',

@@ -5,6 +5,7 @@ Self-hosted academic calendar and homework planner with Canvas LMS and Apple Cal
 [![Release](https://img.shields.io/github/v/release/aiden0rchad/StudySync)](https://github.com/aiden0rchad/StudySync/releases)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-indigo.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-capabilities%20%26%20guides-2a78d6)](https://aiden0rchad.github.io/StudySync/)
+[![Buy Me A Coffee](https://img.shields.io/badge/Support-Buy%20Me%20A%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/aiden0rchad)
 
 **[Explore the complete documentation →](https://aiden0rchad.github.io/StudySync/)**
 Setup guides, Canvas integration details, Apple Calendar webcal configuration, Tailscale deployment, MCP tool definitions, and operations—with full-text search and light/dark themes.
@@ -153,6 +154,20 @@ The full documentation site is built with VitePress and deployed to GitHub Pages
   ```sh
   npm --prefix docs run dev
   ```
+
+## Supporting Future Development
+
+StudySync is free and open for all students, researchers, and self-hosters. If StudySync has helped you manage your semester, conquer procrastination, or save hours of manual calendar entry, consider buying me a coffee! Your support directly funds ongoing development, local and multimodal AI model evaluations, and hardware testing.
+
+<p align="left">
+  <a href="https://buymeacoffee.com/aiden0rchad" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" style="height: 50px !important;" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://buymeacoffee.com/aiden0rchad" target="_blank">
+    <img src="public/bmc-qr.png" alt="Scan to Buy Me A Coffee" width="100" height="100" style="height: 50px !important; width: 50px !important; border-radius: 8px; vertical-align: middle;" />
+  </a>
+</p>
 
 ## License & Usage
 

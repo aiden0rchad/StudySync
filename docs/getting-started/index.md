@@ -43,4 +43,5 @@ flowchart TD
 * **Hermes Agent & MCP Ready**: Built-in Model Context Protocol server lets local LLMs manage your timetable autonomously.
 * **Safe Clean Slate**: Wipe sample demo items at any time without ever affecting your school's Canvas account.
 * **Free for Personal & Non-Commercial Use**: Released under the **PolyForm Noncommercial License 1.0.0**. Free for all students, self-hosters, and personal study. Commercial use or monetization requires prior written permission from the author.
+* **Support Ongoing Development**: If StudySync helps you succeed in your studies, consider [buying me a coffee](https://buymeacoffee.com/aiden0rchad) to support future development, model evaluations, and testing!
 

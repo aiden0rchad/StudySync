@@ -45,3 +45,18 @@ features:
   - title: Mobile Touch Gestures & PWA
     details: "TikTok-style vertical swipe navigation in the Study Feed, mobile dot indicators with tap-to-inspect daily agenda sheets, and keyboard-safe modals."
 ---
+
+<div style="text-align: center; margin: 4rem auto 2rem; max-width: 680px; padding: 2.5rem 1.5rem; border-radius: 16px; border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft);">
+  <h3 style="margin-top: 0; font-size: 1.5rem; font-weight: 700;">☕ Support Future Development</h3>
+  <p style="margin: 0.75rem auto 1.5rem; color: var(--vp-c-text-2); font-size: 1rem; line-height: 1.6;">
+    StudySync is free and open for students, researchers, and homelabbers. If StudySync has helped you manage your semester, conquer procrastination, or save time, consider buying me a coffee! Your support directly funds ongoing development, local & multimodal AI testing, and server maintenance.
+  </p>
+  <div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+    <a href="https://buymeacoffee.com/aiden0rchad" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
+      <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 52px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12);" />
+    </a>
+    <a href="https://buymeacoffee.com/aiden0rchad" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
+      <img src="/bmc-qr.png" alt="Scan QR code to Buy Me A Coffee" style="width: 80px; height: 80px; border-radius: 10px; border: 1px solid var(--vp-c-divider); box-shadow: 0 4px 12px rgba(0,0,0,0.08);" />
+    </a>
+  </div>
+</div>
