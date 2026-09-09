@@ -201,7 +201,7 @@ export default function App() {
       if (res.didLevelUp) {
         audioFX.playLevelUp();
         triggerLevelUpConfetti();
-        showToast(`🏆 Level Up! You are now Level ${res.newLevel}: ${res.rank.title}!`, 'success');
+        showToast(`Level Advanced: Level ${res.newLevel} · ${res.rank.title}`, 'success');
       }
     }
   };
@@ -209,7 +209,7 @@ export default function App() {
   const handleToggleSound = () => {
     const next = audioFX.toggleSound();
     setSoundEnabled(next);
-    showToast(next ? 'Sound FX Enabled 🔔' : 'Sound FX Muted 🔇');
+    showToast(next ? 'Sound FX Enabled' : 'Sound FX Muted');
   };
 
   // Sync to localStorage
@@ -272,8 +272,8 @@ export default function App() {
     if (nextStatus === 'completed') {
       audioFX.playTaskComplete();
       triggerTaskConfetti();
-      triggerXPReward(50, '🎯 Task Conquered! +50 XP');
-      showToast('Task marked as completed! +50 XP 🎉');
+      triggerXPReward(50, 'Milestone Completed (+50 XP)');
+      showToast('Task marked completed (+50 XP)', 'success');
     }
   };
 

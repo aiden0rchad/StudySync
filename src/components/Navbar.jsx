@@ -180,7 +180,7 @@ export default function Navbar({
               <button
                 onClick={onOpenTrophies}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-violet-500/10 hover:from-amber-500/20 hover:to-violet-500/20 border border-amber-300/40 dark:border-amber-500/30 text-slate-800 dark:text-slate-100 transition-all active:scale-95 shadow-2xs group"
-                title="Scholar Profile: Streaks, Quests, Trophies & Wrapped 🎁"
+                title="Scholar Profile: Streaks, Quests, Ranks & Replay"
               >
                 <div className="flex items-center gap-1.5">
                   <Flame className="w-4 h-4 text-amber-500 fill-amber-500 group-hover:scale-110 transition-transform" />
@@ -454,7 +454,7 @@ export default function Navbar({
                           className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-left"
                         >
                           <Sparkles className="w-3.5 h-3.5 text-pink-500" />
-                          <span>Scholar Wrapped (Story Recap)</span>
+                          <span>Scholar Replay (Annual Recap)</span>
                         </button>
 
                         <div className="border-t border-slate-100 dark:border-slate-800 my-1" />

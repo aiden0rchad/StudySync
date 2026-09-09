@@ -26,8 +26,12 @@ import {
   Moon,
   Palette,
   Eye,
-  Cat,
-  Sprout as SproutIcon
+  BookOpen,
+  Terminal,
+  Compass,
+  Leaf,
+  Activity,
+  AlertCircle
 } from 'lucide-react';
 import { audioFX } from '../utils/audioFX';
 import { triggerLevelUpConfetti, triggerTaskConfetti } from '../utils/confetti';
@@ -40,7 +44,7 @@ const ROOM_THEMES = [
   { 
     id: 'rainy_tokyo', 
     name: 'Rainy Tokyo', 
-    icon: '🌧️', 
+    icon: CloudRain, 
     bgGradient: 'from-slate-950 via-slate-900 to-indigo-950', 
     cardBg: 'bg-slate-900/90 border-indigo-500/30',
     accentText: 'text-indigo-400',
@@ -49,7 +53,7 @@ const ROOM_THEMES = [
   { 
     id: 'midnight_cafe', 
     name: 'Midnight Cafe', 
-    icon: '☕', 
+    icon: Coffee, 
     bgGradient: 'from-[#170e08] via-[#24150b] to-[#120904]', 
     cardBg: 'bg-[#1e1109]/90 border-amber-500/30',
     accentText: 'text-amber-400',
@@ -58,7 +62,7 @@ const ROOM_THEMES = [
   { 
     id: 'gothic_library', 
     name: 'Gothic Library', 
-    icon: '📚', 
+    icon: BookOpen, 
     bgGradient: 'from-[#071712] via-[#09221b] to-[#04100c]', 
     cardBg: 'bg-[#0a1f18]/90 border-emerald-500/30',
     accentText: 'text-emerald-400',
@@ -66,8 +70,8 @@ const ROOM_THEMES = [
   },
   { 
     id: 'cyberpunk', 
-    name: 'Cyberpunk HUD', 
-    icon: '🌌', 
+    name: 'Cyberpunk Terminal', 
+    icon: Terminal, 
     bgGradient: 'from-[#0d071b] via-[#170a2f] to-[#090314]', 
     cardBg: 'bg-[#15092a]/90 border-purple-500/30',
     accentText: 'text-purple-400',
@@ -75,8 +79,8 @@ const ROOM_THEMES = [
   },
   { 
     id: 'zen_garden', 
-    name: 'Zen Garden', 
-    icon: '🌿', 
+    name: 'Zen Sanctuary', 
+    icon: Compass, 
     bgGradient: 'from-slate-900 via-stone-900 to-emerald-950', 
     cardBg: 'bg-stone-900/90 border-teal-500/30',
     accentText: 'text-teal-400',
@@ -111,12 +115,12 @@ export default function FocusRoom({
   const [isSoundMuted, setIsSoundMuted] = useState(() => !audioFX.isSoundEnabled());
   const [sessionsCompletedToday, setSessionsCompletedToday] = useState(0);
 
-  // Companion Type: 'sprout' or 'cat'
-  const [companionType, setCompanionType] = useState(() => {
+  // Focus Flow Visualizer Mode: 'pulse' | 'botanical' | 'telemetry'
+  const [visualizerMode, setVisualizerMode] = useState(() => {
     try {
-      return localStorage.getItem('studysync_companion_type') || 'cat';
+      return localStorage.getItem('studysync_visualizer_mode') || 'pulse';
     } catch (e) {
-      return 'cat';
+      return 'pulse';
     }
   });
 
@@ -237,10 +241,10 @@ export default function FocusRoom({
     const originalTitle = document.title;
     const handleVisibilityChange = () => {
       if (document.hidden && isActive) {
-        document.title = '🚨 GET BACK TO WORK! • StudySync';
+        document.title = `⏳ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} · Focus Active • StudySync`;
         setTabDefections(prev => prev + 1);
       } else if (!document.hidden && isActive) {
-        document.title = isLockInMode ? '🔒 Locked In • StudySync' : '⏱️ Focusing • StudySync';
+        document.title = isLockInMode ? 'Deep Focus • StudySync' : 'Focus Session • StudySync';
         setShowTabWarning(true);
         setTimeout(() => setShowTabWarning(false), 3500);
       } else if (!isActive) {
@@ -253,7 +257,7 @@ export default function FocusRoom({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.title = originalTitle;
     };
-  }, [isActive, isLockInMode]);
+  }, [isActive, isLockInMode, minutes, seconds]);
 
   // Mechanical Keyboard ASMR Listener
   useEffect(() => {
@@ -277,12 +281,15 @@ export default function FocusRoom({
     }
   };
 
-  const handleToggleCompanion = () => {
-    const next = companionType === 'cat' ? 'sprout' : 'cat';
-    setCompanionType(next);
-    try {
-      localStorage.setItem('studysync_companion_type', next);
-    } catch (e) {}
+  const handleToggleVisualizer = () => {
+    audioFX.playClick();
+    setVisualizerMode(prev => {
+      const next = prev === 'pulse' ? 'botanical' : prev === 'botanical' ? 'telemetry' : 'pulse';
+      try {
+        localStorage.setItem('studysync_visualizer_mode', next);
+      } catch (e) {}
+      return next;
+    });
   };
 
   const handleToggleKeyboardASMR = () => {
@@ -531,7 +538,7 @@ export default function FocusRoom({
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
             }`}>
               {isUrgent ? <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" /> : <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />}
-              <span>{isUrgent ? `🚨 Top Priority: Due ${currentTask.dueDate}` : '🌱 Steady Flow: Focused progress.'}</span>
+              <span>{isUrgent ? `Top Priority: Due ${currentTask.dueDate}` : 'Steady Flow: Focused progress.'}</span>
             </div>
 
             {/* Giant Countdown Display */}
@@ -605,6 +612,7 @@ export default function FocusRoom({
         <div className="flex items-center gap-1.5 flex-wrap justify-center pt-1">
           {ROOM_THEMES.map(theme => {
             const isSelected = roomTheme === theme.id;
+            const ThemeIcon = theme.icon;
             return (
               <button
                 key={theme.id}
@@ -615,7 +623,7 @@ export default function FocusRoom({
                     : 'bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <span>{theme.icon}</span>
+                <ThemeIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>{theme.name}</span>
               </button>
             );
@@ -623,27 +631,28 @@ export default function FocusRoom({
         </div>
       </div>
 
-      {/* Emergency Anti-Procrastination Launchpad Trigger */}
-      <div className="w-full bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-indigo-500/15 border border-amber-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
+      {/* 5-Minute Momentum Gateway Trigger */}
+      <div className="w-full bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-teal-500/10 border border-amber-500/20 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold shrink-0">
-            <Zap className="w-5 h-5 fill-amber-400 text-amber-400" />
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold shrink-0 border border-amber-500/20">
+            <Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" />
           </div>
           <div className="text-left">
-            <div className="text-xs font-black text-slate-800 dark:text-white">
-              Struggling with Task Initiation?
+            <div className="text-xs font-bold text-slate-800 dark:text-white">
+              5-Minute Momentum Gateway
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Commit to 300 seconds without pressure. Break executive paralysis.
+              Break task initiation friction. Commit to 300 seconds of low-barrier progress.
             </div>
           </div>
         </div>
 
         <button
           onClick={() => setIs5MinLaunchpadOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 shrink-0 active:scale-95 transition-all"
+          className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-sm shadow-amber-500/20 shrink-0 active:scale-95 transition-all flex items-center gap-1.5"
         >
-          Just 5 Mins ⚡
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Launch Gateway</span>
         </button>
       </div>
 
@@ -665,12 +674,13 @@ export default function FocusRoom({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
             <div className="space-y-1 flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
                   isUrgent 
-                    ? 'bg-rose-500 text-white animate-pulse'
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 }`}>
-                  {isUrgent ? '🚨 Top Priority' : '🌱 Steady Flow'}
+                  {isUrgent ? <AlertTriangle className="w-3 h-3 text-rose-400" /> : <Sparkles className="w-3 h-3 text-emerald-400" />}
+                  <span>{isUrgent ? 'Top Priority' : 'Steady Flow'}</span>
                 </span>
 
                 {currentCourse && (
@@ -752,45 +762,122 @@ export default function FocusRoom({
           </button>
         </div>
 
-        {/* Desk Tamagotchi Companion Display */}
-        <div className="relative flex flex-col items-center justify-center my-1 group">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-b from-indigo-50 to-emerald-50 dark:from-slate-800 dark:to-emerald-950/40 flex items-center justify-center text-4xl shadow-inner border border-slate-200/60 dark:border-slate-700/60 relative">
-            {companionType === 'cat' ? (
-              isActive ? (
-                <div className="flex flex-col items-center animate-bounce">
-                  <span className="text-3xl">🐱</span>
-                  <span className="text-[11px] -mt-1 font-mono">⌨️🐾</span>
+        {/* Ambient Flow Visualizer Display */}
+        <div className="relative flex flex-col items-center justify-center my-3 group">
+          {visualizerMode === 'pulse' && (
+            <div className="relative flex items-center justify-center">
+              {/* Outer Breathing Aura */}
+              <div className={`w-28 h-28 rounded-full border transition-all duration-700 flex items-center justify-center ${
+                isActive 
+                  ? 'border-indigo-500/40 shadow-[0_0_35px_rgba(99,102,241,0.25)] animate-pulse' 
+                  : 'border-slate-200 dark:border-slate-800'
+              }`}>
+                {/* Secondary Ripple Ring */}
+                <div className={`w-20 h-20 rounded-full border transition-all duration-500 flex items-center justify-center ${
+                  isActive 
+                    ? 'border-violet-500/60 bg-gradient-to-tr from-indigo-500/20 via-purple-500/10 to-teal-500/20' 
+                    : 'border-slate-200/60 dark:border-slate-800/60'
+                }`}>
+                  {/* Glowing Core */}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isActive
+                      ? 'bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-lg shadow-indigo-500/40 scale-105'
+                      : mode === 'short_break'
+                      ? 'bg-emerald-600 text-white shadow-emerald-500/30'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                  }`}>
+                    {mode === 'short_break' ? (
+                      <Coffee className="w-5 h-5" />
+                    ) : isActive ? (
+                      <Sparkles className="w-5 h-5 animate-spin duration-1000" style={{ animationDuration: '6s' }} />
+                    ) : (
+                      <Moon className="w-5 h-5" />
+                    )}
+                  </div>
                 </div>
-              ) : mode === 'short_break' ? (
-                <span className="animate-pulse text-3xl">🧋🐱</span>
-              ) : (
-                <span className="opacity-80 text-3xl">💤😺</span>
-              )
-            ) : (
-              isActive ? (
-                <span className="animate-bounce text-4xl">🌿✨</span>
-              ) : mode === 'short_break' ? (
-                <span className="text-4xl">🌸</span>
-              ) : (
-                <span className="opacity-80 text-4xl">🌱💤</span>
-              )
-            )}
-          </div>
+              </div>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-              {companionType === 'cat'
-                ? isActive ? 'Study Cat is typing with you! 🐾' : 'Study Cat is napping 💤'
-                : isActive ? 'Sprout is thriving! ✨' : 'Sprout is resting 🌱'}
+          {visualizerMode === 'botanical' && (
+            <div className="relative flex items-center justify-center">
+              <div className={`w-28 h-28 rounded-full border transition-all duration-700 flex items-center justify-center ${
+                isActive 
+                  ? 'border-emerald-500/40 shadow-[0_0_35px_rgba(16,185,129,0.25)]' 
+                  : 'border-slate-200 dark:border-slate-800'
+              }`}>
+                <div className={`w-20 h-20 rounded-full border transition-all duration-500 flex items-center justify-center ${
+                  isActive 
+                    ? 'border-teal-500/50 bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-emerald-500/20' 
+                    : 'border-slate-200/60 dark:border-slate-800/60'
+                }`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isActive
+                      ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/40 scale-105'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                  }`}>
+                    <Leaf className={`w-5 h-5 ${isActive ? 'animate-pulse' : ''}`} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {visualizerMode === 'telemetry' && (
+            <div className="relative flex flex-col items-center justify-center w-28 h-28 rounded-2xl bg-slate-900/80 border border-indigo-500/30 p-2 shadow-inner">
+              {/* Telemetry Waveform Bars */}
+              <div className="flex items-end gap-1.5 h-12 mb-1.5">
+                {[14, 28, 42, 22, 36, 18].map((h, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-1.5 rounded-full transition-all duration-300 ${
+                      isActive 
+                        ? 'bg-gradient-to-t from-indigo-500 to-cyan-400 animate-pulse' 
+                        : 'bg-slate-700 h-2'
+                    }`}
+                    style={isActive ? { height: `${h}px`, animationDelay: `${i * 120}ms` } : {}}
+                  />
+                ))}
+              </div>
+              <div className="text-[9px] font-mono font-bold tracking-widest text-indigo-300 uppercase">
+                {isActive ? '40Hz GAMMA' : 'IDLE'}
+              </div>
+            </div>
+          )}
+
+          {/* Visualizer Mode Selector & Status */}
+          <div className="flex flex-col items-center gap-1.5 mt-3">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              {visualizerMode === 'pulse' && (isActive ? 'Zenith Flow Orb • Coherence Active' : 'Zenith Flow Orb • Primed')}
+              {visualizerMode === 'botanical' && (isActive ? 'Botanical Sanctuary • Deep Flow' : 'Botanical Sanctuary • Grounded')}
+              {visualizerMode === 'telemetry' && (isActive ? 'Cognitive Telemetry • Resonant Focus' : 'Cognitive Telemetry • Standby')}
             </span>
 
-            <button
-              onClick={handleToggleCompanion}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
-              title="Switch Companion (Cat / Sprout)"
-            >
-              Switch to {companionType === 'cat' ? 'Sprout 🌱' : 'Cat 🐾'}
-            </button>
+            <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700/60">
+              {[
+                { id: 'pulse', label: 'Zenith' },
+                { id: 'botanical', label: 'Botanical' },
+                { id: 'telemetry', label: 'Telemetry' }
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => {
+                    audioFX.playClick();
+                    setVisualizerMode(opt.id);
+                    try {
+                      localStorage.setItem('studysync_visualizer_mode', opt.id);
+                    } catch (e) {}
+                  }}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all ${
+                    visualizerMode === opt.id
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -949,7 +1036,7 @@ export default function FocusRoom({
           </div>
           <div>
             <div className="text-xs font-bold text-slate-800 dark:text-slate-200">+100 XP per Focus</div>
-            <div className="text-[10px] text-slate-400">Nurture study companion</div>
+            <div className="text-[10px] text-slate-400">Deep work mastery</div>
           </div>
         </div>
       </div>

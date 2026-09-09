@@ -55,7 +55,7 @@ export default function AntiProcrastinationLaunchpad({
       audioFX.playLevelUp();
       triggerLevelUpConfetti();
       if (onActionReward) {
-        onActionReward(40, '🔥 5-Minute Friction Barrier Shattered! +40 XP');
+        onActionReward(40, 'Momentum Established · 5-Minute Gateway Completed (+40 XP)');
       }
       try {
         recordFocusSessionAPI(5, activeTask?.id, activeTask?.courseId);
@@ -96,19 +96,19 @@ export default function AntiProcrastinationLaunchpad({
         </button>
 
         {/* Header Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black tracking-wider uppercase mb-3">
-          <Zap className="w-3.5 h-3.5 fill-amber-400" />
-          <span>The 5-Minute Anti-Procrastination Rule</span>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold tracking-wider uppercase mb-3">
+          <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <span>Activation Protocol · 5-Minute Gateway</span>
         </div>
 
         <h3 className="text-xl font-black tracking-tight text-white mb-1">
-          {hasCompleted5Mins ? '🎉 Barrier Shattered!' : 'Just Give Me 5 Minutes'}
+          {hasCompleted5Mins ? 'Activation Complete · Momentum Established' : '5-Minute Momentum Gateway'}
         </h3>
         
         <p className="text-xs text-slate-300 max-w-xs mb-4">
           {hasCompleted5Mins
-            ? 'You conquered the hardest part: starting. The brain loves momentum—roll straight into a deep focus session!'
-            : 'ADHD friction happens at the start. Commit to only 300 seconds without pressure. If you want to stop after, you can.'}
+            ? 'You conquered activation inertia. Your focus baseline is established—maintain your flow into a deep work block.'
+            : 'Task initiation demands the highest cognitive energy. Commit to 300 seconds of low-friction progress without pressure.'}
         </p>
 
         {/* Circular Countdown Progress */}
@@ -142,7 +142,7 @@ export default function AntiProcrastinationLaunchpad({
               {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
             </span>
             <span className="text-[10px] font-bold text-amber-300/90 tracking-wider uppercase mt-0.5">
-              {isActive ? 'Rolling 🔥' : hasCompleted5Mins ? 'Done 🌟' : 'Paused'}
+              {isActive ? 'Flow Active' : hasCompleted5Mins ? 'Target Met' : 'Paused'}
             </span>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function AntiProcrastinationLaunchpad({
         <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 my-3 text-left">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mb-1">
             <Target className="w-3.5 h-3.5 text-amber-400" />
-            <span>Your Only Job Right Now:</span>
+            <span>Immediate Focal Step:</span>
           </div>
           <p className="text-xs font-semibold text-slate-100 leading-snug">
             {microGoal}
@@ -195,14 +195,14 @@ export default function AntiProcrastinationLaunchpad({
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-indigo-600 hover:from-emerald-400 hover:to-indigo-500 text-white font-black text-xs shadow-xl shadow-emerald-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <Flame className="w-4 h-4 fill-amber-300 text-amber-300" />
-              <span>Keep Rolling — Start 25m Focus (+100 XP)</span>
+              <span>Extend Momentum · Begin 25m Focus Block (+100 XP)</span>
             </button>
 
             <button
               onClick={onClose}
               className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
             >
-              I'm good for now, take a breather
+              Conclude Session
             </button>
           </div>
         )}

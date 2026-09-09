@@ -3,16 +3,16 @@ import { format, subDays, differenceInCalendarDays } from 'date-fns';
 
 // Level Hierarchy & Titles
 export const RANKS = [
-  { level: 1, title: 'Novice Scholar', minXP: 0, maxXP: 150 },
-  { level: 2, title: 'Cram Champion', minXP: 150, maxXP: 350 },
-  { level: 3, title: 'Syllabus Scholar', minXP: 350, maxXP: 650 },
-  { level: 4, title: 'Pomodoro Prodigy', minXP: 650, maxXP: 1050 },
-  { level: 5, title: 'Dean’s List Contender', minXP: 1050, maxXP: 1550 },
-  { level: 6, title: 'Active Recall Master', minXP: 1550, maxXP: 2150 },
-  { level: 7, title: 'Campus Legend', minXP: 2150, maxXP: 2850 },
+  { level: 1, title: 'Apprentice Scholar', minXP: 0, maxXP: 150 },
+  { level: 2, title: 'Focused Inquirer', minXP: 150, maxXP: 350 },
+  { level: 3, title: 'Disciplined Scholar', minXP: 350, maxXP: 650 },
+  { level: 4, title: 'Deep Work Adept', minXP: 650, maxXP: 1050 },
+  { level: 5, title: 'Dean’s List Scholar', minXP: 1050, maxXP: 1550 },
+  { level: 6, title: 'Cognitive Strategist', minXP: 1550, maxXP: 2150 },
+  { level: 7, title: 'Scholar Laureate', minXP: 2150, maxXP: 2850 },
   { level: 8, title: 'Research Fellow', minXP: 2850, maxXP: 3650 },
-  { level: 9, title: 'Polymath Elite', minXP: 3650, maxXP: 4550 },
-  { level: 10, title: 'Academic Weapon', minXP: 4550, maxXP: 999999 }
+  { level: 9, title: 'Master Polymath', minXP: 3650, maxXP: 4550 },
+  { level: 10, title: 'Distinguished Fellow', minXP: 4550, maxXP: 999999 }
 ];
 
 export function getRankForXP(xp) {
@@ -37,7 +37,7 @@ export function getRankForXP(xp) {
   }
   return {
     level: 1,
-    title: 'Novice Scholar',
+    title: 'Apprentice Scholar',
     currentXP: xp,
     minXP: 0,
     nextLevelXP: 150,
@@ -303,24 +303,24 @@ export function getDailyQuests() {
       {
         id: `quest_hw_${today}`,
         quest_type: 'complete_homework',
-        title: 'Assignment Crusher',
-        description: 'Complete 2 homework tasks today',
+        title: 'Assignment Progress',
+        description: 'Complete 2 assignments or milestones today',
         target: 2,
         xp_reward: 80
       },
       {
         id: `quest_cards_${today}`,
         quest_type: 'review_cards',
-        title: 'Brain Scroller',
-        description: 'Review 5 flashcards or micro-quizzes in Study Feed',
+        title: 'Active Recall Practice',
+        description: 'Review 5 study cards or micro-quizzes in Daily Feed',
         target: 5,
         xp_reward: 50
       },
       {
         id: `quest_focus_${today}`,
         quest_type: 'focus_session',
-        title: 'Deep Work Pioneer',
-        description: 'Complete a 20+ minute Focus Room session',
+        title: 'Deep Work Session',
+        description: 'Log a 20+ minute Focus Room block',
         target: 1,
         xp_reward: 100
       }
@@ -417,13 +417,13 @@ function checkMilestoneAchievements(streak, level) {
 function seedDefaultAchievements() {
   const list = [
     { id: 'first_step', title: 'First Step', description: 'Complete your first assignment in StudySync', icon: 'CheckCircle2', xp_reward: 50 },
-    { id: 'feed_scroller', title: 'Brain Scroller', description: 'Review 10 flashcards or quizzes in the Feed', icon: 'Zap', xp_reward: 75 },
-    { id: 'quiz_whiz', title: 'Trivia Master', description: 'Score 5 correct answers in micro-quizzes', icon: 'Sparkles', xp_reward: 100 },
-    { id: 'focus_monk', title: 'Deep Work Monk', description: 'Complete a 25-minute Pomodoro focus block', icon: 'Headphones', xp_reward: 100 },
-    { id: 'streak_week', title: 'Consistent Grind', description: 'Reach a 7-day active study streak', icon: 'Flame', xp_reward: 200 },
-    { id: 'night_owl', title: 'Midnight Oil', description: 'Complete an assignment after 10:00 PM', icon: 'Moon', xp_reward: 50 },
-    { id: 'deans_list', title: 'Dean’s Honor', description: 'Reach Scholar Level 5 (Dean’s List Contender)', icon: 'Trophy', xp_reward: 250 },
-    { id: 'canvas_pioneer', title: 'Canvas Master', description: 'Import and sync your official university courses', icon: 'BookOpen', xp_reward: 100 },
+    { id: 'feed_scroller', title: 'Curriculum Reviewer', description: 'Review 10 study cards or quizzes in the Feed', icon: 'Zap', xp_reward: 75 },
+    { id: 'quiz_whiz', title: 'Knowledge Recall', description: 'Score 5 correct answers in micro-quizzes', icon: 'Sparkles', xp_reward: 100 },
+    { id: 'focus_monk', title: 'Deep Work Block', description: 'Complete a 25-minute Pomodoro focus session', icon: 'Headphones', xp_reward: 100 },
+    { id: 'streak_week', title: 'Week of Consistency', description: 'Maintain a 7-day continuous study streak', icon: 'Flame', xp_reward: 200 },
+    { id: 'night_owl', title: 'Midnight Scholar', description: 'Complete an assignment during quiet hours', icon: 'Moon', xp_reward: 50 },
+    { id: 'deans_list', title: 'Dean’s Honor', description: 'Reach Scholar Level 5 (Dean’s List Scholar)', icon: 'Trophy', xp_reward: 250 },
+    { id: 'canvas_pioneer', title: 'Campus Sync', description: 'Import and sync your university curriculum', icon: 'BookOpen', xp_reward: 100 },
   ];
 
   const stmt = db.prepare(`
@@ -802,21 +802,21 @@ export function getScholarWrappedData() {
     else morningCount++;
   }
 
-  let timeArchetype = 'Night Owl Polymath';
-  let peakTimeStr = 'Night (8 PM - 2 AM)';
+  let timeArchetype = 'Night Flow Specialist';
+  let peakTimeStr = 'Evening & Night (8 PM - 2 AM)';
   if (morningCount >= afternoonCount && morningCount >= nightCount) {
-    timeArchetype = 'Early Bird Tactician';
+    timeArchetype = 'Morning Deep Work Strategist';
     peakTimeStr = 'Morning (6 AM - 11 AM)';
   } else if (afternoonCount >= morningCount && afternoonCount >= nightCount) {
-    timeArchetype = 'Afternoon Flow Master';
+    timeArchetype = 'Afternoon Focus Tactician';
     peakTimeStr = 'Afternoon (12 PM - 6 PM)';
   }
 
   // Scholar Archetype based on level and focus
   let persona = 'Deep Work Architect';
-  if (profile.level >= 8) persona = 'Certified Academic Weapon';
-  else if (profile.level >= 5) persona = 'Syllabus Slayer';
-  else if (completedCount >= 5) persona = 'Assignment Crusher';
+  if (profile.level >= 8) persona = 'Distinguished Fellow';
+  else if (profile.level >= 5) persona = 'Senior Academic Strategist';
+  else if (completedCount >= 5) persona = 'Disciplined Practitioner';
 
   const totalMins = profile.total_study_minutes || heatmap.summary.totalMinutes || 50;
   const totalHours = (totalMins / 60).toFixed(1);
@@ -834,7 +834,7 @@ export function getScholarWrappedData() {
     timeArchetype,
     peakTimeStr,
     persona,
-    shareText: `🎓 StudySync Scholar Wrapped 2026\n⚡ Rank: ${profile.title} (Level ${profile.level})\n⏱️ Time Locked In: ${totalHours} Hours\n🎯 Tasks Slain: ${completedCount} Completed\n🏆 Top Course: ${topCourseObj ? topCourseObj.code : 'All Courses'}\n🦉 Archetype: ${timeArchetype}\n🔥 Streak: ${profile.streak} Days\n\nSelf-hosted with StudySync 🚀`
+    shareText: `StudySync Scholar Wrapped & Replay · Academic Season Summary\n• Rank: ${profile.title} (Level ${profile.level})\n• Deep Work Logged: ${totalHours} Hours\n• Completed Objectives: ${completedCount}\n• Primary Focus: ${topCourseObj ? topCourseObj.code : 'All Disciplines'}\n• Chronotype: ${timeArchetype}\n• Consistency Streak: ${profile.streak} Days\n\nOrganized with StudySync.`
   };
 }
 

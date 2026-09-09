@@ -115,18 +115,18 @@ export default function ScholarWrappedModal({ isOpen, onClose }) {
           {/* SLIDE 0: DEEP WORK TIME */}
           {currentSlide === 0 && (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="w-20 h-20 rounded-3xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto text-4xl shadow-xl shadow-indigo-500/20">
-                ⏱️
+              <div className="w-20 h-20 rounded-3xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto shadow-xl shadow-indigo-500/20">
+                <Clock className="w-9 h-9 text-indigo-400" />
               </div>
               <div>
-                <span className="text-xs font-black uppercase tracking-widest text-indigo-400">
-                  Total Time Locked In
+                <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">
+                  Deep Work Investment
                 </span>
                 <div className="text-6xl font-black font-mono tracking-tight text-white my-2">
                   {data?.totalHours || '0'}<span className="text-2xl text-indigo-300"> hrs</span>
                 </div>
                 <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
-                  You spent over <strong className="text-white">{data?.totalMinutes || 0} minutes</strong> in uninterrupted deep work flow. That’s pure discipline.
+                  You spent over <strong className="text-white">{data?.totalMinutes || 0} minutes</strong> in uninterrupted deep work flow. Exceptional cognitive stamina.
                 </p>
               </div>
             </div>
@@ -135,12 +135,12 @@ export default function ScholarWrappedModal({ isOpen, onClose }) {
           {/* SLIDE 1: COURSE DOMINANCE */}
           {currentSlide === 1 && (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto text-4xl shadow-xl shadow-emerald-500/20">
-                📚
+              <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/20">
+                <BookOpen className="w-9 h-9 text-emerald-400" />
               </div>
               <div>
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-400">
-                  Top Subject Slayed
+                <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  Primary Academic Focus
                 </span>
                 <h3 className="text-3xl font-black text-white my-2">
                   {data?.topCourse?.code || 'CS 101'}
@@ -149,7 +149,7 @@ export default function ScholarWrappedModal({ isOpen, onClose }) {
                   <span>{data?.completedTasksCount || 0} Assignments Completed</span>
                 </div>
                 <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
-                  You didn't just study—you dismantled deadlines one by one without letting late penalties pile up.
+                  Consistent execution and disciplined progress across every milestone without accumulating backlog.
                 </p>
               </div>
             </div>
@@ -158,12 +158,12 @@ export default function ScholarWrappedModal({ isOpen, onClose }) {
           {/* SLIDE 2: STUDY TIME ARCHETYPE */}
           {currentSlide === 2 && (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="w-20 h-20 rounded-3xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mx-auto text-4xl shadow-xl shadow-amber-500/20">
-                🦉
+              <div className="w-20 h-20 rounded-3xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mx-auto shadow-xl shadow-amber-500/20">
+                <Sparkles className="w-9 h-9 text-amber-400" />
               </div>
               <div>
-                <span className="text-xs font-black uppercase tracking-widest text-amber-400">
-                  Your Scholar Chronotype
+                <span className="text-xs font-bold uppercase tracking-widest text-amber-400">
+                  Cognitive Focus Chronotype
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-black text-white my-2">
                   {data?.timeArchetype || 'Night Owl Polymath'}
@@ -172,7 +172,7 @@ export default function ScholarWrappedModal({ isOpen, onClose }) {
                   <span>Peak Focus: {data?.peakTimeStr || 'Late Night'}</span>
                 </div>
                 <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
-                  While others were distracted, your brain entered hyperdrive during your personal peak cognitive window.
+                  Deep focus achieved within your personal circadian peak cognitive productivity window.
                 </p>
               </div>
             </div>
@@ -205,7 +205,10 @@ export default function ScholarWrappedModal({ isOpen, onClose }) {
                   </div>
                   <div className="bg-white/5 rounded-xl p-2.5 border border-white/10">
                     <div className="text-[10px] text-slate-400 font-medium">Active Streak</div>
-                    <div className="text-sm font-black text-amber-400">{data?.streak || 1} Days 🔥</div>
+                    <div className="text-sm font-black text-amber-400 flex items-center gap-1">
+                      <span>{data?.streak || 1} Days</span>
+                      <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    </div>
                   </div>
                 </div>
 

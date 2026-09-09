@@ -67,7 +67,7 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
       const res = await claimDailyQuestAPI(questId);
       if (res && res.success) {
         if (onActionReward) {
-          onActionReward(xpReward, `🎉 Quest Claimed! +${xpReward} XP`);
+          onActionReward(xpReward, `Quest Completed (+${xpReward} XP)`);
         }
         await loadData();
       }
@@ -92,11 +92,11 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
           <div className="absolute top-4 right-4 flex items-center gap-1.5">
             <button
               onClick={() => setIsWrappedOpen(true)}
-              className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-xs transition-all active:scale-95 flex items-center gap-1 border border-white/20 shadow-xs"
-              title="Open Scholar Wrapped Story"
+              className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 border border-white/20 shadow-xs"
+              title="Open Scholar Replay"
             >
-              <span>Wrapped</span>
-              <span>🎁</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Scholar Replay</span>
             </button>
 
             <button
@@ -339,7 +339,7 @@ export default function TrophyModal({ isOpen, onClose, onActionReward }) {
               onClick={() => setIsWrappedOpen(true)}
               className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
             >
-              Story Replay 🎁
+              Scholar Replay
             </button>
             <button
               onClick={onClose}

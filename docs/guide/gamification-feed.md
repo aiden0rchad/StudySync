@@ -40,34 +40,33 @@ Students accumulate Experience Points (XP) through active studying, reviewing ca
 
 | Level | Title | Min XP | Max XP |
 | :---: | :--- | :---: | :---: |
-| **1** | Novice Scholar | 0 | 150 |
-| **2** | Cram Champion | 150 | 350 |
-| **3** | Syllabus Scholar | 350 | 650 |
-| **4** | Pomodoro Prodigy | 650 | 1,050 |
-| **5** | Dean's List Contender | 1,050 | 1,550 |
-| **6** | Active Recall Master | 1,550 | 2,150 |
-| **7** | Campus Legend | 2,150 | 2,850 |
+| **1** | Apprentice Scholar | 0 | 150 |
+| **2** | Focused Inquirer | 150 | 350 |
+| **3** | Disciplined Scholar | 350 | 650 |
+| **4** | Deep Work Adept | 650 | 1,050 |
+| **5** | Dean's List Scholar | 1,050 | 1,550 |
+| **6** | Cognitive Strategist | 1,550 | 2,150 |
+| **7** | Scholar Laureate | 2,150 | 2,850 |
 | **8** | Research Fellow | 2,850 | 3,650 |
-| **9** | Polymath Elite | 3,650 | 4,550 |
-| **10** | Academic Weapon | 4,550+ | Unlimited |
+| **9** | Master Polymath | 3,650 | 4,550 |
+| **10** | Distinguished Fellow | 4,550+ | Unlimited |
 
 ### Daily Quests
 Refreshed automatically every morning at 5:00 AM:
-- **Assignment Crusher**: Complete 2 homework tasks today (`+80 XP`).
-- **Brain Scroller**: Review 5 study cards in the Feed (`+50 XP`).
+- **Assignment Progress**: Complete 2 homework tasks today (`+80 XP`).
+- **Active Recall Practice**: Review 5 study cards in the Feed (`+50 XP`).
 - **Deep Work Pioneer**: Log a 20+ minute Focus Room session (`+100 XP`).
 
 ---
 
 ## Gamified Focus Room & Ambient Soundscapes
 
-Located under the **Focus** tab, the Focus Room combines a Pomodoro timer with an evolving companion and procedural soundscapes.
+Located under the **Focus** tab, the Focus Room combines a Pomodoro timer with an ambient flow visualizer and procedural soundscapes.
 
-### Companion Evolution Stages
-- **Stage 1 (0% – 30%)**: Tiny Seedling 🌱
-- **Stage 2 (30% – 70%)**: Thriving Sprout 🌿
-- **Stage 3 (70% – 99%)**: Flowering Plant 🌸
-- **Stage 4 (100%)**: Majestic Bonsai Tree 🌳
+### Ambient Visualizer Modes
+- **Zenith Flow Orb**: Concentric breathing aura circles that expand and pulse synchronously with focus blocks.
+- **Botanical Sanctuary**: Organic botanical node that breathes and stabilizes cognitive energy.
+- **Cognitive Telemetry**: Real-time waveform frequency telemetry displaying analytical flow state metrics (40Hz Gamma sync).
 
 If the timer is paused or abandoned, the companion rests (`💤`). Completing a full focus block awards `+100 XP` and logs study minutes to your daily profile.
 
