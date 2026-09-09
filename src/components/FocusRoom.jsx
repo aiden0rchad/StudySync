@@ -123,6 +123,7 @@ export default function FocusRoom({
   const [ambientType, setAmbientType] = useState('brown_noise');
   const [ambientVolume, setAmbientVolume] = useState(0.4);
   const [isSoundMuted, setIsSoundMuted] = useState(() => !audioFX.isSoundEnabled());
+  const [isAmbientPlayingManual, setIsAmbientPlayingManual] = useState(false);
   const [sessionsCompletedToday, setSessionsCompletedToday] = useState(0);
 
   // Focus Flow Visualizer Mode: 'pulse' | 'botanical' | 'telemetry'
@@ -368,7 +369,8 @@ export default function FocusRoom({
 
   // Ambient sound management
   useEffect(() => {
-    if (isActive && ambientType !== 'off' && !isSoundMuted) {
+    const shouldPlay = (isActive || isAmbientPlayingManual) && ambientType !== 'off' && !isSoundMuted;
+    if (shouldPlay) {
       audioFX.startAmbient(ambientType, ambientVolume);
     } else {
       audioFX.stopAmbient();
@@ -376,15 +378,42 @@ export default function FocusRoom({
     return () => {
       audioFX.stopAmbient();
     };
-  }, [isActive, ambientType, isSoundMuted]);
+  }, [isActive, isAmbientPlayingManual, ambientType, isSoundMuted]);
 
   // Update ambient volume
   useEffect(() => {
     audioFX.setAmbientVolume(ambientVolume);
   }, [ambientVolume]);
 
+  const isAmbientPlaying = (isActive || isAmbientPlayingManual) && ambientType !== 'off' && !isSoundMuted;
+
+  const handleSelectAmbientSound = (soundId) => {
+    audioFX.playClick();
+    if (ambientType === soundId && isAmbientPlaying) {
+      setAmbientType('off');
+      setIsAmbientPlayingManual(false);
+      audioFX.stopAmbient();
+    } else {
+      setAmbientType(soundId);
+      setIsAmbientPlayingManual(true);
+    }
+  };
+
+  const handleToggleManualAmbient = () => {
+    audioFX.playClick();
+    if (isAmbientPlaying) {
+      setAmbientType('off');
+      setIsAmbientPlayingManual(false);
+      audioFX.stopAmbient();
+    } else {
+      setAmbientType(prev => prev === 'off' ? 'rain' : prev);
+      setIsAmbientPlayingManual(true);
+    }
+  };
+
   const handleTimerComplete = async () => {
     setIsActive(false);
+    setIsAmbientPlayingManual(false);
     audioFX.stopAmbient();
     audioFX.playLevelUp();
     triggerLevelUpConfetti();
@@ -426,6 +455,7 @@ export default function FocusRoom({
   const handleReset = (newMinutes = 25) => {
     audioFX.playClick();
     setIsActive(false);
+    setIsAmbientPlayingManual(false);
     audioFX.stopAmbient();
     setMinutes(newMinutes);
     setSeconds(0);
@@ -983,54 +1013,86 @@ export default function FocusRoom({
         {/* Ambient Soundscapes & ASMR Controls */}
         <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-5 mt-2 space-y-4">
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Radio className="w-4 h-4 text-indigo-500" />
-              <span>Procedural Soundscapes</span>
+              <span>Ambient Soundscapes</span>
             </span>
             
-            {/* Keyboard ASMR Toggle Button */}
-            <button
-              onClick={handleToggleKeyboardASMR}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
-                keyboardASMR
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-              }`}
-            >
-              <Keyboard className="w-3.5 h-3.5" />
-              <span>Thocky ASMR {keyboardASMR ? 'ON' : 'OFF'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Play / Pause Ambience Button */}
+              <button
+                onClick={handleToggleManualAmbient}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                  isAmbientPlaying
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                }`}
+                title={isAmbientPlaying ? 'Pause soundscape' : 'Play soundscape'}
+              >
+                {isAmbientPlaying ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5" />
+                    <span>Playing Ambience</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5" />
+                    <span>Play Ambience</span>
+                  </>
+                )}
+              </button>
+
+              {/* Keyboard ASMR Toggle Button */}
+              <button
+                onClick={handleToggleKeyboardASMR}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                  keyboardASMR
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                <Keyboard className="w-3.5 h-3.5" />
+                <span>Thocky ASMR {keyboardASMR ? 'ON' : 'OFF'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Sound selection pills */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { id: 'brown_noise', label: 'Brown Noise', icon: Coffee, desc: 'Deep Focus' },
-              { id: 'rain', label: 'Rain Drops', icon: CloudRain, desc: 'Cozy Window' },
-              { id: 'campfire', label: 'Campfire', icon: Flame, desc: 'Warm Crackle' },
-              { id: 'cafe', label: 'Midnight Cafe', icon: Coffee, desc: 'Room Murmur' },
-              { id: 'binaural_40hz', label: '40Hz Gamma', icon: Radio, desc: 'Flow State' },
-              { id: 'cyber_drone', label: 'Cyber Drone', icon: Zap, desc: 'Sci-Fi Hum' },
+              { id: 'rain', label: 'Rain Drops', icon: CloudRain, desc: 'Authentic Stereo Rain' },
+              { id: 'campfire', label: 'Campfire', icon: Flame, desc: 'Warm Wood Crackle' },
+              { id: 'cafe', label: 'Midnight Cafe', icon: Coffee, desc: 'Room Murmur & Cups' },
+              { id: 'brown_noise', label: 'Brown Noise', icon: Radio, desc: 'Deep Focus' },
+              { id: 'binaural_40hz', label: '40Hz Gamma', icon: Radio, desc: 'Flow State Waves' },
+              { id: 'cyber_drone', label: 'Cyber Drone', icon: Zap, desc: 'Sci-Fi Resonant Hum' },
             ].map(item => {
               const Icon = item.icon;
               const isSelected = ambientType === item.id;
+              const isCurrentlyPlayingThis = isSelected && isAmbientPlaying;
+
               return (
                 <button
                   key={item.id}
-                  onClick={() => {
-                    audioFX.playClick();
-                    setAmbientType(item.id);
-                  }}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  onClick={() => handleSelectAmbientSound(item.id)}
+                  className={`p-2.5 rounded-xl border text-left transition-all relative overflow-hidden ${
                     isSelected
-                      ? 'border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200'
+                      ? 'border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 shadow-sm ring-1 ring-indigo-500/30'
                       : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
-                    <span className="text-xs font-bold leading-tight">{item.label}</span>
+                  <div className="flex items-center justify-between gap-1.5 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
+                      <span className="text-xs font-bold leading-tight">{item.label}</span>
+                    </div>
+                    {isCurrentlyPlayingThis && (
+                      <span className="flex h-2 w-2 relative shrink-0" title="Playing now">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                    )}
                   </div>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500">{item.desc}</span>
                 </button>

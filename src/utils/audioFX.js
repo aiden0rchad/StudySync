@@ -6,6 +6,7 @@ class SoundManager {
     this.ctx = null;
     this.ambientSource = null;
     this.ambientGain = null;
+    this.ambientAudioEl = null;
     this.currentAmbientType = null;
     this.soundEnabled = true;
 
@@ -39,7 +40,7 @@ class SoundManager {
     try {
       localStorage.setItem('studysync_sound_enabled', String(this.soundEnabled));
     } catch (e) {}
-    if (!this.soundEnabled && this.ambientSource) {
+    if (!this.soundEnabled && (this.ambientSource || this.ambientAudioEl)) {
       this.stopAmbient();
     }
     return this.soundEnabled;
@@ -50,7 +51,7 @@ class SoundManager {
     try {
       localStorage.setItem('studysync_sound_enabled', String(this.soundEnabled));
     } catch (e) {}
-    if (!this.soundEnabled && this.ambientSource) {
+    if (!this.soundEnabled && (this.ambientSource || this.ambientAudioEl)) {
       this.stopAmbient();
     }
   }
@@ -313,17 +314,55 @@ class SoundManager {
     });
   }
 
-  // Procedural Focus Soundscapes (Rain, Brown Noise, 40Hz Gamma, Campfire, Cafe, Cyber Drone)
+  // Ambient Soundscapes (Rain, Campfire, Midnight Cafe, Brown Noise, 40Hz Gamma, Cyber Drone)
   startAmbient(type = 'brown_noise', volume = 0.5) {
     this.stopAmbient();
     if (!this.soundEnabled) return;
 
+    this.currentAmbientType = type;
+    const clampedVol = Math.max(0.05, Math.min(1.0, volume));
+
+    // 1. For realistic recorded/synthesized audio files (rain, campfire, cafe), use HTML5 Audio
+    if (['rain', 'campfire', 'cafe'].includes(type) && typeof Audio !== 'undefined') {
+      try {
+        const audio = new Audio(`/sounds/${type}.mp3`);
+        audio.loop = true;
+        audio.volume = clampedVol;
+        this.ambientAudioEl = audio;
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn(`Audio playback error for /sounds/${type}.mp3, falling back to procedural:`, err);
+            this.startProceduralAmbient(type, volume);
+          });
+        }
+
+        this.ambientSource = {
+          stop: () => {
+            try {
+              audio.pause();
+              audio.currentTime = 0;
+            } catch (e) {}
+          }
+        };
+        return;
+      } catch (e) {
+        console.warn('HTML Audio instantiation error, falling back to procedural:', e);
+      }
+    }
+
+    // 2. Otherwise (or as fallback), synthesize natively in Web Audio API
+    this.startProceduralAmbient(type, volume);
+  }
+
+  startProceduralAmbient(type = 'brown_noise', volume = 0.5) {
     const ctx = this.initContext();
     if (!ctx) return;
 
-    this.currentAmbientType = type;
     const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(Math.max(0.05, Math.min(1.0, volume)) * 0.25, ctx.currentTime);
+    const clampedVol = Math.max(0.05, Math.min(1.0, volume));
+    gainNode.gain.setValueAtTime(clampedVol * 0.25, ctx.currentTime);
     gainNode.connect(ctx.destination);
     this.ambientGain = gainNode;
 
@@ -338,8 +377,8 @@ class SoundManager {
       oscR.type = 'sine';
       oscR.frequency.value = 260; // 220 + 40Hz beat
 
-      oscL.connect(merger, 0, 0); // Left channel
-      oscR.connect(merger, 0, 1); // Right channel
+      oscL.connect(merger, 0, 0);
+      oscR.connect(merger, 0, 1);
       merger.connect(gainNode);
 
       oscL.start();
@@ -360,11 +399,11 @@ class SoundManager {
       const sub = ctx.createOscillator();
 
       osc1.type = 'sawtooth';
-      osc1.frequency.value = 55; // A1
+      osc1.frequency.value = 55;
       osc2.type = 'sawtooth';
-      osc2.frequency.value = 56.5; // Slight detune for phasing pulse
+      osc2.frequency.value = 56.5;
       sub.type = 'sine';
-      sub.frequency.value = 27.5; // A0 sub
+      sub.frequency.value = 27.5;
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
@@ -390,48 +429,62 @@ class SoundManager {
         }
       };
     } else {
-      // Noise buffer (Rain, White Noise, Brown Noise, Campfire, Cafe)
-      const bufferSize = ctx.sampleRate * 2;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
+      // Expanded 6-second realistic procedural noise buffer
+      const bufferSize = ctx.sampleRate * 6;
+      const noiseBuffer = ctx.createBuffer(2, bufferSize, ctx.sampleRate);
+      const outputL = noiseBuffer.getChannelData(0);
+      const outputR = noiseBuffer.getChannelData(1);
 
-      let lastOut = 0.0;
+      let lastOutL = 0.0;
+      let lastOutR = 0.0;
+
       for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+
         if (type === 'brown_noise') {
-          // Brown noise (integrated white noise)
-          lastOut = (lastOut + 0.02 * white) / 1.02;
-          output[i] = lastOut * 3.5;
+          lastOutL = (lastOutL + 0.02 * whiteL) / 1.02;
+          lastOutR = (lastOutR + 0.02 * whiteR) / 1.02;
+          outputL[i] = lastOutL * 3.5;
+          outputR[i] = lastOutR * 3.5;
         } else if (type === 'rain') {
-          // Rain simulation: Pink/brown noise + randomized high-freq droplets
-          lastOut = (lastOut + 0.04 * white) / 1.04;
-          const drop = Math.random() > 0.998 ? (Math.random() * 0.5) : 0;
-          output[i] = lastOut * 2.0 + drop;
+          // Rain: pink wash + water droplet impacts with exponential decays
+          lastOutL = (lastOutL + 0.035 * whiteL) / 1.035;
+          lastOutR = (lastOutR + 0.035 * whiteR) / 1.035;
+          const dropL = Math.random() > 0.997 ? (Math.random() * 0.4) : 0;
+          const dropR = Math.random() > 0.997 ? (Math.random() * 0.4) : 0;
+          outputL[i] = lastOutL * 2.2 + dropL;
+          outputR[i] = lastOutR * 2.2 + dropR;
         } else if (type === 'campfire') {
-          // Campfire: Low wood rumble + occasional pop/crackle transients
-          lastOut = (lastOut + 0.03 * white) / 1.03;
-          const crackle = Math.random() > 0.9985 ? (Math.random() * 1.8 - 0.9) : 0;
-          output[i] = lastOut * 2.2 + crackle;
+          // Campfire: low combustion rumble + wood snaps & crackles
+          lastOutL = (lastOutL + 0.028 * whiteL) / 1.028;
+          lastOutR = (lastOutR + 0.028 * whiteR) / 1.028;
+          const crackleL = Math.random() > 0.9975 ? (Math.random() * 1.6 - 0.8) : 0;
+          const crackleR = Math.random() > 0.9975 ? (Math.random() * 1.6 - 0.8) : 0;
+          outputL[i] = lastOutL * 2.4 + crackleL;
+          outputR[i] = lastOutR * 2.4 + crackleR;
         } else if (type === 'cafe') {
-          // Cafe murmur: Pink/brown modulated room noise
-          lastOut = (lastOut + 0.035 * white) / 1.035;
-          const modulation = 1 + 0.25 * Math.sin((i / ctx.sampleRate) * 1.5 * Math.PI);
-          output[i] = lastOut * 2.2 * modulation;
+          // Cafe murmur: modulated room presence + faint ceramic rings
+          lastOutL = (lastOutL + 0.032 * whiteL) / 1.032;
+          lastOutR = (lastOutR + 0.032 * whiteR) / 1.032;
+          const clink = Math.random() > 0.9992 ? (Math.sin((i / ctx.sampleRate) * 2 * Math.PI * 2400) * 0.25) : 0;
+          const mod = 1 + 0.2 * Math.sin((i / ctx.sampleRate) * 1.8 * Math.PI);
+          outputL[i] = lastOutL * 2.2 * mod + clink;
+          outputR[i] = lastOutR * 2.2 * mod + clink;
         } else {
-          // White noise
-          output[i] = white * 0.3;
+          outputL[i] = whiteL * 0.3;
+          outputR[i] = whiteR * 0.3;
         }
       }
 
-      const whiteNoise = ctx.createBufferSource();
-      whiteNoise.buffer = noiseBuffer;
-      whiteNoise.loop = true;
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = true;
 
-      // Filter for soothing curve
       const filter = ctx.createBiquadFilter();
       if (type === 'rain') {
         filter.type = 'lowpass';
-        filter.frequency.value = 1200;
+        filter.frequency.value = 1400;
       } else if (type === 'brown_noise') {
         filter.type = 'lowpass';
         filter.frequency.value = 400;
@@ -440,34 +493,46 @@ class SoundManager {
         filter.frequency.value = 850;
       } else if (type === 'cafe') {
         filter.type = 'bandpass';
-        filter.frequency.value = 550;
-        filter.Q.value = 0.8;
+        filter.frequency.value = 650;
+        filter.Q.value = 0.9;
       } else {
         filter.type = 'lowpass';
         filter.frequency.value = 3000;
       }
 
-      whiteNoise.connect(filter);
+      noiseSource.connect(filter);
       filter.connect(gainNode);
-      whiteNoise.start();
+      noiseSource.start();
 
-      this.ambientSource = whiteNoise;
+      this.ambientSource = noiseSource;
     }
   }
 
   setAmbientVolume(volume) {
+    const clampedVol = Math.max(0.05, Math.min(1.0, volume));
+    if (this.ambientAudioEl) {
+      try {
+        this.ambientAudioEl.volume = clampedVol;
+      } catch (e) {}
+    }
     if (this.ambientGain && this.ctx) {
-      const vol = Math.max(0, Math.min(1.0, volume)) * 0.25;
-      this.ambientGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      this.ambientGain.gain.setValueAtTime(clampedVol * 0.25, this.ctx.currentTime);
     }
   }
 
   stopAmbient() {
+    if (this.ambientAudioEl) {
+      try {
+        this.ambientAudioEl.pause();
+        this.ambientAudioEl.currentTime = 0;
+      } catch (e) {}
+      this.ambientAudioEl = null;
+    }
     if (this.ambientSource) {
       try {
         this.ambientSource.stop();
       } catch (e) {}
-        this.ambientSource = null;
+      this.ambientSource = null;
     }
     this.ambientGain = null;
     this.currentAmbientType = null;
