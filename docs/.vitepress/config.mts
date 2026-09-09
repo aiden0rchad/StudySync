@@ -57,19 +57,9 @@ export default defineConfig({
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'StudySync Documentation' }],
     ['meta', { property: 'og:description', content: 'Self-hosted academic calendar with AI, Canvas LMS pull, and Apple Calendar sync.' }],
-    ['script', {
-      type: 'text/javascript',
-      src: 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js',
-      'data-name': 'bmc-button',
-      'data-slug': 'aiden0rchad',
-      'data-color': '#FFDD00',
-      'data-emoji': '',
-      'data-font': 'Cookie',
-      'data-text': 'Buy me a coffee',
-      'data-outline-color': '#000000',
-      'data-font-color': '#000000',
-      'data-coffee-color': '#ffffff'
-    }]
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cookie&display=swap' }]
   ],
   markdown: {
     lineNumbers: true,
