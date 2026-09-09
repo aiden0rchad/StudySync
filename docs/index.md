@@ -13,6 +13,9 @@ hero:
       text: Get Started →
       link: /getting-started/
     - theme: alt
+      text: ☕ Buy Me a Coffee
+      link: https://buymeacoffee.com/aiden0rchad
+    - theme: alt
       text: 5:00 AM Daily Sync
       link: /guide/daily-sync
     - theme: alt
